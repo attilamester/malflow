@@ -8,3 +8,4 @@ networkx==2.4
 python-louvain==0.15
 pygraphviz==1.6
 r2pipe==1.7.3
+numpy==1.16.3

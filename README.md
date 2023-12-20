@@ -3,7 +3,11 @@
 * https://github.com/radareorg/radare2
 * summary on [GitHub Pages](https://attilamester.github.io/call-graph/)
 
-## Install
+## Setup
 
-* sudo apt-get install graphviz graphviz-dev
-* tested with python3.6 and python3.8
+```bash
+sudo apt-get install graphviz graphviz-dev
+virtualenv --python="/usr/bin/python3.8" "env"
+source env/bin/activa
+python3 -m pip install -r requirements.txt
+```

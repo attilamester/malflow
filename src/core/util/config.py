@@ -12,7 +12,3 @@ def load_env():
             print(f"Not existing .env [{env_path}]")
     except Exception as e:
         print(f"Could not load .env file [{e}]")
-
-
-if __name__ == "__main__":
-    load_env()
