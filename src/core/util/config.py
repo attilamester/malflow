@@ -1,10 +1,12 @@
 import os
 
+from core.util.misc import get_project_root
+
 
 def load_env():
     try:
         from dotenv import load_dotenv
-        env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+        env_path = os.path.join(get_project_root(), "src", ".env")
         if os.path.isfile(env_path):
             load_dotenv(verbose=True, dotenv_path=env_path)
             print(f"Loaded .env [{env_path}]")
