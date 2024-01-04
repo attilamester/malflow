@@ -11,3 +11,15 @@ virtualenv --python="/usr/bin/python3.8" "env"
 source env/bin/activa
 python3 -m pip install -r requirements.txt
 ```
+
+## Local development
+
+* to install the pre-commit hook:
+```bash
+pre-commit install
+```
+
+* to run tests:
+```bash
+pre-commit run
+```

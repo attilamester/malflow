@@ -37,3 +37,4 @@ env/
 *.mbazaar
 *.dot
 *.svg
+.coverage
