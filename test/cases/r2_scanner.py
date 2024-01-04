@@ -4,7 +4,7 @@ from typing import List
 from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph
 from core.model.function import CGNode
-from core.util import config
+from util import config
 
 
 class TestR2Scanner(unittest.TestCase):

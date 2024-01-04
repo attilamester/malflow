@@ -1,6 +1,6 @@
 import os
 
-from core.util.misc import get_project_root
+from util.misc import get_project_root
 
 
 def load_env():

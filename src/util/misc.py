@@ -1,11 +1,11 @@
 import errno
 import os
 
-from core.util.logger import Logger
+from util.logger import Logger
 
 
 def get_project_root():
-    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def ensure_dir(path):

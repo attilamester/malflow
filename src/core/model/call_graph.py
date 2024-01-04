@@ -13,7 +13,7 @@ from networkx import MultiDiGraph
 from core.model.call_graph_compressed import CallGraphCompressed
 from core.model.fingerprint import CGFingerprint
 from core.model.function import FunctionType, Instruction, CGNode
-from core.util.logger import Logger
+from util.logger import Logger
 
 
 class CallGraph:

@@ -2,7 +2,7 @@ import os
 
 from core.data import DatasetProvider
 from core.model.sample import Sample
-from core.util.validators import HashValidator
+from util.validators import HashValidator
 
 
 class Bodmas(DatasetProvider):
@@ -18,6 +18,7 @@ class Bodmas(DatasetProvider):
                 raise Exception(f"Invalid BODMAS file: {filepath}")
 
             yield Sample(filepath, md5=None, sha256=sha256)
+
     @staticmethod
     def get_sample(md5: str = None, sha256: str = None) -> Sample:
         bodmas_samples_dir = Bodmas.get_dir_samples()
