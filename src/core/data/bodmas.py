@@ -17,7 +17,7 @@ class Bodmas(DatasetProvider):
             if not HashValidator.is_sha256(sha256):
                 raise Exception(f"Invalid BODMAS file: {filepath}")
 
-            yield Sample(filepath, md5=None, sha256=sha256)
+            yield Sample(filepath, md5=None, sha256=sha256, check_hashes=False)
 
     @staticmethod
     def get_sample(md5: str = None, sha256: str = None) -> Sample:
@@ -25,7 +25,7 @@ class Bodmas(DatasetProvider):
         filepath = os.path.join(bodmas_samples_dir, f"{sha256}.exe")
         if not os.path.isfile(filepath):
             raise Exception(f"Cannot find BODMAS file: {filepath}")
-        return Sample(filepath=filepath, sha256=sha256)
+        return Sample(filepath=filepath, sha256=sha256, check_hashes=False)
 
     @staticmethod
     def is_existing_analysis(md5: str):
