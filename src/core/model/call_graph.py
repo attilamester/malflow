@@ -164,11 +164,9 @@ class CallGraph:
             if n1 is None:
                 continue
 
-            if b.startswith("sym.imp") or b.startswith("fcn"):
+            if b.startswith("sym.imp") or b.startswith("fcn") or b.startswith("section"):
                 if n2 is None:
-                    agfd = r2.cmd(f"agfd {b}")
-                    __nx_agf = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agfd))
-                    rva = list(__nx_agf.nodes)[0]
+                    rva = r2.cmd(f"s {b} ; s").strip()
                     n2 = CGNode(b, rva)
                     self.add_node(n2)
                 if not (n2 in n1.calls):
@@ -176,8 +174,9 @@ class CallGraph:
                         Logger.info(f"[Reference call] {n1} -> {n2}")
                     n1.add_call_to(n2)
 
-        for addr, data in nx_g.nodes.items():
-            cg_node = self.get_node_by_rva(addr)
+        for label, cg_node in self.nodes.items():
+            cg_node: CGNode
+            addr = cg_node.rva.value
             if cg_node.type == FunctionType.DLL:
                 continue
             try:
@@ -214,17 +213,6 @@ class CallGraph:
             #             continue
             #         cg_node.add_instructions(data["label"])
 
-            # mnemonics1 = [i.mnemonic for i in cg_node.instructions]
-            # mnemonics2 = [i.mnemonic for i in cg_node.instructions2]
-            # try:
-            #     assert mnemonics_are_same(mnemonics1, mnemonics2)
-            # except:
-            #     print(f">>>>>> Mismatch at {addr} {cg_node}")
-            #     print(mnemonics1)
-            #     print(mnemonics2)
-
-            # if verbose:
-            #     logger.info(f"[Node] {cg_node} {cg_node.instructions}")
         self.scan_time = time.time() - ts
 
         if save:

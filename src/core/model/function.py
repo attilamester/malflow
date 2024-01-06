@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import List, Optional, Set, Dict
 
+from util.logger import Logger
+
 
 class FunctionType(Enum):
     SUBROUTINE = "subroutine"
@@ -76,12 +78,12 @@ class CGNode:
         self.instructions = []
 
         if label.startswith("fcn.") or label.startswith("entry") or label.startswith("sub.") or label.startswith(
-                "unk.") or label == "main":
+                "unk.") or label.startswith("section") or label == "main":
             self.type = FunctionType.SUBROUTINE
         elif label.startswith("sym."):
             self.type = FunctionType.DLL
         else:
-            print(f"UNKNOWN node type: {label}")
+            Logger.warning(f"UNKNOWN node type: {label} at {rva}")
             self.type = FunctionType.STATIC_LINKED_LIB
 
         self.rva = RVA(rva) if rva else None
