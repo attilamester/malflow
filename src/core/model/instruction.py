@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 
 class Registers(Enum):
@@ -25,17 +25,24 @@ class Instruction:
     disasm: str  # full instruction string, e.g. `mov eax, 0xc`
     opcode: bytes  # e.g. `0x83c40c`
     mnemonic: str  # e.g. `mov`
+    prefix: Optional["InstructionPrefix"]
     parameters: List["InstructionParameter"]
 
     def __init__(self, disasm: str, opcode: bytes):
         self.disasm = disasm
         self.opcode = opcode
+        self.prefix = None
         self.parameters = []
         self.process()
 
     def process(self):
         opcode_tokens = self.disasm.split(" ", maxsplit=1)
         self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
+        if self.mnemonic in InstructionPrefixes:
+            self.prefix = InstructionPrefix(self.mnemonic)
+            opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
+            self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
+
         parameters = []
         if len(opcode_tokens) == 2:
             parameters = opcode_tokens[1].split(",")
@@ -60,6 +67,22 @@ class Instruction:
         if mnemonic in ["ea", "odsd"]:
             mnemonic = f"l{mnemonic}"
         return mnemonic
+
+
+class InstructionPrefix(Enum):
+    SEGCS = "segcs"
+    SEGDS = "segds"
+    SEGSS = "segss"
+    SEGES = "seges"
+    LOCK = "lock"
+    REP = "rep"
+    REPE = "repe"
+    REPZ = "repz"
+    REPNE = "repne"
+    REPNZ = "repnz"
+
+
+InstructionPrefixes = {prefix.value for prefix in InstructionPrefix}
 
 
 class InstructionParameter(Enum):
