@@ -91,6 +91,8 @@ class InstructionParameter(Enum):
             return InstructionParameter.STRING
         if token.startswith("case"):
             return InstructionParameter.BLOCK
+        if token.startswith("section"):
+            return InstructionParameter.ADDRESS
         try:
             int(token)
             return InstructionParameter.CONSTANT
