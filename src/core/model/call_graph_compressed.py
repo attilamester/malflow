@@ -1,7 +1,8 @@
 import pickle
 from typing import Dict, List, Union, TYPE_CHECKING
 
-from core.model.function import CGNode, FunctionType, Instruction
+from core.model.function import CGNode, FunctionType
+from core.model.instruction import Instruction
 
 if TYPE_CHECKING:
     from core.model.call_graph import CallGraph
@@ -23,7 +24,7 @@ class CallGraphCompressed:
         self.nodes = {}
         for str, node in cg.nodes.items():
             self.nodes[str] = [node.label, node.rva.value, node.type.value,
-                               [[instr.mnemonic, instr.opcode] for instr in node.instructions],
+                               [[instr.disasm, instr.opcode] for instr in node.instructions],
                                [n.label for n in node.calls]]
 
     def to_dict(self):

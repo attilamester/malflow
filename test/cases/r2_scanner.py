@@ -5,6 +5,7 @@ from cases.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
 from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph
 from core.model.function import CGNode
+from core.model.instruction import Instruction
 from util import config
 
 
@@ -29,15 +30,36 @@ class TestR2Scanner(unittest.TestCase):
             """
 
             buff_nodes = "\", \"".join(sorted(actual_nodes))
-            buff_links = ",".join([f"(\"{t[0]}\", \"{t[1]}\")" for t in sorted(actual_links)])
+            buff_links = ", ".join([f"(\"{t[0]}\", \"{t[1]}\")" for t in sorted(actual_links)])
+
+            def buff_instruction_parameters(i: Instruction):
+                if i.parameters:
+                    return "\"" + "\", \"".join([p.value for p in i.parameters]) + "\""
+                else:
+                    return ""
+
             print("\n")
             print(f"<<< Ground truth for md5:{cg.md5} >>>")
             print(f"<<< nodes: \n{{\"{buff_nodes}\"}}\n>>>")
             print(f"<<< links: \n{{{buff_links}}}\n>>>")
+            print(f"<<< functions: ")
+            node: CGNode
+            for node in cg.DFS()[:5]:
+                print(f"<<< {node.label}")
+                instructions = ", ".join(
+                    [f"(\"{i.mnemonic}\", [{buff_instruction_parameters(i)}])" for i in node.instructions])
+                print(f"<<< [{instructions}]")
             return
 
         self.assertEqual(test_sample.nodes, actual_nodes)
         self.assertEqual(test_sample.links, actual_links)
+
+        if test_sample.functions:
+            for function_name, function_instructions in test_sample.functions.items():
+                cg_node = cg.get_node_by_label(function_name)
+                self.assertIsNotNone(cg_node)
+                actual_instructions = [(i.mnemonic, [p.value for p in i.parameters]) for i in cg_node.instructions]
+                self.assertEqual(function_instructions, actual_instructions)
 
     def test_md5_bart_35987(self):
         self.__test_sample(R2_SCANNER_DATA["35987"])

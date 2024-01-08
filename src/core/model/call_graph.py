@@ -12,7 +12,8 @@ from networkx import MultiDiGraph
 
 from core.model.call_graph_compressed import CallGraphCompressed
 from core.model.fingerprint import CGFingerprint
-from core.model.function import FunctionType, Instruction, CGNode
+from core.model.function import FunctionType, CGNode
+from core.model.instruction import Instruction
 from util.logger import Logger
 
 
@@ -182,36 +183,12 @@ class CallGraph:
             try:
                 pdfj = json.loads(r2.cmd(f"s {addr} ; pdfj"))
                 cg_node.set_instructions_from_function_disassembly(pdfj)
-            except:
+            except json.decoder.JSONDecodeError as e:
                 if verbose:
-                    Logger.warning(f"Could not run pdfj on {cg_node}")
-
-            # block = r2.cmd(f"agfd {addr}")  # TODO: this will be no longer necessary once we use pdf command
-            # g_agf: MultiDiGraph
-            # try:
-            #     g_agf = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(block))
-            #     # g_agf = nx.Graph(nx.nx_pydot.read_dot(path))
-            # except Exception as e:
-            #     logger.warning(f"{self.md5}: {addr} could not be read as DOT. {e}")
-            #     continue
-            # try:
-            #     g_agfn = g_agf.nodes[addr]
-            #     if verbose:
-            #         logger.info(f"Running agf on {addr}; {g_agfn}")
-            # except:
-            #     if verbose:
-            #         logger.warning(f"{self.md5}: {addr} not found ({self.file_path})")
-            #     continue
-            # if cg_node.type == FunctionType.SUBROUTINE:
-            #     if not cg_node.label.startswith("unk."):
-            #         if "label" not in g_agfn:
-            #             logger.warning(f"{g_agfn} does not have label")
-            #         else:
-            #             cg_node.add_instructions(g_agfn["label"])
-            #     for _addr, data in g_agf.nodes.items():
-            #         if _addr == addr or not data:
-            #             continue
-            #         cg_node.add_instructions(data["label"])
+                    Logger.warning(f"Could not run pdfj on {cg_node}: {e}")
+            except Exception as e:
+                Logger.error(f"Could not process instructions on {cg_node}: {e}")
+                raise e
 
         self.scan_time = time.time() - ts
 
@@ -287,23 +264,7 @@ class CallGraph:
 
         return fingerprints
 
-    def DFS(self, node: CGNode = None, node_sorter: Callable[[CGNode], str] = lambda n: n.label):
-        if not node:
-            if self.entrypoints and len(self.entrypoints) > 0:
-                node = self.entrypoints[0]
-            else:
-                for n in self.nodes.values():
-                    if n.label.startswith("entry"):
-                        node = n
-                        break
-                if not node:
-                    Logger.warning(f"No entrypoint found for {self.md5}")
-                    if self.nodes:
-                        node = next(iter(self.nodes.values()))
-                    else:
-                        Logger.warning(f"No nodes for {self.md5}")
-                        return []
-
+    def DFS(self, node_sorter: Callable[[CGNode], str] = lambda n: n.label):
         node_list = []
         visited_nodes = {}
 
