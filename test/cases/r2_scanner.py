@@ -58,7 +58,8 @@ class TestR2Scanner(unittest.TestCase):
             for function_name, function_instructions in test_sample.functions.items():
                 cg_node = cg.get_node_by_label(function_name)
                 self.assertIsNotNone(cg_node)
-                actual_instructions = [(i.mnemonic, [p.value for p in i.parameters]) for i in cg_node.instructions]
+                actual_instructions = [(i.mnemonic, [p.value for p in i.parameters]) +
+                                       ((i.prefix.value,) if i.prefix else ()) for i in cg_node.instructions]
                 self.assertEqual(function_instructions, actual_instructions)
 
     def test_md5_bart_35987(self):
