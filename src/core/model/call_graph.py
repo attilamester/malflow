@@ -146,34 +146,64 @@ class CallGraph:
         nx_g = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agCd))
         nx_g_references = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agRd))
 
+        # ==============
+        # Process agCd - Global callgraph https://r2wiki.readthedocs.io/en/latest/options/a/ag/
+        # ==============
+
         for addr, data in nx_g.nodes.items():
             node = CGNode(data["label"], addr)
             self.add_node(node)
             if verbose:
-                Logger.info(f"[Node] {node}")
+                Logger.info(f"[Node - agC] {node}")
 
         for (a, b, w), data in nx_g.edges.items():
             node1 = self.get_node_by_rva(a)
             node2 = self.get_node_by_rva(b)
             node1.add_call_to(node2)
             if verbose:
-                Logger.info(f"[Call] {node1} -> {node2}")
+                Logger.info(f"[Call - agC] {node1} -> {node2}")
+
+        # ==============
+        # Process agRd - Global references graph
+        # ==============
+
+        def get_rva_of_label(lbl: str):
+            """
+            Padding to 8 chars is important to match the existing addressing e.g. 0x0043012c
+            """
+            return r2.cmd(f"s {lbl} ; s:8").strip()
+
+        def add_node_by_label(lbl: str):
+            rva = get_rva_of_label(lbl)
+            n = CGNode(lbl, rva)
+            self.add_node(n)
+            return n
+
+        for addr, data in nx_g_references.nodes.items():
+            if addr.startswith("sym") or addr.startswith("fcn"):
+                rva = get_rva_of_label(addr)
+                if rva not in self.addresses:
+                    node = CGNode(data["label"], rva)
+                    self.add_node(node)
+                    if verbose:
+                        Logger.info(f"[Node - agR] {node}")
 
         for (a, b, w), data in nx_g_references.edges.items():
-            n1 = self.get_node_by_label(a)
-            n2 = self.get_node_by_label(b)
-            if n1 is None:
-                continue
+            node1 = self.get_node_by_label(a)
+            node2 = self.get_node_by_label(b)
 
-            if b.startswith("sym.imp") or b.startswith("fcn") or b.startswith("section"):
-                if n2 is None:
-                    rva = r2.cmd(f"s {b} ; s").strip()
-                    n2 = CGNode(b, rva)
-                    self.add_node(n2)
-                if not (n2 in n1.calls):
+            if a.startswith("sym.imp") or a.startswith("fcn") or a.startswith("section") or a.startswith("sub"):
+                if node1 is None:
+                    node1 = add_node_by_label(a)
+            if b.startswith("sym.imp") or b.startswith("fcn") or b.startswith("section") or b.startswith("sub"):
+                if node2 is None:
+                    node2 = add_node_by_label(b)
+                if node1 is None:
+                    Logger.error(f"None: {a} {b}")
+                if not (node2 in node1.calls):
                     if verbose:
-                        Logger.info(f"[Reference call] {n1} -> {n2}")
-                    n1.add_call_to(n2)
+                        Logger.info(f"[Call - agR] {node1} -> {node2}")
+                    node1.add_call_to(node2)
 
         for label, cg_node in self.nodes.items():
             cg_node: CGNode
@@ -184,6 +214,11 @@ class CallGraph:
                 pdfj = json.loads(r2.cmd(f"s {addr} ; pdfj"))
                 cg_node.set_instructions_from_function_disassembly(pdfj)
             except json.decoder.JSONDecodeError as e:
+                # TODO: conceptual question whether we want to keep these nodes or not.
+                #  The fact that pdf fails means r2 could not find commands on that address, that being dynamic one
+                #  e.g. call [eax]
+                #   - in this case, we could even delete the node
+                #   - but still, the call relation should mean a link in the graph
                 if verbose:
                     Logger.warning(f"Could not run pdfj on {cg_node}: {e}")
             except Exception as e:
