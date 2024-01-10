@@ -108,13 +108,15 @@ class InstructionParameter(Enum):
             return InstructionParameter.CONSTANT
         if "[" in token:
             return InstructionParameter.ADDRESS
-        if token.startswith("sub") or token.startswith("fcn") or token.startswith("main") or token.startswith("entry"):
+        if token.startswith("sub") or token.startswith("fcn") or token.startswith("main") or token.startswith(
+                "entry") or token.startswith("sym"):
             return InstructionParameter.FUNCTION
         if token.startswith("str"):
             return InstructionParameter.STRING
         if token.startswith("case"):
             return InstructionParameter.BLOCK
-        if token.startswith("section"):
+        if token.startswith("section") or token.startswith("switch.") or token.startswith("reloc.") or token.startswith(
+                "int.") or token.startswith("loc."):
             return InstructionParameter.ADDRESS
         try:
             int(token)
