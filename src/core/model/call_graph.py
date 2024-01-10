@@ -3,7 +3,7 @@ import json
 import os.path
 import pickle
 import time
-from typing import List, Dict, Set, Union, Tuple, Callable
+from typing import List, Dict, Set, Union, Tuple, Callable, Optional
 
 import networkx as nx
 import pygraphviz
@@ -46,10 +46,10 @@ class CallGraph:
             except Exception as e:
                 Logger.error(f"Could not scan {self.md5}: {e}")
 
-    def get_node_by_label(self, label) -> Union[CGNode, None]:
+    def get_node_by_label(self, label) -> Optional[CGNode]:
         return self.nodes.get(label, None)
 
-    def get_node_by_rva(self, rva: str) -> Union[CGNode, None]:
+    def get_node_by_rva(self, rva: str) -> Optional[CGNode]:
         return self.addresses.get(rva, None)
 
     def add_node(self, node: CGNode):
