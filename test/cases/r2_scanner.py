@@ -1,11 +1,10 @@
 import unittest
-from typing import List
+from typing import List, Set, Tuple, Union, Optional
 
 from cases.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
 from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph
 from core.model.function import CGNode
-from core.model.instruction import Instruction
 from util import config
 
 
@@ -15,52 +14,83 @@ class TestR2Scanner(unittest.TestCase):
     def setUpClass(cls):
         config.load_env()
 
-    def __test_sample(self, test_sample: R2ScannerData, generate_ground_truth: bool = False):
+    def __generate_test_data(self, cg: CallGraph, test_sample: R2ScannerData):
+
+        def buff_nodes(cg: CallGraph):
+            nodes = self.__test_sample_get_nodes(cg)
+            return "{\"" + "\", \"".join(sorted(nodes)) + "\"}"
+
+        def buff_links(cg: CallGraph):
+            links = self.__test_sample_get_links(cg)
+            return "{" + ", ".join([f"(\"{t[0]}\", \"{t[1]}\")" for t in sorted(links)]) + "}"
+
+        def buff_instruction_parameters(i: List[str]):
+            if i:
+                return "[\"" + "\", \"".join(i) + "\"]"
+            else:
+                return "[]"
+
+        def buff_instruction_prefix(p: Optional[str]):
+            if p:
+                return f", \"{p}\""
+            else:
+                return ""
+
+        def buff_function_instructions(cg_node: CGNode):
+            instructions = self.__test_sample_get_function_instructions(cg_node)
+            return "[" + ", ".join(
+                [
+                    f"(\"{i[0]}\", {buff_instruction_parameters(i[1])}"
+                    f"{buff_instruction_prefix(i[2]) if len(i) == 3 else ''})"
+                    for i in instructions
+                ]) + "]"
+
+        print("\n")
+        print(f"<<< Ground truth for md5:{cg.md5} >>>")
+        print(f"<<< nodes: \n{buff_nodes(cg)}\n>>>")
+        print(f"<<< links: \n{buff_links(cg)}\n>>>")
+        print(f"<<< functions: ")
+        cg_node: CGNode
+        cg_nodes: List[CGNode]
+        if test_sample.functions:
+            cg_nodes = [cg.get_node_by_label(lbl) for lbl in test_sample.functions.keys()]
+        else:
+            cg_nodes = cg.DFS()[:5]
+        for node in cg_nodes:
+            print(f"<<< {node.label}")
+            print(f"<<< {buff_function_instructions(node)}")
+        return
+
+    def __test_sample_get_nodes(self, cg: CallGraph) -> Set[str]:
+        return set([node.label for node in cg.nodes.values()])
+
+    def __test_sample_get_links(self, cg: CallGraph) -> Set[Tuple[str, str]]:
+        return {(caller.label, callee.label) for caller in cg.nodes.values() for callee in caller.calls}
+
+    def __test_sample_get_function_instructions(self, cg_node: CGNode) -> List[Tuple[Union[str, List[str]], ...]]:
+        return [(i.mnemonic, [p.value for p in i.parameters]) + ((i.prefix.value,) if i.prefix else ()) for i in
+                cg_node.instructions]
+
+    def __test_sample(self, test_sample: R2ScannerData, generate_test_data: bool = False):
         sample = MalwareBazaar.get_sample(sha256=test_sample.sha256)
         cg = CallGraph(file_path=sample.filepath, scan=True, verbose=False)
-        nodes: List[CGNode]
-        nodes = list(cg.nodes.values())
 
-        actual_nodes = set([node.label for node in nodes])
-        actual_links = {(caller.label, callee.label) for caller in nodes for callee in caller.calls}
-
-        if generate_ground_truth:
+        if generate_test_data:
             """
             Used only when creating new test sample data.
             """
-
-            buff_nodes = "\", \"".join(sorted(actual_nodes))
-            buff_links = ", ".join([f"(\"{t[0]}\", \"{t[1]}\")" for t in sorted(actual_links)])
-
-            def buff_instruction_parameters(i: Instruction):
-                if i.parameters:
-                    return "\"" + "\", \"".join([p.value for p in i.parameters]) + "\""
-                else:
-                    return ""
-
-            print("\n")
-            print(f"<<< Ground truth for md5:{cg.md5} >>>")
-            print(f"<<< nodes: \n{{\"{buff_nodes}\"}}\n>>>")
-            print(f"<<< links: \n{{{buff_links}}}\n>>>")
-            print(f"<<< functions: ")
-            node: CGNode
-            for node in cg.DFS()[:5]:
-                print(f"<<< {node.label}")
-                instructions = ", ".join(
-                    [f"(\"{i.mnemonic}\", [{buff_instruction_parameters(i)}])" for i in node.instructions])
-                print(f"<<< [{instructions}]")
+            self.__generate_test_data(cg, test_sample)
             return
 
-        self.assertEqual(test_sample.nodes, actual_nodes)
-        self.assertEqual(test_sample.links, actual_links)
+        self.assertEqual(test_sample.nodes, self.__test_sample_get_nodes(cg))
+        self.assertEqual(test_sample.links, self.__test_sample_get_links(cg))
 
         if test_sample.functions:
-            for function_name, function_instructions in test_sample.functions.items():
+            for function_name in test_sample.functions.keys():
                 cg_node = cg.get_node_by_label(function_name)
                 self.assertIsNotNone(cg_node)
-                actual_instructions = [(i.mnemonic, [p.value for p in i.parameters]) +
-                                       ((i.prefix.value,) if i.prefix else ()) for i in cg_node.instructions]
-                self.assertEqual(function_instructions, actual_instructions)
+                self.assertEqual(test_sample.functions[function_name],
+                                 self.__test_sample_get_function_instructions(cg_node))
 
     def test_md5_bart_35987(self):
         self.__test_sample(R2_SCANNER_DATA["35987"])
