@@ -1,6 +1,5 @@
 coverage==7.4.0
 elasticsearch==7.16.2
-matplotlib==3.3.4
 python-dotenv==0.15.0
 pytz==2019.1
 requests==2.21.0
@@ -8,7 +7,7 @@ urllib3==1.24.3
 networkx==2.4
 python-louvain==0.15
 pygraphviz==1.6
-r2pipe==1.7.3
+r2pipe==1.8.8
 numpy==1.16.3
 pyzipper==0.3.6
 pytest==7.4.4

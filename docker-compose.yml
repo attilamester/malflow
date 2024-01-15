@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+
+  malcallgraph_test:
+    image: image_malcallgraph
+    container_name: container_malcallgraph
+    build:
+      context: .
+      network: host
+      dockerfile: ./Dockerfile
+    network_mode: "host"
+    environment:
+      - MBAZAAR_DIR_SAMPLES=/usr/callgraph/mbazaar
+      - MBAZAAR_DIR_R2_SCANS=/usr/callgraph/mbazaar

@@ -1,7 +1,6 @@
 import hashlib
 import json
 import os.path
-import pickle
 import time
 from typing import List, Dict, Set, Union, Tuple, Callable, Optional
 
@@ -10,10 +9,9 @@ import pygraphviz
 import r2pipe
 from networkx import MultiDiGraph
 
-from core.model.call_graph_compressed import CallGraphCompressed
 from core.model.fingerprint import CGFingerprint
 from core.model.function import FunctionType, CGNode
-from core.model.instruction import Instruction
+from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
 
@@ -27,7 +25,7 @@ class CallGraph:
 
     __nx: MultiDiGraph
 
-    def __init__(self, file_path: str = None, scan=True, verbose=False, save=False, decompressed=False):
+    def __init__(self, file_path: str = None, scan=True, verbose=False, decompressed=False):
 
         if not decompressed:
             with open(file_path, "rb") as f:
@@ -40,9 +38,7 @@ class CallGraph:
 
         if scan:
             try:
-                self.scan(verbose, save)
-                if save:
-                    self.dump_compressed(os.path.dirname(self.file_path))
+                self.scan(verbose)
             except Exception as e:
                 Logger.error(f"Could not scan {self.md5}: {e}")
 
@@ -61,23 +57,9 @@ class CallGraph:
         self.nodes[node.label] = node
         self.addresses[node.rva.value] = node
 
-    def dump_compressed(self, dir_path):
-        compressed = CallGraphCompressed(self)
-        file_path = CallGraph.get_compressed_path(dir_path, self.md5)
-        with open(file_path, "wb") as f:
-            pickle.dump(compressed, f)
-        return file_path
-
-    @staticmethod
-    def get_compressed_path(dir_path, md5):
-        return os.path.join(dir_path, CallGraph.get_compressed_file_name(md5))
-
     @staticmethod
     def get_compressed_file_name(md5: str):
         return f"{md5}.cgcompressed.pickle"
-
-    def format_compressed(self) -> CallGraphCompressed:
-        return CallGraphCompressed(self)
 
     def format_nx(self, fingerprint_matches: Dict[str, Dict[str, Set[Tuple[str, int]]]]) -> nx.DiGraph:
         def add_info_of_fingerprint_matches(_dict, hash):
@@ -117,7 +99,7 @@ class CallGraph:
         basename = os.path.basename(path)
         return os.path.join(dirname, basename.split(".")[0])
 
-    def scan(self, verbose=False, save=False):
+    def scan(self, verbose=False):
         Logger.info(f"Scanning {self.file_path}")
 
         ts = time.time()
@@ -180,7 +162,7 @@ class CallGraph:
             return n
 
         for addr, data in nx_g_references.nodes.items():
-            if addr.startswith("sym") or addr.startswith("fcn"):
+            if InstructionParameter.is_function(addr):
                 rva = get_rva_of_label(addr)
                 if rva not in self.addresses:
                     node = CGNode(data["label"], rva)
@@ -192,10 +174,10 @@ class CallGraph:
             node1 = self.get_node_by_label(a)
             node2 = self.get_node_by_label(b)
 
-            if a.startswith("sym.imp") or a.startswith("fcn") or a.startswith("section") or a.startswith("sub"):
+            if InstructionParameter.is_function(a):
                 if node1 is None:
                     node1 = add_node_by_label(a)
-            if b.startswith("sym.imp") or b.startswith("fcn") or b.startswith("section") or b.startswith("sub"):
+            if InstructionParameter.is_function(b):
                 if node2 is None:
                     node2 = add_node_by_label(b)
                 if node1 is None:
@@ -226,9 +208,6 @@ class CallGraph:
                 raise e
 
         self.scan_time = time.time() - ts
-
-        if save:
-            self.dump_compressed(os.path.dirname(self.file_path))
 
     def get_edges(self) -> Set[Tuple[CGNode, CGNode]]:
         edges = set()

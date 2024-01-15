@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional, Set, Dict
 
-from core.model.instruction import Instruction
+from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
 
@@ -43,12 +43,10 @@ class CGNode:
     def __init__(self, label: str, rva: str):
         self.label = label
         self.instructions = []
-
-        if label.startswith("fcn.") or label.startswith("entry") or label.startswith("sub.") or label.startswith(
-                "unk.") or label.startswith("section") or label == "main":
-            self.type = FunctionType.SUBROUTINE
-        elif label.startswith("sym."):
+        if label.startswith("sym."):
             self.type = FunctionType.DLL
+        elif InstructionParameter.is_function(label):
+            self.type = FunctionType.SUBROUTINE
         else:
             Logger.warning(f"UNKNOWN node type: {label} at {rva}")
             self.type = FunctionType.STATIC_LINKED_LIB

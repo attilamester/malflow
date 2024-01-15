@@ -9,6 +9,6 @@ repos:
     hooks:
       - id: run-unittests
         name: run our unittests
-        entry: coverage run -m pytest -ra ./test/test.py
+        entry: bash -c "docker compose up --build malcallgraph_test"
         language: system
         types: [python]

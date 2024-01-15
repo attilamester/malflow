@@ -1,11 +1,10 @@
+import os
 import pickle
-from typing import Dict, List, Union, TYPE_CHECKING
+from typing import Dict, List, Union
 
+from core.model.call_graph import CallGraph
 from core.model.function import CGNode, FunctionType
 from core.model.instruction import Instruction
-
-if TYPE_CHECKING:
-    from core.model.call_graph import CallGraph
 
 
 class CallGraphCompressed:
@@ -35,7 +34,7 @@ class CallGraphCompressed:
         }
 
     def decompress(self) -> "CallGraph":
-        cg = CallGraph(None, scan=False, verbose=False, save=False, decompressed=True)
+        cg = CallGraph(None, scan=False, verbose=False, decompressed=True)
         cg.md5 = self.md5
         cg.scan_time = self.scan_time
         for label, data in self.nodes.items():
@@ -54,9 +53,19 @@ class CallGraphCompressed:
                 node.add_call_to(other_node)
         return cg
 
+    def dump_compressed(self, dir_path):
+        file_path = CallGraphCompressed.get_compressed_path(dir_path, self.md5)
+        with open(file_path, "wb") as f:
+            pickle.dump(self, f)
+        return file_path
+
     @staticmethod
     def load(path: str) -> "CallGraphCompressed":
         with open(path, "rb") as f:
             cg_compressed: CallGraphCompressed
             cg_compressed = pickle.load(f)
             return cg_compressed
+
+    @staticmethod
+    def get_compressed_path(dir_path, md5):
+        return os.path.join(dir_path, CallGraph.get_compressed_file_name(md5))
