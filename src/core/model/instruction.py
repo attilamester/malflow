@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import List, Optional
 
+from core.model.radare2_definitions import get_function_types, is_symbol_flag
+
 
 class Registers(Enum):
     GENERAL_PURPOSE_64 = {"rax", "rbx", "rcx", "rdx", "rsp", "rbp", "rdi", "rsi"}
@@ -108,15 +110,13 @@ class InstructionParameter(Enum):
             return InstructionParameter.CONSTANT
         if "[" in token:
             return InstructionParameter.ADDRESS
-        if token.startswith("sub") or token.startswith("fcn") or token.startswith("main") or token.startswith(
-                "entry") or token.startswith("sym"):
+        if InstructionParameter.is_function(token):
             return InstructionParameter.FUNCTION
         if token.startswith("str"):
             return InstructionParameter.STRING
-        if token.startswith("case"):
+        if InstructionParameter.is_block(token):
             return InstructionParameter.BLOCK
-        if token.startswith("section") or token.startswith("switch.") or token.startswith("reloc.") or token.startswith(
-                "int.") or token.startswith("loc."):
+        if token.startswith("section"):
             return InstructionParameter.ADDRESS
         try:
             int(token)
@@ -124,3 +124,13 @@ class InstructionParameter(Enum):
         except:
             pass
         raise Exception(f"Undefined instruction parameter type `{token}`")
+
+    @staticmethod
+    def is_block(token: str):
+        return token.startswith("case.") or token.startswith("switch.")
+
+    @staticmethod
+    def is_function(token: str):
+        if is_symbol_flag(token):
+            return True
+        return any([token.startswith(t) for t in get_function_types()])

@@ -13,7 +13,7 @@ from networkx import MultiDiGraph
 from core.model.call_graph_compressed import CallGraphCompressed
 from core.model.fingerprint import CGFingerprint
 from core.model.function import FunctionType, CGNode
-from core.model.instruction import Instruction
+from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
 
@@ -180,7 +180,7 @@ class CallGraph:
             return n
 
         for addr, data in nx_g_references.nodes.items():
-            if addr.startswith("sym") or addr.startswith("fcn"):
+            if InstructionParameter.is_function(addr):
                 rva = get_rva_of_label(addr)
                 if rva not in self.addresses:
                     node = CGNode(data["label"], rva)
@@ -192,10 +192,10 @@ class CallGraph:
             node1 = self.get_node_by_label(a)
             node2 = self.get_node_by_label(b)
 
-            if a.startswith("sym.imp") or a.startswith("fcn") or a.startswith("section") or a.startswith("sub"):
+            if InstructionParameter.is_function(a):
                 if node1 is None:
                     node1 = add_node_by_label(a)
-            if b.startswith("sym.imp") or b.startswith("fcn") or b.startswith("section") or b.startswith("sub"):
+            if InstructionParameter.is_function(b):
                 if node2 is None:
                     node2 = add_node_by_label(b)
                 if node1 is None:
