@@ -1,0 +1,3 @@
+numpy==1.24.4
+pygraphviz==1.11
+r2pipe==1.8.8
