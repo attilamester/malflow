@@ -21,6 +21,11 @@ WORKDIR /usr/callgraph
 
 COPY --from=base /usr/local/bin/python3.8 /usr/local/bin/python3.8
 COPY --from=base /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
+COPY --from=base /usr/lib/libcgraph* /usr/lib/
+COPY --from=base /usr/lib/libcdt* /usr/lib/
+COPY --from=base /usr/lib/libgvc* /usr/lib/
+COPY --from=base /usr/lib/libxdot* /usr/lib/
+COPY --from=base /usr/lib/libpathplan** /usr/lib/
 COPY --from=base /usr/include/graphviz /usr/include/graphviz
 COPY --from=base /usr/share/graphviz /usr/share/graphviz
 COPY --from=base /usr/local/lib/radare2 /usr/local/lib/radare2
