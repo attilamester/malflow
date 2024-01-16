@@ -35,8 +35,3 @@ COPY --from=base /usr/local/share/radare2 /usr/local/share/radare2
 COPY --from=base /usr/local/bin/r2 /usr/local/bin/r2
 COPY --from=base /usr/local/lib/libr_*.so /usr/local/lib/
 COPY --from=base /usr/callgraph/radare2-5.8.8/libr /usr/callgraph/radare2-5.8.8/libr
-
-COPY ./src ./src
-COPY ./test ./test
-
-CMD ["python3", "-m", "pytest", "-ra", "./test/test.py"]
