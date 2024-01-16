@@ -1,5 +1,5 @@
 # =================
-FROM ghcr.io/attilamester/r2-5.8.8
+FROM docker.io/attilamester/r2-5.8.8
 # =================
 
 WORKDIR /usr/callgraph
