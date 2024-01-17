@@ -36,5 +36,5 @@ jobs:
 
     - name: Testing
       run: |
-        docker load --input ~/.image_malcallgraph.tar
+        docker load --input ~/image_malcallgraph.tar
         docker compose up malcallgraph_test
