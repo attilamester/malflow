@@ -1,4 +1,5 @@
 ---
+fail_fast: true
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
@@ -11,7 +12,7 @@ repos:
     hooks:
       - id: run-unittests
         name: run unittests
-        entry: bash -c "docker compose up --build malcallgraph_test"
+        entry: bash -c "docker compose up --build malcallgraph_test --exit-code-from malcallgraph_test"
         require_serial: true
         verbose: true
         language: system
