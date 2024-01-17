@@ -29,7 +29,7 @@ jobs:
         path: ~/image_malcallgraph.tar
 
     - name: Building the test container - `docker build` & `docker save`
-      if: ${{ steps.cache-docker-build.output.cache-hit != 'true' }}
+      if: ${{ steps.cache-docker-build.outputs.cache-hit != 'true' }}
       run: |
         docker compose build --no-cache malcallgraph_test
         docker save image_malcallgraph > ~/image_malcallgraph.tar
