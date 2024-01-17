@@ -5,10 +5,14 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: check-yaml
+      - id: requirements-txt-fixer
   - repo: local
     hooks:
       - id: run-unittests
-        name: run our unittests
+        name: run unittests
         entry: bash -c "docker compose up --build malcallgraph_test"
+        require_serial: true
+        verbose: true
         language: system
         types: [python]

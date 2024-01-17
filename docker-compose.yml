@@ -8,6 +8,7 @@ services:
       context: .
       network: host
       dockerfile: ./Dockerfile
+    command: python3 -m pytest -ra ./test/test.py
     network_mode: "host"
     environment:
       - MBAZAAR_DIR_SAMPLES=/usr/callgraph/mbazaar

@@ -10,5 +10,3 @@ RUN python3 -m pip install pip==23.0 && \
 
 COPY ./src ./src
 COPY ./test ./test
-
-CMD ["python3", "-m", "pytest", "-ra", "./test/test.py"]
