@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from core.model.radare2_definitions import get_function_types, is_symbol_flag
+from core.model.radare2_definitions import get_function_types, is_symbol_flag, get_class_attribute_types
 
 
 class Registers(Enum):
@@ -133,4 +133,6 @@ class InstructionParameter(Enum):
     def is_function(token: str):
         if is_symbol_flag(token):
             return True
-        return any([token.startswith(t) for t in get_function_types()])
+        return any(
+            [token.startswith(t) for t in get_function_types()]) or any(
+            [token.startswith(t) for t in get_class_attribute_types()])
