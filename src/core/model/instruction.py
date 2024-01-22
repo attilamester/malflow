@@ -56,6 +56,14 @@ class Instruction:
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        if isinstance(other, Instruction):
+            return (self.disasm == other.disasm and
+                    self.opcode == other.opcode and
+                    self.prefix == other.prefix and
+                    self.parameters == other.parameters)
+        return False
+
     @staticmethod
     def standardize_mnemonic(mnemonic):
         if mnemonic in ["jz", "jnz", "repz", "repnz", "cmovz", "cmovnz", "loopz", "loopnz", "setn", "setnz"]:

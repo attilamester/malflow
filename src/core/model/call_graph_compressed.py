@@ -24,7 +24,7 @@ class CallGraphCompressed:
         for str, node in cg.nodes.items():
             self.nodes[str] = [node.label, node.rva.value, node.type.value,
                                [[instr.disasm, instr.opcode] for instr in node.instructions],
-                               [n.label for n in node.calls]]
+                               [n.label for n in node.get_calls()]]
 
     def to_dict(self):
         return {
@@ -37,6 +37,7 @@ class CallGraphCompressed:
         cg = CallGraph(None, scan=False, verbose=False, decompressed=True)
         cg.md5 = self.md5
         cg.scan_time = self.scan_time
+        cg.file_path = self.file_path
         for label, data in self.nodes.items():
             node_label, node_rva, node_type, instructions, call_labels = data
             node = CGNode(node_label, node_rva)
@@ -69,3 +70,11 @@ class CallGraphCompressed:
     @staticmethod
     def get_compressed_path(dir_path, md5):
         return os.path.join(dir_path, CallGraph.get_compressed_file_name(md5))
+
+    def __eq__(self, other):
+        if isinstance(other, CallGraphCompressed):
+            return (self.md5 == other.md5 and
+                    self.scan_time == other.scan_time and
+                    self.file_path == other.file_path and
+                    self.nodes == other.nodes)
+        return False

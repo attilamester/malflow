@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Set, Dict
+from typing import List, Optional, Dict, ValuesView
 
 from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
@@ -29,6 +29,11 @@ class RVA:
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        if isinstance(other, RVA):
+            return self.value == other.value
+        return False
+
 
 class CGNode:
     """
@@ -37,7 +42,7 @@ class CGNode:
     label: str
     rva: Optional[RVA]
     instructions: List[Instruction]
-    calls: Set["CGNode"]
+    calls: Dict[str, "CGNode"]
     type: FunctionType
 
     def __init__(self, label: str, rva: str):
@@ -52,10 +57,20 @@ class CGNode:
             self.type = FunctionType.STATIC_LINKED_LIB
 
         self.rva = RVA(rva) if rva else None
-        self.calls = set()
+        self.calls = {}
+
+    def get_calls(self) -> ValuesView["CGNode"]:
+        return self.calls.values()
 
     def add_call_to(self, node: "CGNode"):
-        self.calls.add(node)
+        if node.label in self.calls:
+            if node.rva.value != self.calls[node.label].rva.value:
+                raise Exception(f"Conflict while adding call to {node} ; existing {self.calls[node.label]}")
+        else:
+            self.calls[node.label] = node
+
+    def has_call_to(self, node: "CGNode"):
+        return node.label in self.calls
 
     def set_instructions_from_function_disassembly(self, pdfj: Dict):
         """
@@ -69,3 +84,12 @@ class CGNode:
 
     def __str__(self):
         return f"CGNode({self.label}, {self.rva}, {self.type})"
+
+    def __eq__(self, other):
+        if isinstance(other, CGNode):
+            return (self.label == other.label and
+                    self.rva == other.rva and
+                    self.type == other.type and
+                    self.instructions == other.instructions and
+                    list(self.calls.keys()) == list(other.calls.keys()))
+        return False
