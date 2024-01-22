@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from core.model.radare2_definitions import get_function_types, is_symbol_flag
+from core.model.radare2_definitions import get_function_types, is_symbol_flag, get_class_attribute_types
 
 
 class Registers(Enum):
@@ -55,6 +55,14 @@ class Instruction:
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        if isinstance(other, Instruction):
+            return (self.disasm == other.disasm and
+                    self.opcode == other.opcode and
+                    self.prefix == other.prefix and
+                    self.parameters == other.parameters)
+        return False
 
     @staticmethod
     def standardize_mnemonic(mnemonic):
@@ -133,4 +141,6 @@ class InstructionParameter(Enum):
     def is_function(token: str):
         if is_symbol_flag(token):
             return True
-        return any([token.startswith(t) for t in get_function_types()])
+        return any(
+            [token.startswith(t) for t in get_function_types()]) or any(
+            [token.startswith(t) for t in get_class_attribute_types()])

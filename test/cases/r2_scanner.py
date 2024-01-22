@@ -1,9 +1,10 @@
+import os
 import unittest
 from typing import List, Set, Tuple, Union, Optional
 
 from cases.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
 from core.data.malware_bazaar import MalwareBazaar
-from core.model import CallGraph
+from core.model import CallGraph, CallGraphCompressed
 from core.model.function import CGNode
 from util import config
 
@@ -65,7 +66,7 @@ class TestR2Scanner(unittest.TestCase):
         return set([node.label for node in cg.nodes.values()])
 
     def __test_sample_get_links(self, cg: CallGraph) -> Set[Tuple[str, str]]:
-        return {(caller.label, callee.label) for caller in cg.nodes.values() for callee in caller.calls}
+        return {(caller.label, callee.label) for caller in cg.nodes.values() for callee in caller.get_calls()}
 
     def __test_sample_get_function_instructions(self, cg_node: CGNode) -> List[Tuple[Union[str, List[str]], ...]]:
         return [(i.mnemonic, [p.value for p in i.parameters]) + ((i.prefix.value,) if i.prefix else ()) for i in
@@ -91,6 +92,29 @@ class TestR2Scanner(unittest.TestCase):
                 self.assertIsNotNone(cg_node)
                 self.assertEqual(test_sample.functions[function_name],
                                  self.__test_sample_get_function_instructions(cg_node))
+
+        self.__test_callgraph_compression(cg)
+
+    def __test_callgraph_compression(self, cg: CallGraph):
+        dir = "./"
+        compressed_file_path = CallGraphCompressed.get_compressed_path(dir, cg.md5)
+        cg_compressed = CallGraphCompressed(cg)
+
+        # Check: before dump: file does not exist
+        if os.path.isfile(compressed_file_path):
+            os.remove(compressed_file_path)
+        self.assertFalse(os.path.isfile(compressed_file_path))
+
+        # Check: after dump, file exists
+        cg_compressed.dump_compressed(dir)
+        self.assertTrue(os.path.isfile(compressed_file_path))
+
+        # Check: after load
+        cg_compressed_from_disk = CallGraphCompressed.load(compressed_file_path)
+        self.assertEqual(cg_compressed, cg_compressed_from_disk)
+        self.assertEqual(cg, cg_compressed_from_disk.decompress())
+
+        os.remove(compressed_file_path)
 
     def test_md5_bart_35987(self):
         self.__test_sample(R2_SCANNER_DATA["35987"])
