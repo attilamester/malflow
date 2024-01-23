@@ -195,10 +195,10 @@ class CallGraph:
         visited_nodes = {}
 
         def dfs(node: CGNode):
-            if node in visited_nodes:
+            if node.label in visited_nodes:
                 return
 
-            visited_nodes[node] = True
+            visited_nodes[node.label] = True
             node_list.append(node)
 
             for node in sorted(node.get_calls(), key=lambda n: node_sorter(n)):
