@@ -1,7 +1,10 @@
 """
 Based on Radare2 5.8.8 implementation.
 """
+
 from typing import Set
+from .registers import Registers
+from .mnemonics import Mnemonics
 
 
 def is_symbol_flag(name: str) -> bool:
