@@ -51,16 +51,21 @@ class Instruction:
     mnemonic: str  # e.g. `mov`
     prefix: Optional["InstructionPrefix"]
     parameters: List["InstructionParameter"]
+    has_bnd: bool  # typedef struct r_x86nz_opcode_t
 
     def __init__(self, disasm: str, opcode: bytes):
         self.disasm = disasm
         self.opcode = opcode
         self.prefix = None
         self.parameters = []
+        self.has_bnd = False  # MPX - used to check the bounds of memory addresses used by the instruction
         self.process()
 
     def process(self):
         opcode_tokens = self.disasm.split(" ", maxsplit=1)
+        if opcode_tokens[0] == "bnd":
+            opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
+            self.has_bnd = True
         self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
         if self.mnemonic in InstructionPrefixes:
             self.prefix = InstructionPrefix(self.mnemonic)
@@ -82,6 +87,7 @@ class Instruction:
         if isinstance(other, Instruction):
             return (self.disasm == other.disasm and
                     self.opcode == other.opcode and
+                    self.has_bnd == other.has_bnd and
                     self.prefix == other.prefix and
                     self.parameters == other.parameters)
         return False
