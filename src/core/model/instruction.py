@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import List, Optional
 
-from core.model.radare2_definitions import get_function_types, is_symbol_flag, get_class_attribute_types, Registers
+from core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
+                                            Registers, Mnemonics)
 
 
 class Instruction:
@@ -25,11 +26,12 @@ class Instruction:
         if opcode_tokens[0] == "bnd":
             opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
             self.has_bnd = True
-        self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
-        if self.mnemonic in InstructionPrefixes:
-            self.prefix = InstructionPrefix(self.mnemonic)
+
+        if opcode_tokens[0] in InstructionPrefixes:
+            self.prefix = InstructionPrefix(opcode_tokens[0])
             opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
-            self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
+
+        self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
 
         parameters = []
         if len(opcode_tokens) == 2:
@@ -63,6 +65,8 @@ class Instruction:
             mnemonic = "ret"
         if mnemonic in ["ea", "odsd"]:
             mnemonic = f"l{mnemonic}"
+        if mnemonic not in Mnemonics._ALL.value:
+            raise Exception(f"Undefined instruction mnemonic `{mnemonic}`")
         return mnemonic
 
 
