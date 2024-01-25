@@ -56,15 +56,16 @@ class Instruction:
     @staticmethod
     def standardize_mnemonic(mnemonic):
         if mnemonic in ["jz", "jnz", "repz", "repnz", "cmovz", "cmovnz", "loopz", "loopnz", "setn", "setnz"]:
-            mnemonic = mnemonic[:-1] + "e"
-
-        if mnemonic in ["pushal", "pushaw"]:
-            mnemonic = mnemonic[:-1]
+            return mnemonic[:-1] + "e"
 
         if mnemonic == "retn":
-            mnemonic = "ret"
+            return "ret"
         if mnemonic in ["ea", "odsd"]:
-            mnemonic = f"l{mnemonic}"
+            return f"l{mnemonic}"
+
+        if mnemonic[0] in {"s", "l"} and mnemonic[1:] in Mnemonics._ALL.value:
+            return mnemonic[1:]
+
         if mnemonic not in Mnemonics._ALL.value:
             raise Exception(f"Undefined instruction mnemonic `{mnemonic}`")
         return mnemonic
