@@ -11,9 +11,9 @@ def is_symbol_flag(name: str) -> bool:
     """
     static bool is_symbol_flag(const char *name)
     """
-    return "imp." in name \
-        or "dbg." in name \
-        or "sym." in name \
+    return name.startswith("imp.") \
+        or name.startswith("dbg.") \
+        or name.startswith("sym.") \
         or name.startswith("entry") \
         or name == "main"
 

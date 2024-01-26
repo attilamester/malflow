@@ -15,17 +15,27 @@ class InstructionData:
 
 INSTRUCTIONS = [
     InstructionData(**{
-        "disasm": "bnd jl 0x414a9e",
-        "mnemonic": "jl",
-        "has_bnd": True,
-        "prefix": None,
+        "disasm": "bnd jl 0x414a9e", "mnemonic": "jl", "has_bnd": True, "prefix": None,
         "parameters": [InstructionParameter.CONSTANT]
     }),
     InstructionData(**{
-        "disasm": "adc byte [edi - 0x5e], cl",
-        "mnemonic": "adc",
-        "has_bnd": False,
-        "prefix": None,
+        "disasm": "adc byte [edi - 0x5e], cl", "mnemonic": "adc", "has_bnd": False, "prefix": None,
         "parameters": [InstructionParameter.ADDRESS, InstructionParameter.REGISTER]
+    }),
+    InstructionData(**{
+        "disasm": "call method std::string::operator[](unsigned int) const", "mnemonic": "call", "has_bnd": False,
+        "prefix": None, "parameters": [InstructionParameter.FUNCTION]
+    }),
+    InstructionData(**{
+        "disasm": "call method std::basic_ios<char, std::char_traits<char> >::widen(char) const", "mnemonic": "call",
+        "has_bnd": False, "prefix": None, "parameters": [InstructionParameter.FUNCTION]
+    }),
+    InstructionData(**{
+        "disasm": "lcall 0, 0x22", "mnemonic": "call", "has_bnd": False, "prefix": None,
+        "parameters": [InstructionParameter.ADDRESS_FAR]
+    }),
+    InstructionData(**{
+        "disasm": "ljmp 4:0xc2811a31", "mnemonic": "jmp", "has_bnd": False, "prefix": None,
+        "parameters": [InstructionParameter.ADDRESS_FAR]
     })
 ]
