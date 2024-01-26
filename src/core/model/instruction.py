@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
                                             Registers, Mnemonics)
+from util.logger import Logger
 
 
 class Instruction:
@@ -19,7 +20,11 @@ class Instruction:
         self.prefix = None
         self.parameters = []
         self.has_bnd = False  # MPX - used to check the bounds of memory addresses used by the instruction
-        self.process()
+        try:
+            self.process()
+        except Exception as e:
+            Logger.error(f"Could not process instruction `{disasm}`")
+            raise e
 
     def process(self):
         opcode_tokens = self.disasm.split(" ", maxsplit=1)
@@ -34,7 +39,11 @@ class Instruction:
         self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
         parameters = []
         if len(opcode_tokens) == 2:
-            if "call" in self.mnemonic:
+            if opcode_tokens[0] in {"callf", "lcall", "jmpf", "ljmp"}:  # far call
+                if "," in opcode_tokens[1] or ":" in opcode_tokens[1]:
+                    self.parameters = [InstructionParameter.ADDRESS_FAR]
+                    return
+            elif self.mnemonic in {"call", "jmp"}:
                 parameters = [opcode_tokens[1]]
             else:
                 parameters = opcode_tokens[1].split(",")
@@ -93,6 +102,7 @@ class InstructionParameter(Enum):
     CONSTANT = "CONST"
     REGISTER = "REG"
     ADDRESS = "ADDR"  # any address
+    ADDRESS_FAR = "ADDR_FAR"  # any address
     FUNCTION = "FUNC"  # function address
     STRING = "STR"  # address of string
     BLOCK = "BLOCK"  # address of block e.g. jump after if
