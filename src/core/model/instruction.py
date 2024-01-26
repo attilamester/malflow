@@ -32,10 +32,12 @@ class Instruction:
             opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
 
         self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
-
         parameters = []
         if len(opcode_tokens) == 2:
-            parameters = opcode_tokens[1].split(",")
+            if "call" in self.mnemonic:
+                parameters = [opcode_tokens[1]]
+            else:
+                parameters = opcode_tokens[1].split(",")
         self.parameters = [InstructionParameter.construct(token) for token in parameters]
 
     def __str__(self):
@@ -108,15 +110,13 @@ class InstructionParameter(Enum):
                 return InstructionParameter.REGISTER
         if token.startswith("0x"):
             return InstructionParameter.CONSTANT
-        if "[" in token:
-            return InstructionParameter.ADDRESS
-        if InstructionParameter.is_function(token):
-            return InstructionParameter.FUNCTION
         if token.startswith("str"):
             return InstructionParameter.STRING
+        if InstructionParameter.is_function(token):
+            return InstructionParameter.FUNCTION
         if InstructionParameter.is_block(token):
             return InstructionParameter.BLOCK
-        if token.startswith("section"):
+        if token.startswith("section") or "[" in token:
             return InstructionParameter.ADDRESS
         try:
             int(token)

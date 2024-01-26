@@ -27,5 +27,19 @@ INSTRUCTIONS = [
         "has_bnd": False,
         "prefix": None,
         "parameters": [InstructionParameter.ADDRESS, InstructionParameter.REGISTER]
+    }),
+    InstructionData(**{
+        "disasm": "call method std::string::operator[](unsigned int) const",
+        "mnemonic": "call",
+        "has_bnd": False,
+        "prefix": None,
+        "parameters": [InstructionParameter.FUNCTION]
+    }),
+    InstructionData(**{
+        "disasm": "call method std::basic_ios<char, std::char_traits<char> >::widen(char) const",
+        "mnemonic": "call",
+        "has_bnd": False,
+        "prefix": None,
+        "parameters": [InstructionParameter.FUNCTION]
     })
 ]
