@@ -37,5 +37,17 @@ INSTRUCTIONS = [
     InstructionData(**{
         "disasm": "ljmp 4:0xc2811a31", "mnemonic": "jmp", "has_bnd": False, "prefix": None,
         "parameters": [InstructionParameter.ADDRESS_FAR]
+    }),
+    InstructionData(**{
+        "disasm": "notrack jmp 0xfb7508c5", "mnemonic": "jmp", "has_bnd": False, "prefix": InstructionPrefix.NOTRACK,
+        "parameters": [InstructionParameter.CONSTANT]
+    }),
+    InstructionData(**{
+        "disasm": "bnd notrack jmp 0xfb7508c5", "mnemonic": "jmp", "has_bnd": True, "prefix": InstructionPrefix.NOTRACK,
+        "parameters": [InstructionParameter.CONSTANT]
+    }),
+    InstructionData(**{
+        "disasm": "notrack bnd jmp 0xfb7508c5", "mnemonic": "jmp", "has_bnd": True, "prefix": InstructionPrefix.NOTRACK,
+        "parameters": [InstructionParameter.CONSTANT]
     })
 ]

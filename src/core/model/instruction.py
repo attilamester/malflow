@@ -27,10 +27,15 @@ class Instruction:
             raise e
 
     def process(self):
-        opcode_tokens = self.disasm.split(" ", maxsplit=1)
-        if opcode_tokens[0] == "bnd":
-            opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
+        opcode_tokens = self.disasm.split(" ", maxsplit=2)
+        if opcode_tokens[0] == "bnd" or (len(opcode_tokens) > 1 and opcode_tokens[1] == "bnd"):
+            # bnd prefix may not be the first token
+            opcode_tokens = (self.disasm
+                             .replace("bnd ", "")
+                             .split(" ", maxsplit=1))
             self.has_bnd = True
+        else:
+            opcode_tokens = self.disasm.split(" ", maxsplit=1)
 
         if opcode_tokens[0] in InstructionPrefixes:
             self.prefix = InstructionPrefix(opcode_tokens[0])
@@ -93,6 +98,7 @@ class InstructionPrefix(Enum):
     REPZ = "repz"
     REPNE = "repne"
     REPNZ = "repnz"
+    NOTRACK = "notrack"  # allow to jump to any address - only for instructions like call/jmp
 
 
 InstructionPrefixes = {prefix.value for prefix in InstructionPrefix}
