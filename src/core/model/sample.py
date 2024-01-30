@@ -1,6 +1,7 @@
 import hashlib
 
 from core.model import CallGraph
+from util.misc import display_size
 
 
 class Sample:
@@ -30,13 +31,7 @@ class Sample:
 
     def get_size_fmt(self):
         if not self.size_fmt:
-            value = len(self.content)
-            for unit in ["b", "Kb", "Mb", "Gb"]:
-                if value > 1024:
-                    value = round(value / 1024, 2)
-                else:
-                    break
-            self.size_fmt = f"{value}{unit}"
+            self.size_fmt = display_size(len(self.content))
         return self.size_fmt
 
     def __str__(self):
