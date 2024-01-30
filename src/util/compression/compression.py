@@ -10,8 +10,20 @@ class Compressor:
     def compress(self, content: bytes) -> bytes:
         raise Exception("Not implemented")
 
-    def decompress(self, compressed: bytes) -> str:
+    def decompress(self, compressed: bytes) -> bytes:
         raise Exception("Not implemented")
+
+    @staticmethod
+    def get_decompressor(compressed: bytes) -> "Compressor":
+        if compressed.startswith(b"BZh"):
+            return Bzip2Compressor()
+        elif compressed.startswith(b"x\x9c"):
+            return ZLibCompressor()
+        elif compressed.startswith(b"\xfd"):
+            return LzmaCompressor()
+        elif compressed.startswith(b"BROT"):
+            return BrotliCompressor(11)
+        raise Exception("Unknown compression algorithm")
 
     def __str__(self):
         raise Exception("Not implemented")
@@ -24,10 +36,12 @@ class BrotliCompressor(Compressor):
         self.__quality = quality
 
     def compress(self, content: bytes) -> bytes:
-        return brotli.compress(content, quality=self.__quality)
+        return b"BROT" + brotli.compress(content, quality=self.__quality)
 
     def decompress(self, compressed: bytes) -> bytes:
-        return brotli.decompress(compressed)
+        if not compressed.startswith(b"BROT"):
+            raise Exception("Invalid compressed content")
+        return brotli.decompress(compressed[4:])
 
     def __str__(self):
         return f"BrotliCompressor(q={self.__quality})"

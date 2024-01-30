@@ -5,6 +5,7 @@ from typing import Dict, List, Union
 from core.model.call_graph import CallGraph
 from core.model.function import CGNode, FunctionType
 from core.model.instruction import Instruction
+from util.compression import Compressor, BrotliCompressor
 
 
 class CallGraphCompressed:
@@ -54,17 +55,19 @@ class CallGraphCompressed:
                 node.add_call_to(other_node)
         return cg
 
-    def dump_compressed(self, dir_path):
+    def dump_compressed(self, dir_path, compressor: Compressor = BrotliCompressor(1)) -> str:
         file_path = CallGraphCompressed.get_compressed_path(dir_path, self.md5)
         with open(file_path, "wb") as f:
-            pickle.dump(self, f)
+            f.write(compressor.compress(pickle.dumps(self)))
         return file_path
 
     @staticmethod
     def load(path: str) -> "CallGraphCompressed":
         with open(path, "rb") as f:
             cg_compressed: CallGraphCompressed
-            cg_compressed = pickle.load(f)
+            content = f.read()
+            decompressor = Compressor.get_decompressor(content)
+            cg_compressed = pickle.loads(decompressor.decompress(content))
             return cg_compressed
 
     @staticmethod
