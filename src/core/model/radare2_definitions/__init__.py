@@ -15,7 +15,7 @@ def is_symbol_flag(name: str) -> bool:
         or name.startswith("dbg.") \
         or name.startswith("sym.") \
         or name.startswith("entry") \
-        or name == "main"
+        or name == "main" or name == "eip"
 
 
 def get_function_types() -> Set[str]:

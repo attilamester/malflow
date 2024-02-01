@@ -50,11 +50,13 @@ class CGNode:
         self.instructions = []
         if label.startswith("sym."):
             self.type = FunctionType.DLL
-        elif InstructionParameter.is_function(label):
+        elif (InstructionParameter.is_function(label) or
+              InstructionParameter.is_section(label) or
+              InstructionParameter.is_block(label)):
             self.type = FunctionType.SUBROUTINE
         else:
             Logger.warning(f"UNKNOWN node type: {label} at {rva}")
-            self.type = FunctionType.STATIC_LINKED_LIB
+            self.type = FunctionType.SUBROUTINE
 
         self.rva = RVA(rva) if rva else None
         self.calls = {}

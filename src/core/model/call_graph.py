@@ -14,6 +14,12 @@ from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
 
+def sanitize_r2_bugs(ag: str):
+    while not ag.startswith("digraph"):
+        ag = ag[ag.find("\n") + 1:]
+    return ag
+
+
 class CallGraph:
     md5: str
     file_path: str
@@ -49,6 +55,13 @@ class CallGraph:
         return self.addresses.get(rva, None)
 
     def add_node(self, node: CGNode):
+        if node.label == "eip":
+            # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
+            for ep in self.entrypoints:
+                if node.rva.value == ep.rva.value:
+                    Logger.warning(f"Skipping adding EIP node {node} [{self.md5} {self.file_path}]")
+                    return
+
         if node.label in self.nodes:
             if node.rva.value != self.nodes[node.label].rva.value:
                 raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]}")
@@ -90,8 +103,8 @@ class CallGraph:
             if verbose:
                 Logger.info(f"[Entry] {node}")
 
-        agCd = r2.cmd("agCd")
-        agRd = r2.cmd("agRd")
+        agCd = sanitize_r2_bugs(r2.cmd("agCd"))
+        agRd = sanitize_r2_bugs(r2.cmd("agRd"))
 
         nx_g = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agCd))
         nx_g_references = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agRd))
@@ -175,6 +188,7 @@ class CallGraph:
                 Logger.error(f"Could not process instructions on {cg_node}: {e}")
                 raise e
 
+        r2.quit()
         self.scan_time = time.time() - ts
 
     def get_edges(self) -> Set[Tuple[CGNode, CGNode]]:
