@@ -13,6 +13,10 @@ from core.model.function import FunctionType, CGNode
 from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
+def sanitize_r2_bugs(ag: str):
+    while not ag.startswith("digraph"):
+        ag = ag[ag.find("\n") + 1:]
+    return ag
 
 class CallGraph:
     md5: str
@@ -99,8 +103,9 @@ class CallGraph:
             if verbose:
                 Logger.info(f"[Entry] {node}")
 
-        agCd = r2.cmd("agCd")
-        agRd = r2.cmd("agRd")
+        agCd = sanitize_r2_bugs(r2.cmd("agCd"))
+        agRd = sanitize_r2_bugs(r2.cmd("agRd"))
+
 
         nx_g = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agCd))
         nx_g_references = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agRd))
