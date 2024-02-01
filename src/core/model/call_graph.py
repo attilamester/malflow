@@ -13,10 +13,12 @@ from core.model.function import FunctionType, CGNode
 from core.model.instruction import Instruction, InstructionParameter
 from util.logger import Logger
 
+
 def sanitize_r2_bugs(ag: str):
     while not ag.startswith("digraph"):
         ag = ag[ag.find("\n") + 1:]
     return ag
+
 
 class CallGraph:
     md5: str
@@ -65,8 +67,6 @@ class CallGraph:
                 raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]}")
             else:
                 return
-        if node.type == FunctionType.STATIC_LINKED_LIB:
-            Logger.warning(f"Adding static linked lib node {node} [{self.md5} {self.file_path}]")
         self.nodes[node.label] = node
         self.addresses[node.rva.value] = node
 
@@ -105,7 +105,6 @@ class CallGraph:
 
         agCd = sanitize_r2_bugs(r2.cmd("agCd"))
         agRd = sanitize_r2_bugs(r2.cmd("agRd"))
-
 
         nx_g = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agCd))
         nx_g_references = nx.drawing.nx_agraph.from_agraph(pygraphviz.AGraph(agRd))
