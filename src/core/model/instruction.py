@@ -132,7 +132,7 @@ class InstructionParameter(Enum):
             return InstructionParameter.FUNCTION
         if InstructionParameter.is_block(token):
             return InstructionParameter.BLOCK
-        if token.startswith("section") or "[" in token:
+        if InstructionParameter.is_section(token) or "[" in token:
             return InstructionParameter.ADDRESS
         try:
             int(token)
@@ -140,6 +140,10 @@ class InstructionParameter(Enum):
         except:
             pass
         raise Exception(f"Undefined instruction parameter type `{token}`")
+
+    @staticmethod
+    def is_section(token: str):
+        return token.startswith("section.")
 
     @staticmethod
     def is_block(token: str):

@@ -49,11 +49,20 @@ class CallGraph:
         return self.addresses.get(rva, None)
 
     def add_node(self, node: CGNode):
+        if node.label == "eip":
+            # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
+            for ep in self.entrypoints:
+                if node.rva.value == ep.rva.value:
+                    Logger.warning(f"Skipping adding EIP node {node} [{self.md5} {self.file_path}]")
+                    return
+
         if node.label in self.nodes:
             if node.rva.value != self.nodes[node.label].rva.value:
                 raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]}")
             else:
                 return
+        if node.type == FunctionType.STATIC_LINKED_LIB:
+            Logger.warning(f"Adding static linked lib node {node} [{self.md5} {self.file_path}]")
         self.nodes[node.label] = node
         self.addresses[node.rva.value] = node
 
@@ -175,6 +184,7 @@ class CallGraph:
                 Logger.error(f"Could not process instructions on {cg_node}: {e}")
                 raise e
 
+        r2.quit()
         self.scan_time = time.time() - ts
 
     def get_edges(self) -> Set[Tuple[CGNode, CGNode]]:
