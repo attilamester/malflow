@@ -2,6 +2,7 @@ import os
 
 from core.data import DatasetProvider
 from core.model.sample import Sample
+from util.logger import Logger
 from util.validators import HashValidator
 
 
@@ -15,7 +16,8 @@ class Bodmas(DatasetProvider):
             sha256 = filename.split(".")[0]
 
             if not HashValidator.is_sha256(sha256):
-                raise Exception(f"Invalid BODMAS file: {filepath}")
+                Logger.warning(f"Skipping invalid BODMAS filename: {filename}")
+                continue
 
             yield Sample(filepath, md5=None, sha256=sha256, check_hashes=False)
 
