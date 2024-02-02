@@ -64,7 +64,14 @@ class CallGraph:
 
         if node.label in self.nodes:
             if node.rva.value != self.nodes[node.label].rva.value:
-                raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]}")
+                if node.label.startswith("entry"):
+                    Logger.warning(
+                        f"Incorrect entrypoint address provided by ie ({self.nodes[node.label]}. Fixing to the corrected value {node} "
+                        f"[{self.md5} {self.file_path}]")
+                    self.addresses.pop(self.nodes[node.label].rva.value)
+                else:
+                    raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
+                                    f"[{self.md5} {self.file_path}]")
             else:
                 return
         self.nodes[node.label] = node
