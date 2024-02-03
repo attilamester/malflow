@@ -49,5 +49,31 @@ INSTRUCTIONS = [
     InstructionData(**{
         "disasm": "notrack bnd jmp 0xfb7508c5", "mnemonic": "jmp", "has_bnd": True, "prefix": InstructionPrefix.NOTRACK,
         "parameters": [InstructionParameter.CONSTANT]
+    }),
+    InstructionData(**{
+        "disasm": "mov dword [esp], dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)",
+        "mnemonic": "mov", "has_bnd": False, "prefix": None,
+        "parameters": [InstructionParameter.ADDRESS, InstructionParameter.FUNCTION]
+    }),
+    InstructionData(**{
+        "disasm": "movsd dword [esp], dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)",
+        "mnemonic": "movsd", "has_bnd": False, "prefix": None,
+        "parameters": [InstructionParameter.ADDRESS, InstructionParameter.FUNCTION]
     })
+]
+
+INSTRUCTION_PARAMETER_TOKENS = [
+    ["param", ["param"]],
+    ["param with space", ["param with space"]],
+    ["param1, param2", ["param1", "param2"]],
+    ["param1, param2 param3", ["param1", "param2 param3"]],
+    ["param with space, and one comma", ["param with space", "and one comma"]],
+    ["param with special char <, and one comma", ["param with special char <, and one comma"]],
+    [
+        "dword [esp], dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)",
+        [
+            "dword [esp]",
+            "dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)"
+        ]
+    ]
 ]
