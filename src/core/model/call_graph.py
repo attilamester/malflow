@@ -170,10 +170,11 @@ class CallGraph:
                     node2 = add_node_by_label(b)
                 if node1 is None:
                     Logger.error(f"None: {a} {b}")
-                if not node1.has_call_to(node2):
-                    if verbose:
-                        Logger.info(f"[Call - agR] {node1} -> {node2}")
-                    node1.add_call_to(node2)
+                else:
+                    if not node1.has_call_to(node2):
+                        if verbose:
+                            Logger.info(f"[Call - agR] {node1} -> {node2}")
+                        node1.add_call_to(node2)
 
         for label, cg_node in self.nodes.items():
             cg_node: CGNode

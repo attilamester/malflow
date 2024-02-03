@@ -42,17 +42,18 @@ class Instruction:
             opcode_tokens = opcode_tokens[1].split(" ", maxsplit=1)
 
         self.mnemonic = Instruction.standardize_mnemonic(opcode_tokens[0])
-        parameters = []
+        parameter_tokens = []
         if len(opcode_tokens) == 2:
+            # the mnemonic is followed by parameter(s)
             if opcode_tokens[0] in {"callf", "lcall", "jmpf", "ljmp"}:  # far call
                 if "," in opcode_tokens[1] or ":" in opcode_tokens[1]:
                     self.parameters = [InstructionParameter.ADDRESS_FAR]
                     return
             elif self.mnemonic in {"call", "jmp"}:
-                parameters = [opcode_tokens[1]]
+                parameter_tokens = [opcode_tokens[1]]
             else:
-                parameters = opcode_tokens[1].split(",")
-        self.parameters = [InstructionParameter.construct(token) for token in parameters]
+                parameter_tokens = InstructionParameter.split_into_parameter_tokens(opcode_tokens[1])
+        self.parameters = [InstructionParameter.construct(token) for token in parameter_tokens]
 
     def __str__(self):
         return f"<{self.mnemonic}>"
@@ -140,6 +141,43 @@ class InstructionParameter(Enum):
         except:
             pass
         raise Exception(f"Undefined instruction parameter type `{token}`")
+
+    @staticmethod
+    def split_into_parameter_tokens(parameters: str) -> List[str]:
+        # =================
+        # Original implementation: split according to `,`
+        # - problem: params. may contain comma
+        # - e.g. `std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)`
+        #
+        # max_splits = MNEMONIC_INFO.get(self.mnemonic, {}).get("max_operands", 0) - 1
+        # parameters = opcode_tokens[1].split(",", maxsplit=max_splits)
+        #
+        # =================
+        OPENINGS = ["(", "[", "{", "<"]
+        CLOSINGS = [")", "]", "}", ">"]
+        stack = []
+        tokens = []
+
+        def process_token(token: str):
+            for i, char in enumerate(token):
+                if char in OPENINGS:
+                    stack.append(char)
+                elif char in CLOSINGS and stack[-1] == OPENINGS[CLOSINGS.index(char)]:
+                    stack.pop()
+                elif char == "," and not stack:
+                    tokens.append(token[:i])
+                    return token[i + 1:].strip()
+            tokens.append(token)
+            return token
+
+        while True:
+            rest = process_token(parameters)
+            if not rest:  # reached the end of the original string
+                break
+            if rest == parameters:  # no comma was extracted
+                break
+            parameters = rest
+        return tokens
 
     @staticmethod
     def is_section(token: str):
