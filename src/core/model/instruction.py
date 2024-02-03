@@ -1,3 +1,4 @@
+from collections import deque
 from enum import Enum
 from typing import List, Optional
 
@@ -155,10 +156,13 @@ class InstructionParameter(Enum):
         # =================
         OPENINGS = ["(", "[", "{", "<"]
         CLOSINGS = [")", "]", "}", ">"]
-        stack = []
+        stack = deque()
         tokens = []
 
         def process_token(token: str):
+            if not token:
+                return
+
             for i, char in enumerate(token):
                 if char in OPENINGS:
                     stack.append(char)
@@ -166,17 +170,12 @@ class InstructionParameter(Enum):
                     stack.pop()
                 elif char == "," and not stack:
                     tokens.append(token[:i])
-                    return token[i + 1:].strip()
+                    process_token(token[i + 1:].strip())
+                    return
             tokens.append(token)
-            return token
 
-        while True:
-            rest = process_token(parameters)
-            if not rest:  # reached the end of the original string
-                break
-            if rest == parameters:  # no comma was extracted
-                break
-            parameters = rest
+        process_token(parameters)
+
         return tokens
 
     @staticmethod
