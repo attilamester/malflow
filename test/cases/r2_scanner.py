@@ -2,7 +2,7 @@ import os
 import unittest
 from typing import List, Set, Tuple, Union, Optional
 
-from cases.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
+from cases.data.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
 from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph, CallGraphCompressed
 from core.model.function import CGNode

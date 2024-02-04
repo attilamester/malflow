@@ -29,7 +29,7 @@ def scan_sample(filepath: str, rescan=False):
     else:
         compressed_path = CallGraphCompressed.get_compressed_path(Bodmas.get_dir_r2_scans(), md5)
         if not os.path.isfile(compressed_path):
-            Logger.error(f">> No r2 found on disk: {md5}")
+            Logger.info(f">> No r2 found on disk: {md5}")
             scan(cg)
         else:
             Logger.info(f">> Already existing r2 found on disk: {md5}")

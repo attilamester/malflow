@@ -122,9 +122,9 @@ class InstructionParameter(Enum):
     @staticmethod
     def construct(token: str) -> "InstructionParameter":
         token = token.lower().strip()
-
+        token_first_word = token.split(" ")[0]
         for register_class in Registers:
-            if token in register_class.value:
+            if token in register_class.value or token_first_word in register_class.value:
                 return InstructionParameter.REGISTER
         if token.startswith("0x"):
             return InstructionParameter.CONSTANT
@@ -135,6 +135,8 @@ class InstructionParameter(Enum):
         if InstructionParameter.is_block(token):
             return InstructionParameter.BLOCK
         if InstructionParameter.is_section(token) or "[" in token:
+            return InstructionParameter.ADDRESS
+        if token.startswith("global_"):
             return InstructionParameter.ADDRESS
         try:
             int(token)
@@ -166,7 +168,7 @@ class InstructionParameter(Enum):
             for i, char in enumerate(token):
                 if char in OPENINGS:
                     stack.append(char)
-                elif char in CLOSINGS and stack[-1] == OPENINGS[CLOSINGS.index(char)]:
+                elif char in CLOSINGS and stack and stack[-1] == OPENINGS[CLOSINGS.index(char)]:
                     stack.pop()
                 elif char == "," and not stack:
                     tokens.append(token[:i])
