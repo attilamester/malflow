@@ -1,6 +1,6 @@
 import unittest
 
-from cases.instruction_data import InstructionData, INSTRUCTIONS, INSTRUCTION_PARAMETER_TOKENS
+from cases.data.instruction_data import InstructionData, INSTRUCTIONS, INSTRUCTION_PARAMETER_TOKENS
 from core.model.instruction import Instruction, InstructionParameter
 
 
@@ -21,5 +21,5 @@ class TestInstruction(unittest.TestCase):
             self.__test_instruction(item)
 
     def test_instruction_parameter_tokens(self):
-        for item in INSTRUCTION_PARAMETER_TOKENS:
-            self.assertEqual(item[1], InstructionParameter.split_into_parameter_tokens(item[0]))
+        for input, expected in INSTRUCTION_PARAMETER_TOKENS:
+            self.assertEqual(expected, InstructionParameter.split_into_parameter_tokens(input))

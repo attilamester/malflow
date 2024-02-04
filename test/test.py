@@ -8,9 +8,10 @@ sys.path.append(os.path.join(PROJECT_ROOT, "test"))
 
 from cases.r2_scanner import TestR2Scanner
 from cases.instruction import TestInstruction
+from cases.r2_sanitizer import TestR2Sanitizer
 
 if __name__ == "__main__":
     _test = [
-        TestR2Scanner, TestInstruction
+        TestR2Scanner, TestInstruction, TestR2Sanitizer
     ]
     unittest.main()

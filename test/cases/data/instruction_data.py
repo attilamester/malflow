@@ -59,21 +59,34 @@ INSTRUCTIONS = [
         "disasm": "movsd dword [esp], dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)",
         "mnemonic": "movsd", "has_bnd": False, "prefix": None,
         "parameters": [InstructionParameter.ADDRESS, InstructionParameter.FUNCTION]
+    }),
+    InstructionData(**{
+        "disasm": "vpunpcklbw zmm2 {k7} {z}, zmm5, zmmword [edx + 0x140]]",
+        "mnemonic": "vpunpcklbw", "has_bnd": False, "prefix": None,
+        "parameters": [InstructionParameter.REGISTER, InstructionParameter.REGISTER, InstructionParameter.ADDRESS]
     })
 ]
 
 INSTRUCTION_PARAMETER_TOKENS = [
-    ["param", ["param"]],
-    ["param with space", ["param with space"]],
-    ["param1, param2", ["param1", "param2"]],
-    ["param1, param2 param3", ["param1", "param2 param3"]],
-    ["param with space, and one comma", ["param with space", "and one comma"]],
-    ["param with special char <, and one comma", ["param with special char <, and one comma"]],
-    [
+    ("param", ["param"]),
+    ("param with space", ["param with space"]),
+    ("param1, param2", ["param1", "param2"]),
+    ("param1, param2 param3", ["param1", "param2 param3"]),
+    ("param with space, and one comma", ["param with space", "and one comma"]),
+    ("param with special char <, and one comma", ["param with special char <, and one comma"]),
+    (
         "dword [esp], dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)",
         [
             "dword [esp]",
             "dbg.std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&)"
         ]
-    ]
+    ),
+    (
+        "zmm2 {k7} {z}, zmm5, zmmword [edx + 0x140]",
+        [
+            "zmm2 {k7} {z}",
+            "zmm5",
+            "zmmword [edx + 0x140]"
+        ]
+    )
 ]

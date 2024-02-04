@@ -11,13 +11,8 @@ from networkx import MultiDiGraph
 
 from core.model.function import FunctionType, CGNode
 from core.model.instruction import Instruction, InstructionParameter
+from core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
 from util.logger import Logger
-
-
-def sanitize_r2_bugs(ag: str):
-    while not ag.startswith("digraph"):
-        ag = ag[ag.find("\n") + 1:]
-    return ag
 
 
 class CallGraph:
@@ -193,7 +188,7 @@ class CallGraph:
                 if verbose:
                     Logger.warning(f"Could not run pdfj on {cg_node}: {e}")
             except Exception as e:
-                Logger.error(f"Could not process instructions on {cg_node}: {e}")
+                Logger.error(f"Could not process instructions on {cg_node}: {e} [{self.md5} {self.file_path}]")
                 raise e
 
         r2.quit()
@@ -241,7 +236,7 @@ class CallGraph:
             i: Instruction
             global_opcodes += b"".join([i.opcode for i in node.instructions])
         if verbose:
-            Logger.info(f"Image length: {len(global_opcodes)}  for {self.md5}")
+            Logger.info(f"Image length: {len(global_opcodes)} for {self.md5}")
 
         return global_opcodes
 
