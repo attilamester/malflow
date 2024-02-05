@@ -38,3 +38,8 @@ jobs:
       run: |
         docker load --input ~/image_malcallgraph.tar
         docker compose up malcallgraph_test
+
+    - name: Code Coverage Report
+      uses: romeovs/lcov-reporter-action@v0.2.11
+      with:
+        lcov-file: ./test/coverage.lcov
