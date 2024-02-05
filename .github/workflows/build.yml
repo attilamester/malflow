@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   build:
@@ -38,3 +39,9 @@ jobs:
       run: |
         docker load --input ~/image_malcallgraph.tar
         docker compose up malcallgraph_test
+
+    - name: Code Coverage Report
+      uses: romeovs/lcov-reporter-action@v0.2.11
+      with:
+        lcov-file: ./test/coverage.lcov
+        github-token: ${{ secrets.GITHUB_TOKEN }}

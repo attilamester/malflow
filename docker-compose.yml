@@ -8,7 +8,10 @@ services:
       context: .
       network: host
       dockerfile: ./Dockerfile
-    command: python3 -m pytest -ra ./test/test.py
+    command: sh -c "
+      coverage run --omit=./test/*,__init__.py -m pytest -ra ./test/test.py &&
+      coverage lcov -o ./test/coverage.lcov
+      "
     volumes:
       - ./src:/usr/callgraph/src
       - ./test:/usr/callgraph/test
