@@ -49,7 +49,7 @@ class CallGraph:
     def get_node_by_rva(self, rva: str) -> Optional[CGNode]:
         return self.addresses.get(rva, None)
 
-    def add_node(self, node: CGNode):
+    def add_node(self, node: CGNode) -> CGNode:
         if node.label == "eip":
             # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
             for ep in self.entrypoints:
@@ -68,7 +68,7 @@ class CallGraph:
                     raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
                                     f"[{self.md5} {self.file_path}]")
             else:
-                return
+                return node
         self.nodes[node.label] = node
         self.addresses[node.rva.value] = node
         return node
