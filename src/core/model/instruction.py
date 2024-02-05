@@ -136,7 +136,7 @@ class InstructionParameter(Enum):
             return InstructionParameter.BLOCK
         if InstructionParameter.is_section(token) or "[" in token:
             return InstructionParameter.ADDRESS
-        if token.startswith("global_"):
+        if token.startswith("global_") or token.startswith("resource"):
             return InstructionParameter.ADDRESS
         try:
             int(token)
