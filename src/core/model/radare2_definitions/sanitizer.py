@@ -1,6 +1,6 @@
 import re
 
-RE_DOT_LINE = re.compile(f'(.*)\[label="(.*)" URL=".*"];')
+RE_DOT_LINE = re.compile(r'(.*)\[label="(.*)" URL=".*"];')
 
 
 def sanitize_r2_bugs(ag: str):

@@ -9,6 +9,9 @@ services:
       network: host
       dockerfile: ./Dockerfile
     command: python3 -m pytest -ra ./test/test.py
+    volumes:
+      - ./src:/usr/callgraph/src
+      - ./test:/usr/callgraph/test
     network_mode: "host"
     environment:
       - MBAZAAR_DIR_SAMPLES=/usr/callgraph/mbazaar
