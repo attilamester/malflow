@@ -56,8 +56,14 @@ class Instruction:
                 parameter_tokens = InstructionParameter.split_into_parameter_tokens(opcode_tokens[1])
         self.parameters = [InstructionParameter.construct(token) for token in parameter_tokens]
 
+    def get_fmt(self) -> str:
+        return ("[bnd] " if self.has_bnd else "") + \
+            (f"[{self.prefix.value}] " if self.prefix else "") + \
+            f"[{self.mnemonic}]" + \
+            (" " + ", ".join([p.value for p in self.parameters]) if self.parameters else "")
+
     def __str__(self):
-        return f"<{self.mnemonic}>"
+        return f"[{self.mnemonic}]"
 
     def __repr__(self):
         return str(self)
