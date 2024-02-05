@@ -1,11 +1,14 @@
 import os
 import pickle
+import time
 from typing import Dict, List, Union
 
 from core.model.call_graph import CallGraph
 from core.model.function import CGNode, FunctionType
 from core.model.instruction import Instruction
 from util.compression import Compressor, BrotliCompressor
+from util.logger import Logger
+from util.misc import display_size
 
 
 class CallGraphCompressed:
@@ -48,9 +51,13 @@ class CallGraphCompressed:
             if label.startswith("entry"):
                 cg.entrypoints.append(node)
         for label, data in self.nodes.items():
-            node_label, node_rva, node_type, mnemonics, call_labels = data
+            node_label, node_rva, node_type, instructions, call_labels = data
             node = cg.get_node_by_label(node_label)
             for call_label in call_labels:
+                # TODO: this should not be here -- fix is already applied in add_node;
+                # keeping this for old scans
+                if call_label == "eip":
+                    call_label = "entry0"
                 other_node = cg.get_node_by_label(call_label)
                 node.add_call_to(other_node)
         return cg
@@ -62,12 +69,20 @@ class CallGraphCompressed:
         return file_path
 
     @staticmethod
-    def load(path: str) -> "CallGraphCompressed":
+    def load(path: str, verbose=False) -> "CallGraphCompressed":
+        ts = time.perf_counter()
         with open(path, "rb") as f:
             cg_compressed: CallGraphCompressed
             content = f.read()
             decompressor = Compressor.get_decompressor(content)
-            cg_compressed = pickle.loads(decompressor.decompress(content))
+            decompressed = decompressor.decompress(content)
+            cg_compressed = pickle.loads(decompressed)
+            if verbose:
+                dt = time.perf_counter() - ts
+                Logger.info(
+                    f"Loaded compressed callgraph in {dt:.1f}s"
+                    f"[md5={cg_compressed.md5}, pickle={display_size(len(content))}, "
+                    f"decompressed={display_size(len(decompressed))}] from {path}")
             return cg_compressed
 
     @staticmethod

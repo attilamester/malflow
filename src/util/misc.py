@@ -51,3 +51,16 @@ def list_stats(list, round_decimal=False):
             if isinstance(v, float):
                 stats[k] = round(v, round_decimal)
     return stats
+
+
+def dict_key_add(d, key, item=None):
+    if key not in d:
+        if item is None:
+            d[key] = 1
+        else:
+            d[key] = {item}
+    else:
+        if item is None:
+            d[key] += 1
+        else:
+            d[key].add(item)

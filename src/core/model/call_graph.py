@@ -49,13 +49,13 @@ class CallGraph:
     def get_node_by_rva(self, rva: str) -> Optional[CGNode]:
         return self.addresses.get(rva, None)
 
-    def add_node(self, node: CGNode):
+    def add_node(self, node: CGNode) -> CGNode:
         if node.label == "eip":
             # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
             for ep in self.entrypoints:
                 if node.rva.value == ep.rva.value:
                     Logger.warning(f"Skipping adding EIP node {node} [{self.md5} {self.file_path}]")
-                    return
+                    return ep
 
         if node.label in self.nodes:
             if node.rva.value != self.nodes[node.label].rva.value:
@@ -68,9 +68,10 @@ class CallGraph:
                     raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
                                     f"[{self.md5} {self.file_path}]")
             else:
-                return
+                return node
         self.nodes[node.label] = node
         self.addresses[node.rva.value] = node
+        return node
 
     @staticmethod
     def get_compressed_file_name(md5: str):
@@ -141,8 +142,7 @@ class CallGraph:
         def add_node_by_label(lbl: str):
             rva = get_rva_of_label(lbl)
             n = CGNode(lbl, rva)
-            self.add_node(n)
-            return n
+            return self.add_node(n)
 
         for addr, data in nx_g_references.nodes.items():
             if InstructionParameter.is_function(addr):
