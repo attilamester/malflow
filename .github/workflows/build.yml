@@ -41,6 +41,7 @@ jobs:
         docker compose up malcallgraph_test
 
     - name: Code Coverage Report
+      if: ${{ github.event_name == 'pull_request' }}
       uses: romeovs/lcov-reporter-action@v0.2.11
       with:
         lcov-file: ./test/coverage.lcov
