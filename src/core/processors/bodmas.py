@@ -1,8 +1,8 @@
 import json
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
-from typing import List, Callable, Type
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import List, Callable, Type, Union
 
 from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
@@ -17,7 +17,8 @@ from util.misc import dict_key_add
 # General methods
 # ======================
 
-def process_samples(dset: Type[DatasetProvider], fn: Callable[[Sample], None], batch_size=1000, max_batches=None):
+def process_samples(dset: Type[DatasetProvider], fn: Callable[[Sample], None], batch_size: int = 1000,
+                    max_batches: int = None, pool: Union[ThreadPoolExecutor, ProcessPoolExecutor] = None):
     sample: Sample
     b = 0
     batch = []
@@ -25,7 +26,7 @@ def process_samples(dset: Type[DatasetProvider], fn: Callable[[Sample], None], b
         batch.append(sample)
         if len(batch) == batch_size:
             b += 1
-            process_sample_batch(batch, b, fn)
+            process_sample_batch(batch, b, fn, pool)
             batch = []
 
             if max_batches and b == max_batches:
@@ -34,21 +35,32 @@ def process_samples(dset: Type[DatasetProvider], fn: Callable[[Sample], None], b
 
     if batch:
         b += 1
-        process_sample_batch(batch, b, fn)
+        process_sample_batch(batch, b, fn, pool)
+    if pool:
+        pool.shutdown(wait=True)
 
 
-def process_sample_batch(batch: List[Sample], batch_number: int, fn: Callable):
+def process_sample_batch(batch: List[Sample], batch_number: int, fn: Callable,
+                         pool: Union[ThreadPoolExecutor, ProcessPoolExecutor] = None):
     Logger.info(f"[Batch {batch_number}] {len(batch)} samples")
     i = 0
     ts = time.perf_counter()
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        for res in executor.map(fn, batch):
+
+    def log_eta(start_ts, i):
+        dt = time.perf_counter() - start_ts
+        eta = round((len(batch) * dt) / i - dt, 2)
+        Logger.info(f"[Batch {batch_number}] {i} samples done, ETA: {eta}s")
+
+    if pool is None:
+        for sample in batch:
+            fn(sample)
             i += 1
-            dt = time.perf_counter() - ts
-            eta = round((len(batch) * dt) / i - dt, 2)
-            Logger.info(f"[Batch {batch_number}] {i} samples done, ETA: {eta}s")
-            Logger.DEFAULT_LOGGER.handlers[0].flush()
-        executor.shutdown(wait=True)
+            log_eta(ts, i)
+
+    else:
+        for res in pool.map(fn, batch):
+            i += 1
+            log_eta(ts, i)
 
 
 # ======================
@@ -110,4 +122,5 @@ def extract_sample_instructions(sample: Sample):
 
 if __name__ == "__main__":
     config.load_env()
-    process_samples(Bodmas, extract_sample_instructions, batch_size=1000, max_batches=5)
+    process_samples(Bodmas, extract_sample_instructions, batch_size=1000, max_batches=None,
+                    pool=ProcessPoolExecutor(max_workers=12))
