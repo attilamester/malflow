@@ -9,7 +9,7 @@ from core.model.sample import Sample
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_add
+from util.misc import dict_key_add, list_stats
 
 
 def extract_sample_instructions(sample: Sample):
@@ -39,6 +39,7 @@ def extract_sample_instructions(sample: Sample):
 
 
 INSTRUCTIONS = Counter()
+INSTRUCTIONS_PATH = "BODMAS_instructions_all.json"
 
 
 def sum_up_instructions(sample: Sample):
@@ -57,11 +58,41 @@ def sum_up_instructions(sample: Sample):
     INSTRUCTIONS += instructions
 
 
+def display_instruction_stats():
+    if not os.path.isfile(INSTRUCTIONS_PATH):
+        Logger.error(f"No instructions found at {INSTRUCTIONS_PATH}")
+        return
+    with open(INSTRUCTIONS_PATH, "r") as f:
+        instructions = json.load(f)
+
+    sorted_values = [(k, v) for k, v in sorted(instructions.items(), key=lambda item: item[1])]
+    buff = f"Unique instructions: {len(instructions)}\n"
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(10, 6))
+    plt.title(buff)
+    plt.yscale("log")
+    plt.ylabel("Count of such instructions")
+    plt.xlabel("With frequency")
+    plt.hist(instructions.values(), bins=50, label="Instruction occurrence histogram")
+    plt.legend()
+    plt.savefig("BODMAS_instructions_all.png")
+
+    with open("BODMAS_instructions_all.txt", "w") as f:
+        buff += f"Instruction occurrence stats: {list_stats(list(instructions.values()), True)} \n"
+        top = '\t' + '\n\t'.join([f"{v}" for v in sorted_values[-100:][::-1]])
+        low = '\t' + '\n\t'.join([f"{v}" for v in sorted_values[:100]])
+        buff += f"Top: \n{top} \n"
+        buff += f"Low: \n{low}"
+        f.write(buff)
+
+
 if __name__ == "__main__":
     config.load_env()
     process_samples(Bodmas, extract_sample_instructions, batch_size=1000, max_batches=None,
                     pool=ProcessPoolExecutor(max_workers=12))
 
     process_samples(Bodmas, sum_up_instructions, batch_size=1000)
-    with open("BODMAS_instructions_all.json", "w") as f:
+    with open(INSTRUCTIONS_PATH, "w") as f:
         json.dump(INSTRUCTIONS, f, sort_keys=True)
+
+    display_instruction_stats()
