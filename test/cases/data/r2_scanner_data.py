@@ -9,6 +9,7 @@ class R2ScannerData:
     nodes: Set[str]
     links: Set[Tuple[str, str]]
     functions: Dict[str, List] = field(default_factory=dict)
+    dfs: List[str] = field(default_factory=list)
 
 
 R2_SCANNER_DATA: Dict[str, R2ScannerData]

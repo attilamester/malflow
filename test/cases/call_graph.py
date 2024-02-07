@@ -14,7 +14,7 @@ class TestCallGraph(unittest.TestCase):
 
     @patch("core.data.malware_bazaar.MalwareBazaar.get_sample",
            return_value=Sample(filepath=os.path.abspath(__file__), check_hashes=False))
-    def test_eip_node(self, mock_get_sample):
+    def test_call_graph_scanner(self, mock_get_sample):
 
         def get_mock_r2_cmd(data: CallGraphData) -> Callable:
             def mock_r2_cmd(cmd: str) -> str:

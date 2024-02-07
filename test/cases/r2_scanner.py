@@ -98,6 +98,8 @@ def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_tes
             unittest.assertEqual(test_sample.functions[function_name],
                                  get_sample_get_function_instructions(cg_node))
 
+    if test_sample.dfs:
+        unittest.assertEqual(test_sample.dfs, [node.label for node in cg.DFS()])
     test_callgraph_compression(unittest, cg)
 
 
