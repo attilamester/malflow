@@ -1,6 +1,6 @@
 from collections import deque
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, TypedDict
 
 from core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
                                             Registers, Mnemonics)
@@ -14,15 +14,18 @@ class Instruction:
     prefix: Optional["InstructionPrefix"]
     parameters: List["InstructionParameter"]
     has_bnd: bool  # typedef struct r_x86nz_opcode_t
+    refs: List["InstructionReference"]
 
-    def __init__(self, disasm: str, opcode: bytes):
+    def __init__(self, disasm: str, opcode: bytes, refs: List[TypedDict("ref", {"addr": int, "type": str})]):
         self.disasm = disasm
         self.opcode = opcode
         self.prefix = None
         self.parameters = []
         self.has_bnd = False  # MPX - used to check the bounds of memory addresses used by the instruction
+        self.refs = []
         try:
             self.process()
+            self.process_refs(refs)
         except Exception as e:
             Logger.error(f"Could not process instruction `{disasm}`")
             raise e
@@ -55,6 +58,10 @@ class Instruction:
             else:
                 parameter_tokens = InstructionParameter.split_into_parameter_tokens(opcode_tokens[1])
         self.parameters = [InstructionParameter.construct(token) for token in parameter_tokens]
+
+    def process_refs(self, refs: List[Dict]):
+        for ref in refs:
+            self.refs.append(InstructionReference(ref["addr"], ref["type"]))
 
     def get_fmt(self) -> str:
         return ("[bnd] " if self.has_bnd else "") + \
@@ -201,3 +208,27 @@ class InstructionParameter(Enum):
         return any(
             [token.startswith(t) for t in get_function_types()]) or any(
             [token.startswith(t) for t in get_class_attribute_types()])
+
+
+class InstructionReferenceType(Enum):
+    """
+    R_API const char *r_anal_ref_type_tostring(RAnalRefType type)
+    """
+    CODE = "CODE"
+    CALL = "CALL"
+    JUMP = "JUMP"
+    DATA = "DATA"
+    OTHER = "OTHER"
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.OTHER
+
+
+class InstructionReference:
+    addr: int
+    type: InstructionReferenceType
+
+    def __init__(self, addr: int, type: str):
+        self.addr = addr
+        self.type = InstructionReferenceType(type)

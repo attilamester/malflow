@@ -9,7 +9,7 @@ import pygraphviz
 import r2pipe
 from networkx import MultiDiGraph
 
-from core.model.function import FunctionType, CGNode
+from core.model.function import CGNode, FunctionType
 from core.model.instruction import Instruction, InstructionParameter
 from core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
 from util.logger import Logger
@@ -228,6 +228,66 @@ class CallGraph:
             dfs(node)
 
         return node_list
+
+    def get_node_calls_from_instructions(self, node: CGNode) -> List[Tuple[str, int]]:
+        """
+        TODO: this will need an emulator for rcall and ucall
+        Correlate the node's calls given the `agCd` and `agRd` with the node's instructions given by `pdfj`
+        :return: labels of the nodes called by the instructions of the given node, in the order of its instructions
+        """
+
+        if node.type == FunctionType.DLL:
+            return []
+
+        node_calls_labels_from_instructions = []
+
+        for k, i in enumerate(node.instructions):
+            if not i.refs:
+                continue
+
+            for ref in i.refs:
+                # 0x0043012c
+                rva_hex = f"{ref.addr:#0{10}x}"
+                if rva_hex in self.addresses:
+                    node_calls_labels_from_instructions.append((self.addresses[rva_hex].label, k))
+
+        return node_calls_labels_from_instructions
+
+    def DFS_instructions(self) -> List[Instruction]:
+        """
+        Based on :func:`<core.model.call_graph.CallGraph.DFS>`
+        The traversal here is done on the instructions level, not the nodes.
+        The order of the instructions is preserved according to execution flow.
+        :return: List[IInstruction]
+        """
+        instructions = []
+        dfs_nodes = self.DFS()
+        visited_nodes = set()
+        visiting_nodes = set()
+
+        def build_instruction_traversal(node: CGNode):
+            if node.label in visited_nodes or node.label in visiting_nodes:
+                return
+
+            visiting_nodes.add(node.label)
+
+            Logger.info(f"Traversing {node.label}")
+
+            last_index = 0
+            node_calls = self.get_node_calls_from_instructions(node)
+
+            for callee_label, i in node_calls:
+                instructions.extend(node.instructions[last_index: i])
+                Logger.info(f"Traversing {node.label} -> adding {node.instructions[last_index: i]}")
+                build_instruction_traversal(self.get_node_by_label(callee_label))
+                last_index = i + 1
+
+            visited_nodes.add(node.label)
+
+        for n in dfs_nodes:
+            build_instruction_traversal(n)
+
+        return instructions
 
     def get_image(self, verbose=False):
         global_opcodes = b""

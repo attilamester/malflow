@@ -7,7 +7,7 @@ from core.model.instruction import Instruction, InstructionParameter
 class TestInstruction(unittest.TestCase):
 
     def __test_instruction(self, instruction_data: InstructionData):
-        i = Instruction(instruction_data.disasm, b"0")
+        i = Instruction(instruction_data.disasm, b"0", [])
 
         self.assertEqual(instruction_data.disasm, i.disasm)
         self.assertEqual(instruction_data.mnemonic, i.mnemonic)

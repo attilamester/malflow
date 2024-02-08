@@ -27,7 +27,8 @@ class CallGraphCompressed:
         self.nodes = {}
         for str, node in cg.nodes.items():
             self.nodes[str] = [node.label, node.rva.value, node.type.value,
-                               [[instr.disasm, instr.opcode] for instr in node.instructions],
+                               [[instr.disasm, instr.opcode, [[ref.addr, ref.type] for ref in instr.refs]] for instr in
+                                node.instructions],
                                [n.label for n in node.get_calls()]]
 
     def to_dict(self):
@@ -46,7 +47,8 @@ class CallGraphCompressed:
             node_label, node_rva, node_type, instructions, call_labels = data
             node = CGNode(node_label, node_rva)
             node.type = FunctionType(node_type)
-            node.instructions = [Instruction(i[0], i[1]) for i in instructions]
+            node.instructions = [Instruction(i[0], i[1], [{"addr": e[0], "type": e[1]} for e in i[2]]) for i in
+                                 instructions]
             cg.add_node(node)
             if label.startswith("entry"):
                 cg.entrypoints.append(node)
