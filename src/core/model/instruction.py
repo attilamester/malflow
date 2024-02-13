@@ -81,7 +81,8 @@ class Instruction:
                     self.opcode == other.opcode and
                     self.has_bnd == other.has_bnd and
                     self.prefix == other.prefix and
-                    self.parameters == other.parameters)
+                    self.parameters == other.parameters and
+                    self.refs == other.refs)
         return False
 
     @staticmethod
@@ -232,3 +233,8 @@ class InstructionReference:
     def __init__(self, addr: int, type: str):
         self.addr = addr
         self.type = InstructionReferenceType(type)
+
+    def __eq__(self, other):
+        if isinstance(other, InstructionReference):
+            return (self.addr == other.addr and self.type == other.type)
+        return False

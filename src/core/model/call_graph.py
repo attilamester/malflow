@@ -11,6 +11,7 @@ from networkx import MultiDiGraph
 
 from core.model.function import CGNode, FunctionType
 from core.model.instruction import Instruction, InstructionParameter
+from core.model.radare2_definitions import is_symbol_flag
 from core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
 from util.logger import Logger
 
@@ -20,7 +21,7 @@ class CallGraph:
     file_path: str
     entrypoints: List[CGNode]
     nodes: Dict[str, CGNode]
-    addresses: Dict[str, CGNode]
+    addresses: Dict[int, CGNode]
     scan_time: Union[float, None]
 
     __nx: MultiDiGraph
@@ -46,14 +47,14 @@ class CallGraph:
     def get_node_by_label(self, label) -> Optional[CGNode]:
         return self.nodes.get(label, None)
 
-    def get_node_by_rva(self, rva: str) -> Optional[CGNode]:
+    def get_node_by_rva(self, rva: int) -> Optional[CGNode]:
         return self.addresses.get(rva, None)
 
     def add_node(self, node: CGNode) -> CGNode:
         if node.label == "eip":
             # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
             for ep in self.entrypoints:
-                if node.rva.value == ep.rva.value:
+                if node.rva.addr == ep.rva.addr:
                     Logger.warning(f"Skipping adding EIP node {node} [{self.md5} {self.file_path}]")
                     return ep
 
@@ -63,14 +64,14 @@ class CallGraph:
                     Logger.warning(
                         f"Incorrect entrypoint address provided by ie ({self.nodes[node.label]}. Fixing to the corrected value {node} "
                         f"[{self.md5} {self.file_path}]")
-                    self.addresses.pop(self.nodes[node.label].rva.value)
+                    self.addresses.pop(self.nodes[node.label].rva.addr)
                 else:
                     raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
                                     f"[{self.md5} {self.file_path}]")
             else:
                 return node
         self.nodes[node.label] = node
-        self.addresses[node.rva.value] = node
+        self.addresses[node.rva.addr] = node
         return node
 
     @staticmethod
@@ -123,8 +124,8 @@ class CallGraph:
                 Logger.info(f"[Node - agC] {node}")
 
         for (a, b, w), data in nx_g.edges.items():
-            node1 = self.get_node_by_rva(a)
-            node2 = self.get_node_by_rva(b)
+            node1 = self.get_node_by_rva(int(a, 16))
+            node2 = self.get_node_by_rva(int(b, 16))
             node1.add_call_to(node2)
             if verbose:
                 Logger.info(f"[Call - agC] {node1} -> {node2}")
@@ -147,7 +148,8 @@ class CallGraph:
         for addr, data in nx_g_references.nodes.items():
             if InstructionParameter.is_function(addr):
                 rva = get_rva_of_label(addr)
-                if rva not in self.addresses:
+                rva_int = int(rva, 16)
+                if rva_int not in self.addresses:
                     node = CGNode(data["label"], rva)
                     self.add_node(node)
                     if verbose:
@@ -207,9 +209,12 @@ class CallGraph:
             edge_set.add((a.label, b.label))
         return edge_set
 
-    def DFS(self, node_sorter: Callable[[CGNode], str] = lambda n: n.label):
+    def DFS(self, node_sorter: Callable[[CGNode], str] = None):
         node_list = []
         visited_nodes = {}
+
+        if node_sorter is None:
+            node_sorter = DFS_sorter
 
         def dfs(node: CGNode):
             if node.label in visited_nodes:
@@ -218,8 +223,8 @@ class CallGraph:
             visited_nodes[node.label] = True
             node_list.append(node)
 
-            for node in sorted(node.get_calls(), key=lambda n: node_sorter(n)):
-                dfs(node)
+            for n in sorted(node.get_calls(), key=node_sorter):
+                dfs(n)
 
         for node in sorted(self.entrypoints, key=lambda n: node_sorter(n)):
             dfs(node)
@@ -246,10 +251,8 @@ class CallGraph:
                 continue
 
             for ref in i.refs:
-                # 0x0043012c
-                rva_hex = f"{ref.addr:#0{10}x}"
-                if rva_hex in self.addresses:
-                    node_calls_labels_from_instructions.append((self.addresses[rva_hex].label, k))
+                if ref.addr in self.addresses:
+                    node_calls_labels_from_instructions.append((self.addresses[ref.addr].label, k))
 
         return node_calls_labels_from_instructions
 
@@ -271,16 +274,17 @@ class CallGraph:
 
             visiting_nodes.add(node.label)
 
-            Logger.info(f"Traversing {node.label}")
-
             last_index = 0
             node_calls = self.get_node_calls_from_instructions(node)
 
-            for callee_label, i in node_calls:
-                instructions.extend(node.instructions[last_index: i])
-                Logger.info(f"Traversing {node.label} -> adding {node.instructions[last_index: i]}")
-                build_instruction_traversal(self.get_node_by_label(callee_label))
-                last_index = i + 1
+            if not node_calls:
+                instructions.extend(node.instructions)
+            else:
+                for callee_label, i in node_calls:
+                    instructions.extend(node.instructions[last_index: i])
+                    build_instruction_traversal(self.get_node_by_label(callee_label))
+                    last_index = i + 1
+                instructions.extend(node.instructions[last_index: ])
 
             visited_nodes.add(node.label)
 
@@ -309,3 +313,9 @@ class CallGraph:
                     self.nodes == other.nodes and
                     self.addresses == other.addresses)
         return False
+
+
+def DFS_sorter(node: CGNode):
+    if is_symbol_flag(node.label):
+        return "_" + node.label
+    return node.label

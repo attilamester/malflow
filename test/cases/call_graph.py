@@ -26,6 +26,8 @@ class TestCallGraph(unittest.TestCase):
                     return data.agRd
                 if cmd == "ie":
                     return data.ie
+                if cmd in data.s_pdfj:
+                    return data.s_pdfj[cmd]
                 return ""
 
             return mock_r2_cmd
