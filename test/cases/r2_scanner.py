@@ -1,4 +1,6 @@
+import datetime
 import os
+import traceback
 import unittest
 from typing import List, Set, Tuple, Union, Optional
 
@@ -7,6 +9,41 @@ from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph, CallGraphCompressed
 from core.model.function import CGNode
 from util import config
+
+
+class TestR2Scanner(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        config.load_env()
+
+    def tearDown(self):
+        try:
+            etype, value, tb = self._outcome.errors[0][1]
+            trace = "".join(traceback.format_exception(etype=etype, value=value, tb=tb, limit=None))
+            date = "{date}\n".format(date=str(datetime.datetime.now()))
+            name = "\n" + self._testMethodName + "-\n"
+            print(name + date + trace)
+        except:
+            pass
+
+    def test_md5_bart_35987(self):
+        test_sample(self, R2_SCANNER_DATA["35987"])
+
+    def test_md5_chinachopper_43c16(self):
+        test_sample(self, R2_SCANNER_DATA["43c16"])
+
+    def test_md5_netwalker_9c7be(self):
+        test_sample(self, R2_SCANNER_DATA["9c7be"])
+
+    def test_md5_powerstats_b2457(self):
+        test_sample(self, R2_SCANNER_DATA["b2457"])
+
+    def test_md5_powerstats_0aab6(self):
+        test_sample(self, R2_SCANNER_DATA["0aab6"])
+
+    def test_md5_powerstats_973bf(self):
+        test_sample(self, R2_SCANNER_DATA["973bf"])
 
 
 # ================
@@ -98,6 +135,22 @@ def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_tes
             unittest.assertEqual(test_sample.functions[function_name],
                                  get_sample_get_function_instructions(cg_node))
 
+    # TODO: test this
+    # for node in cg.nodes.values():
+    #     if node.type == FunctionType.DLL:
+    #         continue
+    #
+    #     node_calls_labels = {n.label for n in node.get_calls()}
+    #     node_calls_labels_from_instructions = cg.get_node_calls_from_instructions(node)
+    #     unittest.assertEqual(node_calls_labels, set([t[0] for t in node_calls_labels_from_instructions]), node)
+
+    if test_sample.dfs:
+        unittest.assertEqual(test_sample.dfs, [node.label for node in cg.DFS()])
+
+    if test_sample.dfs_instructions:
+        for (config, result) in test_sample.dfs_instructions:
+            unittest.assertEqual(result, [i.mnemonic for i in cg.DFS_instructions(**config)])
+
     test_callgraph_compression(unittest, cg)
 
 
@@ -121,28 +174,3 @@ def test_callgraph_compression(unittest: unittest.TestCase, cg: CallGraph):
     unittest.assertEqual(cg, cg_compressed_from_disk.decompress())
 
     os.remove(compressed_file_path)
-
-
-class TestR2Scanner(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        config.load_env()
-
-    def test_md5_bart_35987(self):
-        test_sample(self, R2_SCANNER_DATA["35987"])
-
-    def test_md5_chinachopper_43c16(self):
-        test_sample(self, R2_SCANNER_DATA["43c16"])
-
-    def test_md5_netwalker_9c7be(self):
-        test_sample(self, R2_SCANNER_DATA["9c7be"])
-
-    def test_md5_powerstats_b2457(self):
-        test_sample(self, R2_SCANNER_DATA["b2457"])
-
-    def test_md5_powerstats_0aab6(self):
-        test_sample(self, R2_SCANNER_DATA["0aab6"])
-
-    def test_md5_powerstats_973bf(self):
-        test_sample(self, R2_SCANNER_DATA["973bf"])

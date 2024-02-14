@@ -1,5 +1,5 @@
 import os
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 from core.data.bodmas import Bodmas
 from core.model import CallGraph, CallGraphCompressed
@@ -34,4 +34,4 @@ def scan_sample(sample: Sample, rescan=False):
 if __name__ == "__main__":
     config.load_env()
     process_samples(Bodmas, scan_sample, batch_size=1000, max_batches=None,
-                    pool=ProcessPoolExecutor(max_workers=12))
+                    pool=ThreadPoolExecutor(max_workers=8))

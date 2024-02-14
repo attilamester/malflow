@@ -13,13 +13,14 @@ class FunctionType(Enum):
 
 class RVA:
     value: str  # e.g. "0x<hex-string>"
+    addr: int
 
     def __init__(self, rva: str):
         self.value = rva.lower()
         if not self.value.startswith("0x"):
             raise Exception(f"Invalid RVA {rva}")
         try:
-            int(self.value[2:], 16)
+            self.addr = int(self.value[2:], 16)
         except:
             raise Exception(f"Invalid RVA {rva}")
 
@@ -31,7 +32,7 @@ class RVA:
 
     def __eq__(self, other):
         if isinstance(other, RVA):
-            return self.value == other.value
+            return self.value == other.value and self.addr == other.addr
         return False
 
 
@@ -66,7 +67,7 @@ class CGNode:
 
     def add_call_to(self, node: "CGNode"):
         if node.label in self.calls:
-            if node.rva.value != self.calls[node.label].rva.value:
+            if node.rva.addr != self.calls[node.label].rva.addr:
                 raise Exception(f"Conflict while adding call to {node} ; existing {self.calls[node.label]}")
         else:
             self.calls[node.label] = node
@@ -82,7 +83,8 @@ class CGNode:
         for op in pdfj["ops"]:
             if "disasm" not in op or "bytes" not in op:
                 continue
-            self.instructions.append(Instruction(op["disasm"], op["bytes"].encode()))
+            refs = op.get("refs", []) if ("call" in op["type"] or "jmp" in op["type"]) else []
+            self.instructions.append(Instruction(op["disasm"], op["bytes"].encode(), refs))
 
     def __str__(self):
         return f"CGNode({self.label}, {self.rva}, {self.type})"

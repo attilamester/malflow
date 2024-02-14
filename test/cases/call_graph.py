@@ -1,4 +1,6 @@
+import datetime
 import os.path
+import traceback
 import unittest
 from typing import Callable
 from unittest.mock import Mock, patch
@@ -12,9 +14,19 @@ from core.model.sample import Sample
 
 class TestCallGraph(unittest.TestCase):
 
+    def tearDown(self):
+        try:
+            etype, value, tb = self._outcome.errors[0][1]
+            trace = "".join(traceback.format_exception(etype=etype, value=value, tb=tb, limit=None))
+            date = "{date}\n".format(date=str(datetime.datetime.now()))
+            name = "\n" + self._testMethodName + "-\n"
+            print(name + date + trace)
+        except:
+            pass
+
     @patch("core.data.malware_bazaar.MalwareBazaar.get_sample",
            return_value=Sample(filepath=os.path.abspath(__file__), check_hashes=False))
-    def test_eip_node(self, mock_get_sample):
+    def test_call_graph_scanner(self, mock_get_sample):
 
         def get_mock_r2_cmd(data: CallGraphData) -> Callable:
             def mock_r2_cmd(cmd: str) -> str:
@@ -26,6 +38,8 @@ class TestCallGraph(unittest.TestCase):
                     return data.agRd
                 if cmd == "ie":
                     return data.ie
+                if cmd in data.s_pdfj:
+                    return data.s_pdfj[cmd]
                 return ""
 
             return mock_r2_cmd

@@ -9,6 +9,8 @@ class R2ScannerData:
     nodes: Set[str]
     links: Set[Tuple[str, str]]
     functions: Dict[str, List] = field(default_factory=dict)
+    dfs: List[str] = field(default_factory=list)
+    dfs_instructions: List[Tuple[Dict, List[str]]] = field(default_factory=list)
 
 
 R2_SCANNER_DATA: Dict[str, R2ScannerData]
@@ -109,8 +111,18 @@ R2_SCANNER_DATA = {
                     ("push", ["REG"]), ("push", ["ADDR"]), ("push", ["CONST"]), ("push", ["ADDR"]), ("call", ["ADDR"]),
                     ("cmp", ["ADDR", "CONST"]), ("mov", ["REG", "REG"]), ("je", ["CONST"]), ("push", ["REG"]),
                     ("call", ["ADDR"]), ("pop", ["REG"]), ("mov", ["REG", "REG"]), ("pop", ["REG"]), ("ret", ["CONST"])]
-
-            }
+            },
+            "dfs": [
+                "entry0", "main", "sym.imp.KERNEL32.dll_GetModuleHandleA", "fcn.004060f8", "fcn.0040629f",
+                "sym.imp.KERNEL32.dll_HeapAlloc", "fcn.004062e8", "fcn.0040611f", "sym.imp.KERNEL32.dll_LoadLibraryA",
+                "fcn.004061ba", "sym.imp.KERNEL32.dll_HeapReAlloc", "fcn.00406388", "fcn.0040615c",
+                "sym.imp.KERNEL32.dll_GetProcAddress", "fcn.0040623f", "fcn.004064b0",
+                "sym.imp.KERNEL32.dll_HeapCreate", "sub.KERNEL32.dll_HeapCreate", "sub.MSVCRT.dll_memset",
+                "sym.imp.MSVCRT.dll_memset", "unk.0x430278", "sym.imp.KERNEL32.dll_HeapFree",
+                "sym.imp.MSVCRT.dll_memmove", "sym.imp.MSVCRT.dll_strlen", "fcn.00402000", "fcn.00406000",
+                "fcn.00406560", "fcn.00406660", "sub.MSVCRT.dll_strlen", "fcn.00406040", "fcn.00406530", "fcn.004066a6",
+                "sub.MSVCRT.dll_memmove", "fcn.00406008", "fcn.004065b0", "fcn.0040618c", "fcn.00406310",
+                "fcn.00406335", "fcn.00406264", "fcn.004063b5", "sub.KERNEL32.dll_GetProcAddress"]
         }),
     "43c16":
         R2ScannerData(**{
