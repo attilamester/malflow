@@ -7,7 +7,7 @@ from typing import List, Set, Tuple, Union, Optional
 from cases.data.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
 from core.data.malware_bazaar import MalwareBazaar
 from core.model import CallGraph, CallGraphCompressed
-from core.model.function import CGNode, FunctionType
+from core.model.function import CGNode
 from util import config
 
 
@@ -148,7 +148,8 @@ def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_tes
         unittest.assertEqual(test_sample.dfs, [node.label for node in cg.DFS()])
 
     if test_sample.dfs_instructions:
-        unittest.assertEqual(test_sample.dfs_instructions, [i.mnemonic for i in cg.DFS_instructions()])
+        for (config, result) in test_sample.dfs_instructions:
+            unittest.assertEqual(result, [i.mnemonic for i in cg.DFS_instructions(**config)])
 
     test_callgraph_compression(unittest, cg)
 

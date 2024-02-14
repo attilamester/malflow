@@ -10,7 +10,7 @@ class R2ScannerData:
     links: Set[Tuple[str, str]]
     functions: Dict[str, List] = field(default_factory=dict)
     dfs: List[str] = field(default_factory=list)
-    dfs_instructions: List[str] = field(default_factory=list)
+    dfs_instructions: List[Tuple[Dict, List[str]]] = field(default_factory=list)
 
 
 R2_SCANNER_DATA: Dict[str, R2ScannerData]

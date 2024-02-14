@@ -55,6 +55,9 @@ vaddr=0x1
             ]}),
             "s 0x2 ; pdfj": json.dumps({"ops": [
                 {"disasm": "add eax, 2", "bytes": "", "type": "", "refs": []},
+                {"disasm": "call 0x1", "bytes": "", "type": "call", "refs": [{
+                    "addr": 1, "type": InstructionReferenceType.CALL.value
+                }]},
                 {"disasm": "call 0x3", "bytes": "", "type": "call", "refs": [{
                     "addr": 3, "type": InstructionReferenceType.CALL.value
                 }]},
@@ -123,30 +126,78 @@ vaddr=0x1
             "functions": {},
             "dfs": ["entry0", "main", "fcn.3", "fcn.6", "fcn.5", "fcn.7", "fcn.8", "fcn.4", "fcn.9"],
             "dfs_instructions": [
-                # @formatter:off
-                # 0x1
-                "mov", "xor",
-                    # 0x2
-                    "add",
-                        # 0x3
-                            # 0x6
-                            "pushf",
-                                # 0x7
-                                "div",
-                                # 0x5
-                                "ret",
-                        "shr", "shl",
-                            # 0x8
-                            "imul",
-                                # 0x4
-                                "ret",
-                            "idiv",
-                        "ror",
-                    "adc",
-                        # 0x9
-                        "popf",
-                "pop"
-                # @formatter:on
+                ({}, [
+                    # @formatter:off
+                    # 0x1
+                    "mov", "xor",
+                        # 0x2
+                        "add",
+                            # 0x1
+                            # 0x3
+                                # 0x6
+                                "pushf",
+                                    # 0x7
+                                    "div",
+                                    # 0x5
+                                    "ret",
+                            "shr", "shl",
+                                # 0x8
+                                "imul",
+                                    # 0x4
+                                    "ret",
+                                "idiv",
+                            "ror",
+                        "adc",
+                            # 0x4
+                            # 0x5
+                            # 0x9
+                            "popf",
+                    "pop"
+                    # @formatter:on
+                ]),
+                (dict(store_call=True), [
+                    # @formatter:off
+                    # 0x1
+                    "mov", "xor", "call",
+                        # 0x2
+                        "add", "call",
+                            # 0x1
+                        "call",
+                            # 0x3
+                            "call",
+                                # 0x6
+                                "pushf", "call",
+                                    # 0x7
+                                    "div",
+                                "call",
+                                    # 0x5
+                                    "ret",
+                            "shr", "shl", "call",
+                                # 0x8
+                                "imul", "call",
+                                    # 0x4
+                                    "ret",
+                                "idiv",
+                            "ror",
+                        "adc", "call",
+                            # 0x4
+                        "call",
+                            # 0x5
+                        "call",
+                            # 0x9
+                            "popf",
+                    "pop"
+                    # @formatter:on
+                ]),
+                (dict(allow_multiple_visits=True), [
+                    "mov", "xor", "add", "mov", "xor", "pop", "pushf", "div", "ret", "shr", "shl", "imul", "ret",
+                    "idiv", "ror", "adc", "ret", "ret", "popf", "pop"
+                ]),
+                (dict(allow_multiple_visits=True, store_call=True), [
+                    "mov", "xor", "call", "add", "call", "mov", "xor", "call", "pop", "call", "call", "pushf", "call",
+                    "div", "call", "ret", "shr", "shl", "call", "imul", "call", "ret", "idiv", "ror", "adc", "call",
+                    "ret", "call", "ret", "call", "popf", "pop"
+                ])
             ]
         })
     }),
@@ -177,6 +228,59 @@ digraph code {
 vaddr=0x1
 vaddr=0x2
 """,
+        "s_pdfj": {
+            "s 0x1 ; pdfj": json.dumps({"ops": [
+                {"disasm": "call 0x3", "bytes": "", "type": "call", "refs": [{
+                    "addr": 3, "type": InstructionReferenceType.CALL.value
+                }]},
+                {"disasm": "mov eax, 1", "bytes": "", "type": "", "refs": []},
+                {"disasm": "xor eax, eax", "bytes": "", "type": "", "refs": []},
+            ]}),
+            "s 0x2 ; pdfj": json.dumps({"ops": [
+                {"disasm": "aaa", "bytes": "", "type": "", "refs": []},
+                {"disasm": "call 0x3", "bytes": "", "type": "call", "refs": [{
+                    "addr": 3, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "call 0x8", "bytes": "", "type": "call", "refs": [{
+                    "addr": 8, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "aad", "bytes": "", "type": "", "refs": []},
+                {"disasm": "call 0x7", "bytes": "", "type": "call", "refs": [{
+                    "addr": 7, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "call 0x9", "bytes": "", "type": "call", "refs": [{
+                    "addr": 9, "type": InstructionReferenceType.CALL.value}]},
+            ]}),
+            "s 0x3 ; pdfj": json.dumps({"ops": [
+                {"disasm": "call 0x5", "bytes": "", "type": "call", "refs": [{
+                    "addr": 5, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "call 0x4", "bytes": "", "type": "call", "refs": [{
+                    "addr": 4, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "aam", "bytes": "", "type": "", "refs": []},
+            ]}),
+            "s 0x4 ; pdfj": json.dumps({"ops": [
+                {"disasm": "pusha", "bytes": "", "type": "", "refs": []},
+                {"disasm": "call 0x5", "bytes": "", "type": "call", "refs": [{
+                    "addr": 5, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "call 0x6", "bytes": "", "type": "call", "refs": [{
+                    "addr": 6, "type": InstructionReferenceType.CALL.value}]}
+            ]}),
+            "s 0x5 ; pdfj": json.dumps({"ops": [
+                {"disasm": "cdq", "bytes": "", "type": "", "refs": []}
+            ]}),
+            "s 0x6 ; pdfj": json.dumps({"ops": [
+                {"disasm": "clc", "bytes": "", "type": "", "refs": []},
+                {"disasm": "call 0x7", "bytes": "", "type": "call", "refs": [{
+                    "addr": 7, "type": InstructionReferenceType.CALL.value}]},
+                {"disasm": "cmps", "bytes": "", "type": "", "refs": []}
+            ]}),
+            "s 0x7 ; pdfj": json.dumps({"ops": [
+                {"disasm": "cmc", "bytes": "", "type": "", "refs": []}
+            ]}),
+            "s 0x8 ; pdfj": json.dumps({"ops": [
+                {"disasm": "cwd", "bytes": "", "type": "", "refs": []}
+            ]}),
+            "s 0x9 ; pdfj": json.dumps({"ops": [
+                {"disasm": "cwde", "bytes": "", "type": "", "refs": []}
+            ]}),
+        },
         "r2_data": R2ScannerData(**{
             "md5": "-",
             "sha256": "-",
@@ -187,7 +291,25 @@ vaddr=0x2
                       ("fcn.4", "fcn.5"), ("fcn.4", "fcn.6"), ("fcn.6", "fcn.7"), ("entry1", "fcn.7"),
                       ("entry1", "fcn.8"), ("entry1", "fcn.9")},
             "functions": {},
-            "dfs": ["entry0", "fcn.3", "fcn.4", "fcn.5", "fcn.6", "fcn.7", "entry1", "fcn.8", "fcn.9"]
+            "dfs": ["entry0", "fcn.3", "fcn.4", "fcn.5", "fcn.6", "fcn.7", "entry1", "fcn.8", "fcn.9"],
+            "dfs_instructions": [
+                ({}, [
+                    "cdq", "pusha", "clc", "cmc", "cmps", "aam", "mov", "xor", "aaa", "cwd", "aad", "cwde"
+                ]),
+                (dict(store_call=True), [
+                    "call", "call", "cdq", "call", "pusha", "call", "call", "clc", "call", "cmc", "cmps", "aam",
+                    "mov", "xor", "aaa", "call", "call", "cwd", "aad", "call", "call", "cwde"
+                ]),
+                (dict(allow_multiple_visits=True), [
+                    "cdq", "pusha", "cdq", "clc", "cmc", "cmps", "aam", "mov", "xor", "aaa", "aam", "cwd", "aad", "cmc",
+                    "cwde"
+                ]),
+                (dict(allow_multiple_visits=True, store_call=True), [
+                    "call", "call", "cdq", "call", "pusha", "call", "cdq", "call", "clc", "call", "cmc", "cmps", "aam",
+                    "mov", "xor", "aaa", "call", "call", "call", "aam", "call", "cwd", "aad", "call", "cmc", "call",
+                    "cwde"
+                ])
+            ]
         })
     })
 ]

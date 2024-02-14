@@ -256,7 +256,7 @@ class CallGraph:
 
         return node_calls_labels_from_instructions
 
-    def DFS_instructions(self) -> List[Instruction]:
+    def DFS_instructions(self, allow_multiple_visits=False, store_call=False) -> List[Instruction]:
         """
         Based on :func:`<core.model.call_graph.CallGraph.DFS>`
         The traversal here is done on the instructions level, not the nodes.
@@ -266,29 +266,45 @@ class CallGraph:
         instructions = []
         dfs_nodes = self.DFS()
         visited_nodes = set()
-        visiting_nodes = set()
+        node_calls_cache = {}
+
+        def get_node_calls_from_instructions(node):
+            if node.label not in node_calls_cache:
+                node_calls_cache[node.label] = self.get_node_calls_from_instructions(node)
+            return node_calls_cache[node.label]
 
         def build_instruction_traversal(node: CGNode):
-            if node.label in visited_nodes or node.label in visiting_nodes:
-                return
+            if node.label in visited_nodes:
+                if not allow_multiple_visits:
+                    return
+                else:
+                    if store_call:
+                        instructions.extend(node.instructions)
+                    else:
+                        node_calls = get_node_calls_from_instructions(node)
+                        call_indices = {t[1] for t in node_calls}
+                        instructions.extend(
+                            [instr for i, instr in enumerate(node.instructions) if i not in call_indices])
+                    return
 
-            visiting_nodes.add(node.label)
+            visited_nodes.add(node.label)
 
             last_index = 0
-            node_calls = self.get_node_calls_from_instructions(node)
+            node_calls = get_node_calls_from_instructions(node)
 
             if not node_calls:
                 instructions.extend(node.instructions)
             else:
                 for callee_label, i in node_calls:
-                    instructions.extend(node.instructions[last_index: i])
-                    build_instruction_traversal(self.get_node_by_label(callee_label))
+                    callee = self.get_node_by_label(callee_label)
+                    instructions.extend(node.instructions[last_index: i + store_call])
                     last_index = i + 1
-                instructions.extend(node.instructions[last_index: ])
-
-            visited_nodes.add(node.label)
+                    build_instruction_traversal(callee)
+                instructions.extend(node.instructions[last_index:])
 
         for n in dfs_nodes:
+            if n.label in visited_nodes:
+                continue
             build_instruction_traversal(n)
 
         return instructions
