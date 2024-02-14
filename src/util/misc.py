@@ -64,3 +64,15 @@ def dict_key_add(d, key, item=None):
             d[key] += 1
         else:
             d[key].add(item)
+
+def dict_key_inc(d, key, inc: int = 1):
+    if key not in d:
+        if inc is None:
+            d[key] = 1
+        else:
+            d[key] = inc
+    else:
+        if inc is None:
+            d[key] += 1
+        else:
+            d[key] += inc

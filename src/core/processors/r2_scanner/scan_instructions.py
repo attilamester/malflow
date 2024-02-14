@@ -9,7 +9,7 @@ from core.model.sample import Sample
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_add, list_stats
+from util.misc import dict_key_add, list_stats, dict_key_inc
 
 
 def extract_sample_instructions(sample: Sample):
@@ -58,6 +58,22 @@ def sum_up_instructions(sample: Sample):
     INSTRUCTIONS += instructions
 
 
+# ==============================
+# Stats on the INSTRUCTIONS_PATH
+# ==============================
+
+def get_param_counts(instructions):
+    param_counts = {}
+    for instr, count in instructions.items():
+        mnemonic_end = instr.rindex("]")
+        param_count = 0
+        params = instr[mnemonic_end + 1:].strip()
+        if params:
+            param_count = len(params.split(" "))
+        dict_key_inc(param_counts, param_count, count)
+    return param_counts
+
+
 def display_instruction_stats():
     if not os.path.isfile(INSTRUCTIONS_PATH):
         Logger.error(f"No instructions found at {INSTRUCTIONS_PATH}")
@@ -65,15 +81,26 @@ def display_instruction_stats():
     with open(INSTRUCTIONS_PATH, "r") as f:
         instructions = json.load(f)
 
+    param_counts = get_param_counts(instructions)
+
     sorted_values = [(k, v) for k, v in sorted(instructions.items(), key=lambda item: item[1])]
     buff = f"Unique instructions: {len(instructions)}\n"
     import matplotlib.pyplot as plt
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 10))
+    plt.subplot(2, 1, 1)
     plt.title(buff)
     plt.yscale("log")
     plt.ylabel("Count of such instructions")
     plt.xlabel("With frequency")
     plt.hist(instructions.values(), bins=50, label="Instruction occurrence histogram")
+    plt.legend()
+    plt.savefig("BODMAS_instructions_all.png")
+
+    plt.subplot(2, 1, 2)
+    plt.title(f"Param counts: {param_counts}")
+    plt.ylabel("Count of such instructions")
+    plt.xlabel("Param count")
+    plt.bar(param_counts.keys(), param_counts.values(), label="Param counts")
     plt.legend()
     plt.savefig("BODMAS_instructions_all.png")
 
