@@ -5,7 +5,6 @@ import numpy as np
 from core.model import CallGraph
 from core.model.instruction import Instruction, InstructionPrefix, InstructionParameter
 from core.model.radare2_definitions import Mnemonics
-from util.logger import Logger
 
 
 def get_instruction_token_RG(mnemonic: str, prefix: str, bnd: bool) -> str:
@@ -49,16 +48,14 @@ class CallGraphImage:
     def __init__(self, cg: CallGraph):
         self.cg = cg
 
-    def get_image(self, img_size: Tuple[int, int] = (512, 512), verbose=False) -> np.ndarray:
-        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in self.cg.DFS_instructions()]
+    def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
+        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in self.cg.DFS_instructions(**dfs_kwargs)]
 
-        if verbose:
-            Logger.info(f"[Image] {len(pixels)} pixels for {self.cg.md5}")
         np_pixels = np.array([[int(channel) for channel in pixel] for pixel in pixels], dtype=np.uint8)
         np_pixels.resize((img_size[0] * img_size[1] * 3), refcheck=False)
         np_pixels = np.reshape(np_pixels, (*img_size, 3))
 
-        return np_pixels
+        return np_pixels, len(pixels)
 
     @staticmethod
     def encode_instruction_rgb(i: Instruction) -> bytes:

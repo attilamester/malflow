@@ -28,10 +28,8 @@ def create_image(sample: Sample):
     except Exception as e:
         Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
 
-    # count_rcalls(cg)
 
-
-def count_rcalls(cg: CallGraph):
+def tmp_count_rcalls(cg: CallGraph):
     calls = {}
     calls_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.calls.json")
     for node in cg.nodes.values():

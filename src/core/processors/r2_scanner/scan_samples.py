@@ -51,11 +51,21 @@ def extract_callgraph_instructions(cg: CallGraph):
 
 
 def create_callgraph_image(cg: CallGraph):
-    image_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.png")
+    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
     cg_img = CallGraphImage(cg)
-    np_pixels = cg_img.get_image()
-    pil_image = Image.fromarray(np_pixels)
-    pil_image.save(image_path)
+
+    info = {"configs": {}}
+    for allow_multiple_visits in [True, False]:
+        for store_call in [True, False]:
+            image_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_{allow_multiple_visits}_{store_call}.png")
+            np_pixels, original_size = cg_img.get_image((512, 512), allow_multiple_visits=allow_multiple_visits,
+                                                        store_call=store_call)
+            pil_image = Image.fromarray(np_pixels)
+            pil_image.save(image_path)
+            info["configs"][f"{allow_multiple_visits}_{store_call}"] = original_size
+
+    with open(info_path, "w") as f:
+        json.dump(info, f)
 
 
 if __name__ == "__main__":
