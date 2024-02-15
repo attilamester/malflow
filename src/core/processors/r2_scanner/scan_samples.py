@@ -2,8 +2,11 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+from PIL import Image
+
 from core.data.bodmas import Bodmas
 from core.model import CallGraph, CallGraphCompressed
+from core.model.call_graph_image import CallGraphImage
 from core.model.sample import Sample
 from core.processors.util import process_samples
 from util import config
@@ -29,20 +32,30 @@ def scan_sample(sample: Sample, rescan=False):
         if not os.path.isfile(compressed_path):
             Logger.info(f">> No r2 found on disk: {md5}")
             scan(cg)
-            extract_sample_callgraph_instructions(cg)
+            extract_callgraph_instructions(cg)
+            create_callgraph_image(cg)
         else:
             Logger.info(f">> Already existing r2 found on disk: {md5}")
 
 
-def extract_sample_callgraph_instructions(cg: CallGraph):
+def extract_callgraph_instructions(cg: CallGraph):
+    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.instructions.json")
     instructions = {}
     for node in cg.nodes.values():
         for i in node.instructions:
             key = i.get_fmt()
             dict_key_add(instructions, key)
-    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.instructions.json")
+
     with open(instructions_path, "w") as f:
         json.dump(instructions, f)
+
+
+def create_callgraph_image(cg: CallGraph):
+    image_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.png")
+    cg_img = CallGraphImage(cg)
+    np_pixels = cg_img.get_image()
+    pil_image = Image.fromarray(np_pixels)
+    pil_image.save(image_path)
 
 
 if __name__ == "__main__":

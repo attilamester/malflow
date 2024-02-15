@@ -70,7 +70,7 @@ class Instruction:
             (" " + ", ".join([p.value for p in self.parameters]) if self.parameters else "")
 
     def __str__(self):
-        return f"[{self.mnemonic}]"
+        return self.get_fmt()
 
     def __repr__(self):
         return str(self)
