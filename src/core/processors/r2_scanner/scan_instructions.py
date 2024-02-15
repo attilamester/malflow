@@ -6,10 +6,11 @@ from concurrent.futures import ProcessPoolExecutor
 from core.data.bodmas import Bodmas
 from core.model import CallGraph, CallGraphCompressed
 from core.model.sample import Sample
+from core.processors.r2_scanner.scan_samples import extract_sample_callgraph_instructions
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_add, list_stats, dict_key_inc
+from util.misc import list_stats, dict_key_inc
 
 
 def extract_sample_instructions(sample: Sample):
@@ -26,16 +27,9 @@ def extract_sample_instructions(sample: Sample):
 
     try:
         cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
+        extract_sample_callgraph_instructions(cg)
     except Exception as e:
         Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
-
-    instructions = {}
-    for node in cg.nodes.values():
-        for i in node.instructions:
-            key = i.get_fmt()
-            dict_key_add(instructions, key)
-    with open(instructions_path, "w") as f:
-        json.dump(instructions, f)
 
 
 INSTRUCTIONS = Counter()

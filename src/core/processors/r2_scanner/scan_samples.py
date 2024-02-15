@@ -1,3 +1,4 @@
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
@@ -7,6 +8,7 @@ from core.model.sample import Sample
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
+from util.misc import dict_key_add
 
 
 def scan(cg: CallGraph):
@@ -27,8 +29,20 @@ def scan_sample(sample: Sample, rescan=False):
         if not os.path.isfile(compressed_path):
             Logger.info(f">> No r2 found on disk: {md5}")
             scan(cg)
+            extract_sample_callgraph_instructions(cg)
         else:
             Logger.info(f">> Already existing r2 found on disk: {md5}")
+
+
+def extract_sample_callgraph_instructions(cg: CallGraph):
+    instructions = {}
+    for node in cg.nodes.values():
+        for i in node.instructions:
+            key = i.get_fmt()
+            dict_key_add(instructions, key)
+    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.instructions.json")
+    with open(instructions_path, "w") as f:
+        json.dump(instructions, f)
 
 
 if __name__ == "__main__":
