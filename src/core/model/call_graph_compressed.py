@@ -17,10 +17,10 @@ class CallGraphCompressed:
     nodes: Dict[str, List]
     scan_time: Union[float, None]
 
-    def __init__(self, cg: "CallGraph"):
+    def __init__(self, cg: CallGraph):
         self.init(cg)
 
-    def init(self, cg: "CallGraph"):
+    def init(self, cg: CallGraph):
         self.md5 = cg.md5
         self.file_path = cg.file_path
         self.scan_time = cg.scan_time

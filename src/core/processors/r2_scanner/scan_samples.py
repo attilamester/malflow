@@ -1,12 +1,17 @@
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
+from PIL import Image
+
 from core.data.bodmas import Bodmas
 from core.model import CallGraph, CallGraphCompressed
+from core.model.call_graph_image import CallGraphImage
 from core.model.sample import Sample
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
+from util.misc import dict_key_add
 
 
 def scan(cg: CallGraph):
@@ -27,8 +32,40 @@ def scan_sample(sample: Sample, rescan=False):
         if not os.path.isfile(compressed_path):
             Logger.info(f">> No r2 found on disk: {md5}")
             scan(cg)
+            extract_callgraph_instructions(cg)
+            create_callgraph_image(cg)
         else:
             Logger.info(f">> Already existing r2 found on disk: {md5}")
+
+
+def extract_callgraph_instructions(cg: CallGraph):
+    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.instructions.json")
+    instructions = {}
+    for node in cg.nodes.values():
+        for i in node.instructions:
+            key = i.get_fmt()
+            dict_key_add(instructions, key)
+
+    with open(instructions_path, "w") as f:
+        json.dump(instructions, f)
+
+
+def create_callgraph_image(cg: CallGraph):
+    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
+    cg_img = CallGraphImage(cg)
+
+    info = {"configs": {}}
+    for allow_multiple_visits in [True, False]:
+        for store_call in [True, False]:
+            image_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_{allow_multiple_visits}_{store_call}.png")
+            np_pixels, original_size = cg_img.get_image((512, 512), allow_multiple_visits=allow_multiple_visits,
+                                                        store_call=store_call)
+            pil_image = Image.fromarray(np_pixels)
+            pil_image.save(image_path)
+            info["configs"][f"{allow_multiple_visits}_{store_call}"] = original_size
+
+    with open(info_path, "w") as f:
+        json.dump(info, f)
 
 
 if __name__ == "__main__":

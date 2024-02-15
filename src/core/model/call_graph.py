@@ -309,17 +309,6 @@ class CallGraph:
 
         return instructions
 
-    def get_image(self, verbose=False):
-        global_opcodes = b""
-        dfs_nodes = self.DFS()
-        for node in dfs_nodes:
-            i: Instruction
-            global_opcodes += b"".join([i.opcode for i in node.instructions])
-        if verbose:
-            Logger.info(f"Image length: {len(global_opcodes)} for {self.md5}")
-
-        return global_opcodes
-
     def __eq__(self, other):
         if isinstance(other, CallGraph):
             return (self.md5 == other.md5 and
