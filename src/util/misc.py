@@ -53,17 +53,23 @@ def list_stats(list, round_decimal=False):
     return stats
 
 
-def dict_key_add(d, key, item=None):
+def dict_key_add(d, key, item=None, collect_as_list=False):
     if key not in d:
         if item is None:
             d[key] = 1
         else:
-            d[key] = {item}
+            if collect_as_list:
+                d[key] = [item]
+            else:
+                d[key] = {item}
     else:
         if item is None:
             d[key] += 1
         else:
-            d[key].add(item)
+            if collect_as_list:
+                d[key].append(item)
+            else:
+                d[key].add(item)
 
 def dict_key_inc(d, key, inc: int = 1):
     if key not in d:

@@ -49,7 +49,8 @@ class CallGraphImage:
         self.cg = cg
 
     def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
-        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in self.cg.DFS_instructions(**dfs_kwargs)]
+        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in
+                  self.cg.DFS_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)]
 
         np_pixels = np.array([[int(channel) for channel in pixel] for pixel in pixels], dtype=np.uint8)
         np_pixels.resize((img_size[0] * img_size[1] * 3), refcheck=False)
