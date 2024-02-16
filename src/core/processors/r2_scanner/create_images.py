@@ -1,6 +1,6 @@
 import json
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 
@@ -11,12 +11,16 @@ from core.processors.r2_scanner.scan_samples import create_callgraph_image
 from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_inc, dict_key_add
+from util.misc import dict_key_inc, dict_key_add, list_stats
 
 
 def create_image(sample: Sample):
     cg = CallGraph(sample.filepath, scan=False, verbose=False)
     md5 = cg.md5
+
+    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
+    if os.path.isfile(info_path):
+        return
 
     compressed_path = CallGraphCompressed.get_compressed_path(Bodmas.get_dir_r2_scans(), md5)
     if not os.path.isfile(compressed_path):
@@ -68,6 +72,41 @@ def tmp_call_jmp_stats(instructions_path: str):
     plt.savefig("./calls_jumps.png")
 
 
+IMAGE_INFO = {"configs": {}}
+
+
+def tmp_collect_image_stats(sample: Sample):
+    """
+    Run this in main:
+    ```
+    process_samples(Bodmas, tmp_collect_image_stats, batch_size=1000, max_batches=None)
+
+    with open("BODMAS_image_info.json", "w") as f:
+        json.dump(IMAGE_INFO, f)
+    ```
+    """
+    cg = CallGraph(sample.filepath, scan=False, verbose=False)
+    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
+    if not os.path.isfile(info_path):
+        return
+
+    with open(info_path, "r") as f:
+        info = json.load(f)
+
+    for key, value in info["configs"].items():
+        dict_key_add(IMAGE_INFO["configs"], key, value, collect_as_list=True)
+
+
+def tmp_display_image_stats():
+    with open("BODMAS_image_info.json", "r") as f:
+        info = json.load(f)
+
+    print("Image stats on DFS-INSTRUCTION-LENGTH(the original, before cropping to 512x512) for DFS kwargs")
+    for key, value in info["configs"].items():
+        stats = list_stats(value)
+        print(key, stats)
+
+
 if __name__ == "__main__":
     config.load_env()
-    process_samples(Bodmas, create_image, batch_size=1000, max_batches=None, pool=ThreadPoolExecutor(max_workers=8))
+    process_samples(Bodmas, create_image, batch_size=1000, max_batches=None, pool=ProcessPoolExecutor(max_workers=8))

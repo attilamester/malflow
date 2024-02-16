@@ -256,7 +256,8 @@ class CallGraph:
 
         return node_calls_labels_from_instructions
 
-    def DFS_instructions(self, allow_multiple_visits=False, store_call=False) -> List[Instruction]:
+    def DFS_instructions(self, max_instructions: int = None, allow_multiple_visits: bool = False,
+                         store_call: bool = False) -> List[Instruction]:
         """
         Based on :func:`<core.model.call_graph.CallGraph.DFS>`
         The traversal here is done on the instructions level, not the nodes.
@@ -274,6 +275,9 @@ class CallGraph:
             return node_calls_cache[node.label]
 
         def build_instruction_traversal(node: CGNode):
+            if max_instructions and len(instructions) > max_instructions:
+                return
+
             if node.label in visited_nodes:
                 if not allow_multiple_visits:
                     return
@@ -305,6 +309,8 @@ class CallGraph:
         for n in dfs_nodes:
             if n.label in visited_nodes:
                 continue
+            if max_instructions and len(instructions) > max_instructions:
+                break
             build_instruction_traversal(n)
 
         return instructions
