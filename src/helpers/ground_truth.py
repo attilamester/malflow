@@ -1,5 +1,7 @@
 import os
 
+import matplotlib.pyplot as plt
+
 from core.data.bodmas import Bodmas
 from util import config
 from util.logger import Logger
@@ -26,6 +28,13 @@ def create_ground_truth_bodmas(bodmas_meta_csv: str):
 
     df.index.rename("filename(original sha256)", inplace=True)
     df.to_csv("./BODMAS_ground_truth.csv")
+
+
+def get_ground_truth_distribution(bodmas_meta_csv: str):
+    df = read_bodmas_metadata(bodmas_meta_csv)
+    plt.title(f"BODMAS Family Distribution ({df['family'].nunique()} unique families)")
+    df["family"].value_counts().plot(kind="barh", figsize=(10, 60), logx=True)
+    plt.savefig("BODMAS_ground_truth_family_distribution.pdf", bbox_inches='tight')
 
 
 def tmp_rename_png_files_to_contain_family(png_dir):
