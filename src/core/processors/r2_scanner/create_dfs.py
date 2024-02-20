@@ -20,7 +20,7 @@ def create_dfs(sample: Sample):
 
     try:
         cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
-        create_callgraph_dfs(cg)
+        create_callgraph_dfs(cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
     except Exception as e:
         Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
 

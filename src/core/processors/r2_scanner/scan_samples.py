@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
+from typing import Tuple
 
 from PIL import Image
 
@@ -51,7 +52,7 @@ def extract_callgraph_instructions(cg: CallGraph):
         json.dump(instructions, f)
 
 
-def create_callgraph_dfs(cg: CallGraph):
+def create_callgraph_dfs(cg: CallGraph, img_dims=None):
     for allow_multiple_visits in [True, False]:
         for store_call in [True, False]:
             instructions_path = os.path.join(Bodmas.get_dir_r2_scans(),
@@ -61,8 +62,17 @@ def create_callgraph_dfs(cg: CallGraph):
             with open(instructions_path, "wb") as f:
                 pickle.dump(instructions, f)
 
+            if img_dims:
+                pixels = [CallGraphImage.encode_instruction_rgb(i) for i in instructions]
+                for dim in img_dims:
+                    image_path = os.path.join(Bodmas.get_dir_r2_scans(),
+                                              f"{cg.md5}_{dim[0]}x{dim[1]}_{allow_multiple_visits}_{store_call}.png")
+                    np_pixels = CallGraphImage.get_image_from_pixels(dim, pixels)
+                    pil_image = Image.fromarray(np_pixels)
+                    pil_image.save(image_path)
 
-def create_callgraph_image(cg: CallGraph):
+
+def create_callgraph_image(cg: CallGraph, dim: Tuple[int, int] = (512, 512)):
     info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
     cg_img = CallGraphImage(cg)
 
@@ -70,7 +80,7 @@ def create_callgraph_image(cg: CallGraph):
     for allow_multiple_visits in [True, False]:
         for store_call in [True, False]:
             image_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_{allow_multiple_visits}_{store_call}.png")
-            np_pixels, original_size = cg_img.get_image((512, 512), allow_multiple_visits=allow_multiple_visits,
+            np_pixels, original_size = cg_img.get_image(dim, allow_multiple_visits=allow_multiple_visits,
                                                         store_call=store_call)
             pil_image = Image.fromarray(np_pixels)
             pil_image.save(image_path)

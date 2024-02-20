@@ -48,15 +48,25 @@ class CallGraphImage:
     def __init__(self, cg: CallGraph):
         self.cg = cg
 
-    def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
-        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in
-                  self.cg.DFS_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)]
-
+    @staticmethod
+    def get_image_from_pixels(img_size, pixels):
         np_pixels = np.array([[int(channel) for channel in pixel] for pixel in pixels], dtype=np.uint8)
         np_pixels.resize((img_size[0] * img_size[1] * 3), refcheck=False)
         np_pixels = np.reshape(np_pixels, (*img_size, 3))
 
-        return np_pixels, len(pixels)
+        return np_pixels
+
+    @staticmethod
+    def get_image_from_instructions(img_size, instructions: List[Instruction]):
+        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in instructions]
+
+        return CallGraphImage.get_image_from_pixels(img_size, pixels)
+
+    def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
+        instructions = self.cg.DFS_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)
+        np_pixels = CallGraphImage.get_image_from_instructions(img_size, instructions)
+
+        return np_pixels, len(instructions)
 
     @staticmethod
     def encode_instruction_rgb(i: Instruction) -> bytes:
