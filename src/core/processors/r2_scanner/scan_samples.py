@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 
 from PIL import Image
@@ -48,6 +49,17 @@ def extract_callgraph_instructions(cg: CallGraph):
 
     with open(instructions_path, "w") as f:
         json.dump(instructions, f)
+
+
+def create_callgraph_dfs(cg: CallGraph):
+    for allow_multiple_visits in [True, False]:
+        for store_call in [True, False]:
+            instructions_path = os.path.join(Bodmas.get_dir_r2_scans(),
+                                             f"{cg.md5}.instructions_{allow_multiple_visits}_{store_call}.pickle")
+            instructions = cg.DFS_instructions(max_instructions=512 * 512, allow_multiple_visits=allow_multiple_visits,
+                                               store_call=store_call)
+            with open(instructions_path, "wb") as f:
+                pickle.dump(instructions, f)
 
 
 def create_callgraph_image(cg: CallGraph):
