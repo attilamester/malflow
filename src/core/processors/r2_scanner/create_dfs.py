@@ -1,28 +1,51 @@
 import os
+import pickle
 from concurrent.futures import ProcessPoolExecutor
+from typing import Type
 
+from PIL import Image
+
+from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
-from core.model import CallGraph, CallGraphCompressed
-from core.model.sample import Sample
-from core.processors.r2_scanner.scan_samples import create_callgraph_dfs
-from core.processors.util import process_samples
+from core.model import CallGraph
+from core.model.call_graph_image import CallGraphImage
+from core.processors.r2_scanner.create_images import get_path_image
+from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
-from util.logger import Logger
+from util.compression import BrotliCompressor
+
+COMPRESSOR = BrotliCompressor(4)
 
 
-def create_dfs(sample: Sample):
-    cg = CallGraph(sample.filepath, scan=False, verbose=False)
-    md5 = cg.md5
+def create_callgraph_dfs(dset: Type[DatasetProvider], cg: CallGraph, img_dims=None):
+    if not img_dims:
+        img_dims = [(30, 30)]
+    else:
+        img_dims = sorted(img_dims, key=lambda x: x[0] * x[1])
 
-    compressed_path = CallGraphCompressed.get_compressed_path(Bodmas.get_dir_r2_scans(), md5)
-    if not os.path.isfile(compressed_path):
-        raise Exception(f"No r2 found on disk: {md5} for {sample.filepath}")
+    for allow_multiple_visits in [True]:
+        for store_call in [True]:
+            instructions_path = os.path.join(dset.get_dir_instructions(),
+                                             f"{cg.md5}.instructions_{allow_multiple_visits}_{store_call}.pickle")
+            instructions = cg.DFS_instructions(max_instructions=img_dims[-1][0] * img_dims[-1][1],
+                                               allow_multiple_visits=allow_multiple_visits,
+                                               store_call=store_call)
+            with open(instructions_path, "wb") as f:
+                f.write(COMPRESSOR.compress(pickle.dumps([i.compress() for i in instructions])))
 
-    try:
-        cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
-        create_callgraph_dfs(cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
-    except Exception as e:
-        Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
+            if img_dims:
+                pixels = [CallGraphImage.encode_instruction_rgb(i) for i in instructions]
+                for dim in img_dims:
+                    image_path = get_path_image(dset, cg.md5, dim, allow_multiple_visits, store_call)
+                    np_pixels = CallGraphImage.get_image_from_pixels(dim, pixels)
+                    pil_image = Image.fromarray(np_pixels)
+                    pil_image.save(image_path)
+
+
+@decorator_callgraph_processor(Bodmas, skip_load_if=lambda dset, md5: os.path.isfile(
+    get_path_image(dset, md5, (300, 300), False, False)))
+def create_dfs(dset: Type[DatasetProvider], cg: CallGraph):
+    create_callgraph_dfs(dset, cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
 
 
 if __name__ == "__main__":

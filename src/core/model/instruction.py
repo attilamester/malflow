@@ -102,6 +102,17 @@ class Instruction:
             raise Exception(f"Undefined instruction mnemonic `{mnemonic}`")
         return mnemonic
 
+    def compress(self) -> List:
+        return [self.disasm, self.opcode, [[ref.addr, ref.type] for ref in self.refs]]
+
+    @staticmethod
+    def decompress(i: List) -> "Instruction":
+        """
+        :param tokens: return value of `compress`
+        :return:
+        """
+        return Instruction(i[0], i[1], [{"addr": e[0], "type": e[1]} for e in i[2]])
+
 
 class InstructionPrefix(Enum):
     SEGCS = "segcs"

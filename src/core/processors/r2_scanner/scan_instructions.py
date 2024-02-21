@@ -2,34 +2,38 @@ import json
 import os
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
+from typing import Type
 
+from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
-from core.model import CallGraph, CallGraphCompressed
+from core.model import CallGraph
 from core.model.sample import Sample
-from core.processors.r2_scanner.scan_samples import extract_callgraph_instructions
-from core.processors.util import process_samples
+from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
 from util.logger import Logger
-from util.misc import list_stats, dict_key_inc
+from util.misc import list_stats, dict_key_inc, dict_key_add
 
 
-def extract_sample_instructions(sample: Sample):
-    cg = CallGraph(sample.filepath, scan=False, verbose=False)
-    md5 = cg.md5
+def get_path_instructions_json(dset: Type[DatasetProvider], md5: str):
+    return os.path.join(dset.get_dir_instructions(), f"{md5}.instructions.json")
 
-    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{md5}.instructions.json")
-    if os.path.isfile(instructions_path):
-        return
 
-    compressed_path = CallGraphCompressed.get_compressed_path(Bodmas.get_dir_r2_scans(), md5)
-    if not os.path.isfile(compressed_path):
-        raise Exception(f"No r2 found on disk: {md5} for {sample.filepath}")
+def extract_callgraph_instructions(dset: Type[DatasetProvider], cg: CallGraph):
+    instructions_path = get_path_instructions_json(dset, cg.md5)
+    instructions = {}
+    for node in cg.nodes.values():
+        for i in node.instructions:
+            key = i.get_fmt()
+            dict_key_add(instructions, key)
 
-    try:
-        cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
-        extract_callgraph_instructions(cg)
-    except Exception as e:
-        Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
+    with open(instructions_path, "w") as f:
+        json.dump(instructions, f)
+
+
+@decorator_callgraph_processor(Bodmas,
+                               skip_load_if=lambda dset, md5: os.path.isfile(get_path_instructions_json(dset, md5)))
+def extract_sample_instructions(dset: Type[DatasetProvider], cg: CallGraph):
+    extract_callgraph_instructions(dset, cg)
 
 
 INSTRUCTIONS = Counter()
@@ -41,7 +45,7 @@ def sum_up_instructions(sample: Sample):
     cg = CallGraph(sample.filepath, scan=False, verbose=False)
     md5 = cg.md5
 
-    instructions_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{md5}.instructions.json")
+    instructions_path = os.path.join(Bodmas.get_dir_instructions(), f"{md5}.instructions.json")
     if not os.path.isfile(instructions_path):
         Logger.error(f"No instructions found for {sample.filepath}")
         return
