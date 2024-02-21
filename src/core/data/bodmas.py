@@ -3,6 +3,7 @@ import os
 from core.data import DatasetProvider
 from core.model.sample import Sample
 from util.logger import Logger
+from util.misc import ensure_dir
 from util.validators import HashValidator
 
 
@@ -31,12 +32,36 @@ class Bodmas(DatasetProvider):
 
     @staticmethod
     def is_existing_analysis(md5: str):
-        return os.path.isfile(os.path.join(os.environ["BODMAS_DIR_R2_SCANS"], f"{md5}.info"))
+        return os.path.isfile(os.path.join(Bodmas.get_dir_info(), f"{md5}.info"))
 
     @staticmethod
     def get_dir_samples():
         return os.environ["BODMAS_DIR_SAMPLES"]
 
     @staticmethod
-    def get_dir_r2_scans():
+    def get_dir_analysis():
         return os.environ["BODMAS_DIR_R2_SCANS"]
+
+    @staticmethod
+    def get_dir_callgraphs():
+        path = os.path.join(Bodmas.get_dir_analysis(), "callgraphs")
+        ensure_dir(path)
+        return path
+
+    @staticmethod
+    def get_dir_images():
+        path = os.path.join(Bodmas.get_dir_analysis(), "images")
+        ensure_dir(path)
+        return path
+
+    @staticmethod
+    def get_dir_instructions():
+        path = os.path.join(Bodmas.get_dir_analysis(), "instructions")
+        ensure_dir(path)
+        return path
+
+    @staticmethod
+    def get_dir_info():
+        path = os.path.join(Bodmas.get_dir_analysis(), "info")
+        ensure_dir(path)
+        return path
