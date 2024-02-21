@@ -1,8 +1,11 @@
+import os
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from functools import wraps
 from typing import List, Callable, Type, Union
 
 from core.data import DatasetProvider
+from core.model import CallGraph, CallGraphCompressed
 from core.model.sample import Sample
 from util.logger import Logger
 
@@ -51,3 +54,41 @@ def process_sample_batch(batch: List[Sample], batch_number: int, fn: Callable,
         for res in pool.map(fn, batch):
             i += 1
             log_eta(ts, i)
+
+
+def decorator_callgraph_processor(dset: Type[DatasetProvider] = None,
+                                  skip_load_if: Callable[[Type[DatasetProvider], str], bool] = lambda x: False) \
+        -> Callable[[Type[DatasetProvider]], Callable[[Sample], None]]:
+    """
+    Will load the callgraph from disk and pass it to the processor.
+    :param dset:
+    :return: Callable[[Sample], None]
+    """
+
+    def decorator(processor) -> Callable[[Sample], None]:
+        @wraps(processor)
+        def wrapped(sample: Sample):
+            cg = CallGraph(sample.filepath, scan=False, verbose=False)
+            md5 = cg.md5
+
+            if skip_load_if and skip_load_if(dset, md5) is True:
+                Logger.error(f"Skipping `{processor.__name__}` for {md5}")
+                return
+
+            compressed_path = CallGraphCompressed.get_compressed_path(dset.get_dir_callgraphs(), md5)
+            if not os.path.isfile(compressed_path):
+                raise Exception(f"No r2 found on disk: {md5} for {sample.filepath}")
+
+            try:
+                cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
+            except Exception as e:
+                Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
+
+            try:
+                processor(dset, cg)
+            except Exception as e:
+                Logger.error(f"Could not execute processor: {e} [{md5} {sample.filepath}]")
+
+        return wrapped
+
+    return decorator
