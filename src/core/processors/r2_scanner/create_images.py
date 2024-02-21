@@ -1,41 +1,58 @@
 import json
 import os
 from concurrent.futures import ProcessPoolExecutor
+from typing import Tuple, Type
 
 import numpy as np
+from PIL import Image
 
+from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
-from core.model import CallGraph, CallGraphCompressed
+from core.model import CallGraph
+from core.model.call_graph_image import CallGraphImage
 from core.model.sample import Sample
-from core.processors.r2_scanner.scan_samples import create_callgraph_image
-from core.processors.util import process_samples
+from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_inc, dict_key_add, list_stats
+from util.misc import dict_key_inc, dict_key_add, list_stats, ensure_dir
 
 
-def create_image(sample: Sample):
-    cg = CallGraph(sample.filepath, scan=False, verbose=False)
-    md5 = cg.md5
+def get_path_imageinfo(dset: Type[DatasetProvider], md5: str):
+    return os.path.join(dset.get_dir_images(), f"{md5}_imageinfo.json")
 
-    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
-    if os.path.isfile(info_path):
-        return
 
-    compressed_path = CallGraphCompressed.get_compressed_path(Bodmas.get_dir_r2_scans(), md5)
-    if not os.path.isfile(compressed_path):
-        raise Exception(f"No r2 found on disk: {md5} for {sample.filepath}")
+def get_path_image(dset: Type[DatasetProvider], md5: str, dim, allow_multiple_visits: bool, store_call: bool):
+    img_dir = os.path.join(dset.get_dir_images(), f"images_{dim[0]}x{dim[1]}")
+    ensure_dir(img_dir)
+    return os.path.join(img_dir, f"{md5}_{dim[0]}x{dim[1]}_{allow_multiple_visits}_{store_call}.png")
 
-    try:
-        cg = CallGraphCompressed.load(compressed_path, verbose=True).decompress()
-        create_callgraph_image(cg)
-    except Exception as e:
-        Logger.error(f"Could not load compressed callgraph: {e} [{md5} {sample.filepath}]")
+
+def create_callgraph_image(dset: Type[DatasetProvider], cg: CallGraph, dim: Tuple[int, int] = (512, 512)):
+    info_path = get_path_imageinfo(dset, cg.md5)
+    cg_img = CallGraphImage(cg)
+
+    info = {"configs": {}}
+    for allow_multiple_visits in [True]:
+        for store_call in [True]:
+            image_path = get_path_image(dset, cg.md5, dim, allow_multiple_visits, store_call)
+            np_pixels, original_size = cg_img.get_image(dim, allow_multiple_visits=allow_multiple_visits,
+                                                        store_call=store_call)
+            pil_image = Image.fromarray(np_pixels)
+            pil_image.save(image_path)
+            info["configs"][f"{allow_multiple_visits}_{store_call}"] = original_size
+
+    with open(info_path, "w") as f:
+        json.dump(info, f)
+
+
+@decorator_callgraph_processor(Bodmas, skip_load_if=lambda dset, md5: os.path.isfile(get_path_imageinfo(dset, md5)))
+def create_image(dset: Type[DatasetProvider], cg: CallGraph):
+    create_callgraph_image(dset, cg, dim=(512, 512))
 
 
 def tmp_count_rcalls(cg: CallGraph):
     calls = {}
-    calls_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}.calls.json")
+    calls_path = os.path.join(Bodmas.get_dir_info(), f"{cg.md5}.calls.json")
     for node in cg.nodes.values():
         for i in node.instructions:
             if "call" in i.mnemonic or "jmp" in i.mnemonic:
@@ -86,7 +103,7 @@ def tmp_collect_image_stats(sample: Sample):
     ```
     """
     cg = CallGraph(sample.filepath, scan=False, verbose=False)
-    info_path = os.path.join(Bodmas.get_dir_r2_scans(), f"{cg.md5}_imageinfo.json")
+    info_path = os.path.join(Bodmas.get_dir_info(), f"{cg.md5}_imageinfo.json")
     if not os.path.isfile(info_path):
         return
 
