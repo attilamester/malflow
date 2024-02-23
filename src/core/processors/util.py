@@ -56,6 +56,18 @@ def process_sample_batch(batch: List[Sample], batch_number: int, fn: Callable,
             log_eta(ts, i)
 
 
+def decorator_sample_processor(dset: Type[DatasetProvider]) \
+        -> Callable[[Type[DatasetProvider]], Callable[[Sample], None]]:
+    def decorator(processor) -> Callable[[Sample], None]:
+        @wraps(processor)
+        def wrapped(sample: Sample):
+            processor(dset, sample)
+
+        return wrapped
+
+    return decorator
+
+
 def decorator_callgraph_processor(dset: Type[DatasetProvider] = None,
                                   skip_load_if: Callable[[Type[DatasetProvider], str], bool] = lambda x: False) \
         -> Callable[[Type[DatasetProvider]], Callable[[Sample], None]]:

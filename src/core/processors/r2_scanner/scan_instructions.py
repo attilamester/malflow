@@ -8,18 +8,15 @@ from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
 from core.model import CallGraph
 from core.model.sample import Sample
+from core.processors.r2_scanner.paths import get_path_instructions_stats
 from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
 from util.logger import Logger
 from util.misc import list_stats, dict_key_inc, dict_key_add
 
 
-def get_path_instructions_json(dset: Type[DatasetProvider], md5: str):
-    return os.path.join(dset.get_dir_instructions(), f"{md5}.instructions.json")
-
-
-def extract_callgraph_instructions(dset: Type[DatasetProvider], cg: CallGraph):
-    instructions_path = get_path_instructions_json(dset, cg.md5)
+def extract_callgraph_instructions_stats(dset: Type[DatasetProvider], cg: CallGraph):
+    instructions_path = get_path_instructions_stats(dset, cg.md5)
     instructions = {}
     for node in cg.nodes.values():
         for i in node.instructions:
@@ -31,9 +28,9 @@ def extract_callgraph_instructions(dset: Type[DatasetProvider], cg: CallGraph):
 
 
 @decorator_callgraph_processor(Bodmas,
-                               skip_load_if=lambda dset, md5: os.path.isfile(get_path_instructions_json(dset, md5)))
+                               skip_load_if=lambda dset, md5: os.path.isfile(get_path_instructions_stats(dset, md5)))
 def extract_sample_instructions(dset: Type[DatasetProvider], cg: CallGraph):
-    extract_callgraph_instructions(dset, cg)
+    extract_callgraph_instructions_stats(dset, cg)
 
 
 INSTRUCTIONS = Counter()
