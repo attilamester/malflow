@@ -1,9 +1,13 @@
 import inspect
 import logging
+import os
 import traceback
 from datetime import datetime
 from enum import Enum
+from logging.handlers import RotatingFileHandler
 from typing import Union
+
+from util.misc import ensure_dir
 
 
 class LogLevel(Enum):
@@ -101,8 +105,20 @@ class Logger:
         return logger
 
     @staticmethod
-    def get_logger_instance(logger_name):
+    def get_logger_instance(logger_name) -> logging.Logger:
         if logger_name in Logger.LOGGER_INSTANCES:
             return Logger.LOGGER_INSTANCES.get(logger_name)
 
         return Logger.get_logger(logger_name)
+
+    @staticmethod
+    def set_file_logging(file_path):
+        if not Logger.DEFAULT_LOGGER:
+            ensure_dir(os.path.dirname(file_path))
+            if not Logger.DEFAULT_LOGGER:
+                Logger.DEFAULT_LOGGER = Logger.get_logger_instance(Logger.DEFAULT_LOGGER_NAME)
+
+        log_formatter = logging.Formatter("%(asctime)s [%(levelname)-8.8s] %(message)s")
+        file_handler = RotatingFileHandler(file_path + (".log" if not file_path.endswith(".log") else ""))
+        file_handler.setFormatter(log_formatter)
+        Logger.DEFAULT_LOGGER.addHandler(file_handler)

@@ -11,20 +11,11 @@ from core.data.bodmas import Bodmas
 from core.model import CallGraph
 from core.model.call_graph_image import CallGraphImage
 from core.model.sample import Sample
+from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image
 from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
 from util.logger import Logger
-from util.misc import dict_key_inc, dict_key_add, list_stats, ensure_dir
-
-
-def get_path_imageinfo(dset: Type[DatasetProvider], md5: str):
-    return os.path.join(dset.get_dir_images(), f"{md5}_imageinfo.json")
-
-
-def get_path_image(dset: Type[DatasetProvider], md5: str, dim, allow_multiple_visits: bool, store_call: bool):
-    img_dir = os.path.join(dset.get_dir_images(), f"images_{dim[0]}x{dim[1]}")
-    ensure_dir(img_dir)
-    return os.path.join(img_dir, f"{md5}_{dim[0]}x{dim[1]}_{allow_multiple_visits}_{store_call}.png")
+from util.misc import dict_key_inc, dict_key_add, list_stats
 
 
 def create_callgraph_image(dset: Type[DatasetProvider], cg: CallGraph, dim: Tuple[int, int] = (512, 512)):

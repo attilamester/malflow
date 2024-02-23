@@ -9,7 +9,7 @@ from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
 from core.model import CallGraph
 from core.model.call_graph_image import CallGraphImage
-from core.processors.r2_scanner.create_images import get_path_image
+from core.processors.r2_scanner.paths import get_path_image, get_path_instructions_dfs
 from core.processors.util import process_samples, decorator_callgraph_processor
 from util import config
 from util.compression import BrotliCompressor
@@ -25,8 +25,7 @@ def create_callgraph_dfs(dset: Type[DatasetProvider], cg: CallGraph, img_dims=No
 
     for allow_multiple_visits in [True]:
         for store_call in [True]:
-            instructions_path = os.path.join(dset.get_dir_instructions(),
-                                             f"{cg.md5}.instructions_{allow_multiple_visits}_{store_call}.pickle")
+            instructions_path = get_path_instructions_dfs(dset, cg.md5, allow_multiple_visits, store_call)
             instructions = cg.DFS_instructions(max_instructions=img_dims[-1][0] * img_dims[-1][1],
                                                allow_multiple_visits=allow_multiple_visits,
                                                store_call=store_call)

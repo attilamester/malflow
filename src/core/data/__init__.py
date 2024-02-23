@@ -5,42 +5,42 @@ from core.model.sample import Sample
 
 
 class DatasetProvider(ABC):
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_samples() -> Generator[Sample, None, None]:
+    def get_samples(cls) -> Generator[Sample, None, None]:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_sample(md5: str = None, sha256: str = None) -> Sample:
+    def get_sample(cls, md5: str = None, sha256: str = None) -> Sample:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_samples() -> str:
+    def get_dir_samples(cls) -> str:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_analysis() -> str:
+    def get_dir_analysis(cls) -> str:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_callgraphs() -> str:
+    def get_dir_callgraphs(cls) -> str:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_images() -> str:
+    def get_dir_images(cls) -> str:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_instructions() -> str:
+    def get_dir_instructions(cls) -> str:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def get_dir_info() -> str:
+    def get_dir_info(cls) -> str:
         pass

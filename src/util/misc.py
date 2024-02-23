@@ -3,8 +3,6 @@ import os
 
 import numpy as np
 
-from util.logger import Logger
-
 
 def get_project_root():
     return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -16,7 +14,7 @@ def ensure_dir(path):
             os.makedirs(path)
     except OSError as e:
         if e.errno != errno.EEXIST:
-            Logger.error("Could not create dir " + path)
+            print("Could not create dir " + path)
 
 
 def display_size(size: int) -> str:
@@ -70,6 +68,7 @@ def dict_key_add(d, key, item=None, collect_as_list=False):
                 d[key].append(item)
             else:
                 d[key].add(item)
+
 
 def dict_key_inc(d, key, inc: int = 1):
     if key not in d:
