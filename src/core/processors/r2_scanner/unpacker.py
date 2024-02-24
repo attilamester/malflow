@@ -40,14 +40,18 @@ def unpack_sample(sample: Sample):
                 packer_info = tokens[4].replace("Packer:", "").strip()
                 packed = True
     if not packed:
-        Logger.info(f"Sample not packed: {sample.md5} {sample.sha256}")
         return
 
     try:
+        Logger.info(f"Unpacking sample: {sample.md5} {sample.sha256} {sample.filepath}")
         subprocess.run(["unipacker", "--dest", dset_unpacked.get_dir_samples(), sample.filepath],
                        capture_output=True)
     except Exception as e:
         Logger.error(f"Error unpacking {sample.filepath}: {e}")
+
+    dest_path = os.path.join(dset_unpacked.get_dir_samples(), f"unpacked_{sample.filepath}")
+    if not os.path.isfile(dest_path):
+        Logger.error(f"Unpacking failed: {sample.md5} {sample.sha256} {sample.filepath}")
 
 
 @decorator_sample_processor(BodmasUnpacked)
