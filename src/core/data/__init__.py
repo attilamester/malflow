@@ -1,7 +1,9 @@
+import os
 from abc import abstractmethod, ABC
 from typing import Generator
 
 from core.model.sample import Sample
+from util.misc import ensure_dir
 
 
 class DatasetProvider(ABC):
@@ -24,6 +26,12 @@ class DatasetProvider(ABC):
     @abstractmethod
     def get_dir_analysis(cls) -> str:
         pass
+
+    @classmethod
+    def get_dir_analysis_custom(cls, custom: str) -> str:
+        path = os.path.join(cls.get_dir_info(), custom)
+        ensure_dir(path)
+        return path
 
     @classmethod
     @abstractmethod

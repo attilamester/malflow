@@ -49,9 +49,9 @@ def send_mendeley_api_request(method, endpoint, **kwargs):
         request_method = requests.get
     if not request_method:
         raise Exception(f"Invalid method: {method}")
-    res = request_method("https://api.mendeley.com" + ("" if endpoint.startswith("/") else "/") + endpoint, **kwargs)
-    display_response(res)
-    return res
+    # res = request_method("https://api.mendeley.com" + ("" if endpoint.startswith("/") else "/") + endpoint, **kwargs)
+    # display_response(res)
+    # return res
 
 
 def display_response(response: requests.Response):
@@ -66,6 +66,23 @@ def upload_papers(papers: List[MendeleyPaper]):
         for res in executor.map(process_and_upload_to_mendeley, papers):
             i += 1
             print(f"Done: {i}")
+
+
+def mendeley_xml_export_to_csv(path):
+    soup = BeautifulSoup(open(path, "r").read(), "xml")
+    sources = soup.find_all("Source")
+
+    def get_field(source, field):
+        try:
+            return source.find(field).text
+        except:
+            return ""
+
+    for i, source in enumerate(sources):
+        title = get_field(source, "Title")
+        year = get_field(source, "Year")
+        tag = get_field(source, "Tag")
+        print(f"{year};{title};{tag}")
 
 
 # ==================
@@ -211,23 +228,6 @@ def upload_from_buffer():
         papers.append(MendeleyPaper(title, year, []))
 
     upload_papers(papers)
-
-
-def process_xml_export(path):
-    soup = BeautifulSoup(open(path, "r").read(), "xml")
-    sources = soup.find_all("Source")
-
-    def get_field(source, field):
-        try:
-            return source.find(field).text
-        except:
-            return ""
-
-    for i, source in enumerate(sources):
-        title = get_field(source, "Title")
-        year = get_field(source, "Year")
-        tag = get_field(source, "Tag")
-        print(f"{year};{title};{tag}")
 
 
 if __name__ == "__main__":

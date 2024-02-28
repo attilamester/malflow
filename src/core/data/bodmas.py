@@ -76,12 +76,23 @@ class Bodmas(DatasetProvider):
         return path
 
 
-class BodmasUnpacked(Bodmas):
+class BodmasArmed(Bodmas):
 
     @classmethod
     def get_dir_samples(cls):
-        return os.path.join(os.path.dirname(Bodmas.get_dir_samples()),
-                            os.path.basename(Bodmas.get_dir_samples()) + "_unpacked")
+        return os.path.join(os.path.dirname(Bodmas.get_dir_samples()), "armed")
+
+    @classmethod
+    def get_dir_analysis(cls):
+        raise Exception("BodmasArmed does not have an analysis directory")
+
+
+class BodmasUnpacked(BodmasArmed):
+
+    @classmethod
+    def get_dir_samples(cls):
+        return os.path.join(os.path.dirname(BodmasArmed.get_dir_samples()),
+                            os.path.basename(BodmasArmed.get_dir_samples()) + "_unpacked")
 
     @classmethod
     def get_dir_analysis(cls):
