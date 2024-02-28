@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 from core.data.bodmas import Bodmas
 from util import config
 from util.logger import Logger
+from util.validators import HashValidator
 
 config.load_env()
 
 BODMAS_METADATA_CSV = "/opt/work/bd/BODMAS/bodmas_metadata.csv"
-
+BODMAS_GROUND_TRUTH_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth.csv"
 
 def read_bodmas_metadata(bodmas_meta_csv: str):
     import pandas as pd
@@ -30,7 +31,7 @@ def create_ground_truth_bodmas(bodmas_meta_csv: str):
             Logger.info(f"Processed {i} samples up to {sha}")
 
     df.index.rename("filename(original sha256)", inplace=True)
-    df.to_csv("./BODMAS_ground_truth.csv")
+    df.to_csv(BODMAS_GROUND_TRUTH_CSV)
 
 
 def get_ground_truth_distribution(bodmas_meta_csv: str):
@@ -56,13 +57,26 @@ def get_ground_truth_distribution(bodmas_meta_csv: str):
         json.dump(family_dict, f)
 
 
-def tmp_rename_png_files_to_contain_family(png_dir):
+def rename_png_files_to_contain_family(png_dir, md5_index_key="md5"):
+    """
+    md5_index_key: str
+    - col. name in GT csv, naming the md5 field. may be "md5" or "unpacked-md5"
+    """
     import pandas as pd
-    df = pd.read_csv("./BODMAS_ground_truth.csv")
-    df.set_index("md5", inplace=True)
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV)
+    df.set_index(md5_index_key, inplace=True)
     for i, file in enumerate(os.listdir(png_dir)):
         md5 = file.split("_")[0]
+        if not HashValidator.is_md5(md5):
+            Logger.warning(f"Invalid supposed md5 detected on file {file}")
+            continue
+
         family = df.loc[md5, "family"]
+        if isinstance(family, pd.Series):
+            Logger.warning(f"Multiple families detected for md5 {md5}: {family}")
+            family_count = family.value_counts()
+            family = "-OR-".join([f"{f}:{family_count[f]}" for f in family.unique()])
+
         new_name = f"{family}_{file}"
         os.rename(os.path.join(png_dir, file), os.path.join(png_dir, new_name))
         if i % 1000 == 0:
