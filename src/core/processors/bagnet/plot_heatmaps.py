@@ -1,22 +1,19 @@
-import bagnet_pytorch.pytorchnet as pytorchnet
+"""
+Based on https://github.com/wielandbrendel/bag-of-local-features-models
+"""
+
 import cv2
-import database.dataloader as dl
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from database.config import dataset_config as config
 from skimage import feature, transform
 
+import dataset.dataloader as dl
+import pytorchnet
+from dataset import config
 
-def plot_heatmap(
-    heatmap,
-    original,
-    ax,
-    cmap="RdBu_r",
-    percentile=99,
-    dilation=0.5,
-    alpha=0.25,
-):
+
+def plot_heatmap(heatmap, original, ax, cmap="RdBu_r", percentile=99, dilation=0.5, alpha=0.25):
     """
     Plots the heatmap on top of the original image
     (which is shown by most important edges).
@@ -77,66 +74,12 @@ def plot_heatmap(
     abs_max = np.percentile(np.abs(heatmap), percentile)
     abs_min = abs_max
 
-    ax.imshow(
-        heatmap,
-        extent=extent,
-        interpolation="none",
-        cmap=cmap,
-        vmin=-abs_min,
-        vmax=abs_max,
-    )
+    ax.imshow(heatmap, extent=extent, interpolation="none", cmap=cmap, vmin=-abs_min, vmax=abs_max)
     if overlay is not None:
-        ax.imshow(
-            overlay,
-            extent=extent,
-            interpolation="none",
-            cmap=cmap_original,
-            alpha=alpha,
-        )
+        ax.imshow(overlay, extent=extent, interpolation="none", cmap=cmap_original, alpha=alpha)
 
 
-def plot_heatmap_protopnet_style(
-    heatmap, original, ax, filename, pred, true, actual, blur=False, perc=99
-):
-    if len(heatmap.shape) == 3:
-        heatmap = np.mean(heatmap, 0)
-
-    # cutting off large pixel values
-    perc = np.percentile(abs(heatmap), perc)
-    heatmap[heatmap > perc] = perc
-    heatmap[heatmap < -perc] = -perc
-
-    vmin = np.amin(heatmap)
-    vmax = np.amax(heatmap)
-    heatmap = (heatmap - vmin) / (vmax - vmin)
-
-    heatmap = np.exp(7 * heatmap)  # scaling pixel intensities
-
-    vmin = np.amin(heatmap)
-    vmax = np.amax(heatmap)
-    heatmap = (heatmap - vmin) / (vmax - vmin)
-
-    heatmap = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
-    if blur:
-        heatmap = cv2.blur(heatmap, (2, 2))
-    heatmap = np.float32(heatmap) / 255
-    # heatmap = heatmap[
-    #     ..., ::-1
-    # ]  # inverting last dimension??? - inverts colors
-    overlayed_img = 0.5 * original + 0.3 * heatmap
-
-    cv2.imwrite
-    (
-        f"./heatmaps/pascalvoc-inv/{filename}_{pred}_{true}_{actual}.png",
-        overlayed_img * 255,
-    )
-
-    ax.imshow(overlayed_img)
-
-
-def generate_heatmap_pytorch(
-    model, image, target, patchsize, padding="replication"
-):
+def generate_heatmap_pytorch(model, image, target, patchsize, padding="replication"):
     """
     Generates high-resolution heatmap for a BagNet by decomposing the
     image into all possible patches and by computing the logits for
@@ -154,7 +97,6 @@ def generate_heatmap_pytorch(
         The size of the receptive field of the given BagNet.
 
     """
-    import torch
 
     with torch.no_grad():
         _, c, x, y = image.shape
@@ -164,9 +106,9 @@ def generate_heatmap_pytorch(
         if padding == "zero":  # original code
             padded_image = np.zeros((c, x + patchsize - 1, y + patchsize - 1))
             padded_image[
-                :,
-                (patchsize - 1) // 2 : (patchsize - 1) // 2 + x,
-                (patchsize - 1) // 2 : (patchsize - 1) // 2 + y,
+            :,
+            (patchsize - 1) // 2: (patchsize - 1) // 2 + x,
+            (patchsize - 1) // 2: (patchsize - 1) // 2 + y,
             ] = image[0]
             input = torch.from_numpy(padded_image[None].astype(np.float32))
         elif padding == "replication":
@@ -199,6 +141,42 @@ def generate_heatmap_pytorch(
         return logits.reshape(
             (config["img_shape"][0] - delta, config["img_shape"][1] - delta)
         )
+
+
+# ==========================
+# Other plotters
+# ==========================
+
+def plot_heatmap_protopnet_style(heatmap, original, ax, filename, pred, true, actual, blur=False, perc=99):
+    if len(heatmap.shape) == 3:
+        heatmap = np.mean(heatmap, 0)
+
+    # cutting off large pixel values
+    perc = np.percentile(abs(heatmap), perc)
+    heatmap[heatmap > perc] = perc
+    heatmap[heatmap < -perc] = -perc
+
+    vmin = np.amin(heatmap)
+    vmax = np.amax(heatmap)
+    heatmap = (heatmap - vmin) / (vmax - vmin)
+
+    heatmap = np.exp(7 * heatmap)  # scaling pixel intensities
+
+    vmin = np.amin(heatmap)
+    vmax = np.amax(heatmap)
+    heatmap = (heatmap - vmin) / (vmax - vmin)
+
+    heatmap = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
+    if blur:
+        heatmap = cv2.blur(heatmap, (2, 2))
+    heatmap = np.float32(heatmap) / 255
+    # heatmap = heatmap[
+    #     ..., ::-1
+    # ]  # inverting last dimension??? - inverts colors
+    overlayed_img = 0.5 * original + 0.3 * heatmap
+
+    cv2.imwrite(f"./heatmaps/pascalvoc-inv/{filename}_{pred}_{true}_{actual}.png", overlayed_img * 255)
+    ax.imshow(overlayed_img)
 
 
 batch_size = 1  # todo: read this from config

@@ -1,9 +1,12 @@
+"""
+Based on https://github.com/wielandbrendel/bag-of-local-features-models
+"""
+
 import math
 import os
 
 import torch
 import torch.nn as nn
-
 from config import dataset_config as config
 from torch.utils import model_zoo
 
@@ -12,17 +15,17 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 __all__ = ["bagnet9", "bagnet17", "bagnet33"]
 
 model_urls = {
-            'bagnet9': 'https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet8-34f4ccd2.pth.tar',
-            'bagnet17': 'https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet16-105524de.pth.tar',
-            'bagnet33': 'https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet32-2ddd53ed.pth.tar',
-                            }
+    "bagnet9": "https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet8-34f4ccd2.pth.tar",
+    "bagnet17": "https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet16-105524de.pth.tar",
+    "bagnet33": "https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet32-2ddd53ed.pth.tar",
+}
 
 
 class Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
-        self, inplanes, planes, stride=1, downsample=None, kernel_size=1
+            self, inplanes, planes, stride=1, downsample=None, kernel_size=1
     ):
         super(Bottleneck, self).__init__()
         # print(f"""Creating bottleneck
@@ -74,13 +77,13 @@ class Bottleneck(nn.Module):
 
 class BagNet(nn.Module):
     def __init__(
-        self,
-        block,
-        layers,
-        strides=[1, 2, 2, 2],
-        kernel3=[0, 0, 0, 0],
-        num_classes=1000,
-        avg_pool=True,
+            self,
+            block,
+            layers,
+            strides=[1, 2, 2, 2],
+            kernel3=[0, 0, 0, 0],
+            num_classes=1000,
+            avg_pool=True,
     ):
         self.inplanes = 64
         super(BagNet, self).__init__()
@@ -169,7 +172,7 @@ class BagNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(
-        self, block, planes, blocks, stride=1, kernel3=0, prefix=""
+            self, block, planes, blocks, stride=1, kernel3=0, prefix=""
     ):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -239,71 +242,46 @@ class BagNet(nn.Module):
         return x
 
 
-def bagnet33(pretrained=False, strides=[2, 2, 2, 1], **kwargs):
-    """Constructs a Bagnet-33 model.
-
+def create_bagnet_model(kernel3, strides=None, pretrained=False, pretrained_model_name=None, **kwargs):
+    """
+    Constructs a Bagnet model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
+    if not strides:
+        strides = [2, 2, 2, 1]
     model = BagNet(
         Bottleneck,
         [3, 4, 6, 3],
         strides=strides,
-        kernel3=[1, 1, 1, 1],
+        kernel3=kernel3,
         **kwargs,
     )
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls["bagnet33"]))
-    return model
-
-
-def bagnet17(
-    pretrained=False, strides=[2, 2, 2, 1], num_classes=1000, **kwargs
-):
-    """Constructs a Bagnet-17 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = BagNet(
-        Bottleneck,
-        [3, 4, 6, 3],
-        strides=strides,
-        kernel3=[1, 1, 1, 0],
-        num_classes=num_classes,
-        **kwargs,
-    )
-    if pretrained:
-        my_dict = model_zoo.load_url(model_urls["bagnet17"])
-        # print(type(my_dict))
+        state = model.load_state_dict(model_zoo.load_url(model_urls[pretrained_model_name]))
         if config["color_channels"] == 1:  # greyscale
-            print(
-                "Adding the first three conv. weights of the pretrained BagNet model"
-            )
-            my_dict.pop("fc.weight")
-            my_dict.pop("fc.bias")
+            print("Adding the first three conv. weights of the pretrained BagNet model")
+            state.pop("fc.weight")
+            state.pop("fc.bias")
             if model.conv1.weight.size(1) == 1:
-                conv1_w = my_dict.pop("conv1.weight")
+                conv1_w = state.pop("conv1.weight")
                 conv1_w = torch.sum(conv1_w, dim=1, keepdim=True)
-                my_dict["conv1.weight"] = conv1_w
+                state["conv1.weight"] = conv1_w
 
-            model.load_state_dict(my_dict, strict=False)
+            model.load_state_dict(state, strict=False)
     return model
 
 
-def bagnet9(pretrained=False, strides=[2, 2, 2, 1], **kwargs):
-    """Constructs a Bagnet-9 model.
+def bagnet9(strides=None, pretrained=False, **kwargs):
+    return create_bagnet_model(kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
+                               pretrained_model_name="bagnet9", **kwargs)
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = BagNet(
-        Bottleneck,
-        [3, 4, 6, 3],
-        strides=strides,
-        kernel3=[1, 1, 0, 0],
-        **kwargs,
-    )
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls["bagnet9"]))
-    return model
+
+def bagnet17(strides=None, pretrained=False, **kwargs):
+    return create_bagnet_model(kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
+                               pretrained_model_name="bagnet17", **kwargs)
+
+
+def bagnet33(strides=None, pretrained=False, **kwargs):
+    return create_bagnet_model(kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
+                               pretrained_model_name="bagnet33", **kwargs)

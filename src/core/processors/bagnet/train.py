@@ -1,9 +1,6 @@
-# adding project root to sys path:
-# from pathlib import Path
-# import sys
-# path_root = Path(__file__).parents[1]
-# sys.path.append(str(path_root))
-# print(sys.path)
+"""
+Based on https://github.com/pytorch/examples/blob/main/imagenet/main.py
+"""
 
 import argparse
 import os
@@ -13,8 +10,6 @@ import time
 import warnings
 from enum import Enum
 
-import pytorchnet as pytorchnet
-import dataloader as dl
 import torch
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
@@ -26,11 +21,13 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.models as models
 import torchvision.transforms as transforms
-
-from config import dataset_config as config
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import Subset
 from torchvision.datasets import CIFAR10
+
+import dataset.dataloader as dl
+import pytorchnet as pytorchnet
+from dataset.config import dataset_config as config
 
 model_names = sorted(
     name
@@ -41,84 +38,23 @@ model_names = sorted(
 )
 
 parser = argparse.ArgumentParser(description="PyTorch ImageNet Training")
-parser.add_argument(
-    "data",
-    metavar="DIR",
-    nargs="?",
-    default="imagenet",
-    help="path to dataset (default: imagenet)",
-)
-parser.add_argument(
-    "-a",
-    "--arch",
-    metavar="ARCH",
-    default="resnet18",
-    choices=model_names,
-    help="model architecture: "
-    + " | ".join(model_names)
-    + " (default: resnet18)",
-)
-parser.add_argument(
-    "-j",
-    "--workers",
-    default=4,
-    type=int,
-    metavar="N",
-    help="number of data loading workers (default: 4)",
-)
-parser.add_argument(
-    "--epochs",
-    default=90,
-    type=int,
-    metavar="N",
-    help="number of total epochs to run",
-)
-parser.add_argument(
-    "--start-epoch",
-    default=0,
-    type=int,
-    metavar="N",
-    help="manual epoch number (useful on restarts)",
-)
-parser.add_argument(
-    "-b",
-    "--batch-size",
-    default=256,
-    type=int,
-    metavar="N",
-    help="mini-batch size (default: 256), this is the total "
-    "batch size of all GPUs on the current node when "
-    "using Data Parallel or Distributed Data Parallel",
-)
-parser.add_argument(
-    "--lr",
-    "--learning-rate",
-    default=0.1,
-    type=float,
-    metavar="LR",
-    help="initial learning rate",
-    dest="lr",
-)
-parser.add_argument(
-    "--momentum", default=0.9, type=float, metavar="M", help="momentum"
-)
-parser.add_argument(
-    "--wd",
-    "--weight-decay",
-    default=1e-4,
-    type=float,
-    metavar="W",
-    help="weight decay (default: 1e-4)",
-    dest="weight_decay",
-)
-parser.add_argument(
-    "-p",
-    "--print-freq",
-    default=10,
-    type=int,
-    metavar="N",
-    help="print frequency (default: 10)",
-)
+parser.add_argument("data", metavar="DIR", nargs="?", default="imagenet", help="path to dataset (default: imagenet)")
+parser.add_argument("-a", "--arch", metavar="ARCH", default="resnet18", choices=model_names,
+                    help="model architecture: " + " | ".join(model_names) + " (default: resnet18)")
+parser.add_argument("-j", "--workers", default=4, type=int, metavar="N",
+                    help="number of data loading workers (default: 4)")
+parser.add_argument("--epochs", default=90, type=int, metavar="N", help="number of total epochs to run")
+parser.add_argument("--start-epoch", default=0, type=int, metavar="N", help="manual epoch number (useful on restarts)")
+parser.add_argument("-b", "--batch-size", default=256, type=int, metavar="N",
+                    help="mini-batch size (default: 256), this is the total "
+                         "batch size of all GPUs on the current node when "
+                         "using Data Parallel or Distributed Data Parallel")
+parser.add_argument("--lr", "--learning-rate", default=0.1, type=float, metavar="LR", help="initial learning rate",
+                    dest="lr")
+parser.add_argument("--momentum", default=0.9, type=float, metavar="M", help="momentum")
+parser.add_argument("--wd", "--weight-decay", default=1e-4, type=float, metavar="W",
+                    help="weight decay (default: 1e-4)", dest="weight_decay")
+parser.add_argument("-p", "--print-freq", default=10, type=int, metavar="N", help="print frequency (default: 10)")
 parser.add_argument(
     "--resume",
     default="",
@@ -179,9 +115,9 @@ parser.add_argument(
     "--multiprocessing-distributed",
     action="store_true",
     help="Use multi-processing distributed training to launch "
-    "N processes per node, which has N GPUs. This is the "
-    "fastest way to use PyTorch for either single node or "
-    "multi node data parallel training",
+         "N processes per node, which has N GPUs. This is the "
+         "fastest way to use PyTorch for either single node or "
+         "multi node data parallel training",
 )
 parser.add_argument(
     "--dummy", action="store_true", help="use fake data to benchmark"
@@ -388,7 +324,6 @@ def main_worker(gpu, ngpus_per_node, args):
         print("SIZE OF THE VALID LOADER:")
         print(len(val_loader))
 
-
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset
@@ -430,8 +365,8 @@ def main_worker(gpu, ngpus_per_node, args):
         best_acc1 = max(acc1, best_acc1)
 
         if not args.multiprocessing_distributed or (
-            args.multiprocessing_distributed
-            and args.rank % ngpus_per_node == 0
+                args.multiprocessing_distributed
+                and args.rank % ngpus_per_node == 0
         ):
             save_checkpoint(
                 {
@@ -480,7 +415,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, args):
         # print("OUTPUT SIZE:")
         print(output)
         # print("TARGET SIZE:")
-        print(target)        
+        print(target)
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 1))
@@ -542,11 +477,11 @@ def validate(val_loader, model, criterion, args):
     progress = ProgressMeter(
         len(val_loader)
         + (
-            args.distributed
-            and (
-                len(val_loader.sampler) * args.world_size
-                < len(val_loader.dataset)
-            )
+                args.distributed
+                and (
+                        len(val_loader.sampler) * args.world_size
+                        < len(val_loader.dataset)
+                )
         ),
         [batch_time, losses, top1, top5],
         prefix="Test: ",
@@ -561,7 +496,7 @@ def validate(val_loader, model, criterion, args):
         top5.all_reduce()
 
     if args.distributed and (
-        len(val_loader.sampler) * args.world_size < len(val_loader.dataset)
+            len(val_loader.sampler) * args.world_size < len(val_loader.dataset)
     ):
         aux_val_dataset = Subset(
             val_loader.dataset,
@@ -670,11 +605,11 @@ def evalF1(val_loader, model, criterion, args):
     progress = ProgressMeter(
         len(val_loader)
         + (
-            args.distributed
-            and (
-                len(val_loader.sampler) * args.world_size
-                < len(val_loader.dataset)
-            )
+                args.distributed
+                and (
+                        len(val_loader.sampler) * args.world_size
+                        < len(val_loader.dataset)
+                )
         ),
         [batch_time, losses, top1, top5],
         prefix="Test: ",
@@ -689,7 +624,7 @@ def evalF1(val_loader, model, criterion, args):
         top5.all_reduce()
 
     if args.distributed and (
-        len(val_loader.sampler) * args.world_size < len(val_loader.dataset)
+            len(val_loader.sampler) * args.world_size < len(val_loader.dataset)
     ):
         aux_val_dataset = Subset(
             val_loader.dataset,
@@ -713,7 +648,7 @@ def evalF1(val_loader, model, criterion, args):
 
 
 def save_checkpoint(
-    state, is_best, filename="checkpoint_bagnet_bosch_cropped.pth.tar"
+        state, is_best, filename="checkpoint_bagnet_bosch_cropped.pth.tar"
 ):
     torch.save(state, filename)
     if is_best:
