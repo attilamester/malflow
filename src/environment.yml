@@ -1,0 +1,28 @@
+name: xai
+channels:
+  - anaconda
+  - conda-forge
+  - pytorch
+dependencies:
+  - albumentations
+  - black
+  - black-jupyter
+  - cudatoolkit
+  - flake8
+  - isort
+  - pre_commit
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - python==3.10
+  - python-dotenv
+  - scikit-learn
+  - tensorflow
+  - tensorflow-datasets
+  - pip:
+    - opencv-contrib-python
+    - --extra-index-url https://download.pytorch.org/whl/cu118
+    - torch==2.0.1+cu118
+    - torchvision==0.15.2+cu118
+    - torchinfo
