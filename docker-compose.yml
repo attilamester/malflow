@@ -1,9 +1,9 @@
 version: '3.8'
 services:
 
-  malcallgraph_test:
-    image: image_malcallgraph
-    container_name: container_malcallgraph
+  malflow_test:
+    image: image_malflow
+    container_name: container_malflow
     build:
       context: .
       network: host
