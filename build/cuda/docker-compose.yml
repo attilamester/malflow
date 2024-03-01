@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+
+  cuda-11.8.0.base-pytorch:
+    image: attilamester/cuda-11.8.0.base-pytorch
+    container_name: container_cuda-11.8.0.base-pytorch
+    build:
+      context: .
+      network: host
+      dockerfile: ./Dockerfile
+    network_mode: "host"

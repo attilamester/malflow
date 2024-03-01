@@ -5,8 +5,8 @@ services:
     image: image_malflow_train
     container_name: container_malflow_train
     build:
-      context: .
+      context: ../../../
       network: host
-      dockerfile: ./Dockerfile
+      dockerfile: ./core/processors/bagnet/Dockerfile
     env_file:
       - dataset.env

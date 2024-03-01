@@ -1,27 +1,10 @@
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS base
+FROM docker.io/attilamester/cuda-11.8.0.base-pytorch
 
 WORKDIR /usr/malflow
 
-RUN apt update && apt install -y wget && wget -O /tmp/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py38_23.11.0-2-Linux-x86_64.sh && \
-    bash /tmp/miniconda.sh -b -p /miniconda && \
-    eval "$(/miniconda/bin/conda shell.bash hook)" && \
-    conda init
-COPY environment.yml .
-RUN --mount=type=cache,target=/opt/conda/pkgs eval "$(/miniconda/bin/conda shell.bash hook)" && \
-    conda env create --name malflow-train --file=environment.yml && \
-    conda activate malflow-train && \
-    conda clean --all --yes && \
-    conda-pack -n malflow-train -o /tmp/env.tar && \
-    mkdir /venv && cd /venv && tar xf /tmp/env.tar && \
-    /venv/bin/conda-unpack && \
-    find /venv -type d -name "__pycache__" -exec rm -rf {} + && \
-    find /venv -follow -type f -name "*.a" -delete && \
-    find /venv -follow -type f -name "*.pyc" -delete
+RUN mkdir -p src/core/processors/bagnet && apt update && apt install -y wget && \
+    wget -O src/core/processors/bagnet/main.py https://raw.githubusercontent.com/attilamester/pytorch-examples/feature/83/imagenet/main.py
 
-FROM nvidia/cuda:11.8.0-base-ubuntu22.04 AS main
+COPY . .
 
-WORKDIR /usr/malflow
-
-COPY --from=BASE /venv /venv
-
-RUN /bin/bash -c "source /venv/bin/activate"
+ENTRYPOINT ["/bin/bash", "-c", "source /venv/bin/activate && cd src && python3 -m core.processors.bagnet.main --use-module-definitions train_definitions.py"]

@@ -1,4 +1,5 @@
 import os
+from typing import Dict, Tuple
 
 import albumentations as alb
 import cv2
@@ -8,32 +9,33 @@ from albumentations.pytorch import ToTensorV2
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, RandomSampler
 
-from core.processors.bagnet.config import Datasets, ImgDataset
+from core.processors.bagnet.dataset.dataset import Datasets, ImgDataset
+from core.processors.bagnet.dataset.preprocess import filter_ds_having_at_column_min_occurencies
 
 
 class BodmasDataset(Dataset):
-    def __init__(self, df, transform: alb.Compose = None):
+    dataset: ImgDataset
+    df: pd.DataFrame  # a subset of the ground-truth dataframe
+    transform: alb.Compose
+    family_index: Dict[str, int]
+
+    def __init__(self, dataset: ImgDataset, df: pd.DataFrame, family_index: Dict[str, int],
+                 transform: alb.Compose = None):
+        self.dataset = dataset
         self.df = df
+        self.family_index = family_index
         self.transform = transform
-        self.label_transform = lambda data: torch.tensor(data, dtype=torch.int),
-        #self.class2index = BODMAS_FILTERED_LABEL_MAPPINGS
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, index):
         line = self.df.iloc[index]
-        filename = line["md5"]
-        label = self.class2index[line["family"]]
-
-        # TODO: read with opencv instead? - depends on the augm library
-        # image = PIL.Image.open(os.path.join(data_dir, images_dir, filename + '_False_False.png'))
-        image = cv2.imread(
-            os.path.join(data_dir, images_dir, filename + '_224x224_True_True.png')
-        )
+        label = self.family_index[line["family"]]
+        filename = f"{line['md5']}_{self.dataset.img_shape[0]}x{self.dataset.img_shape[1]}_True_True.png"
+        image = cv2.imread(os.path.join(self.dataset.img_dir_path, filename))
 
         if self.transform is not None:
-            # image = self.transform(image)
             image = self.transform(image=image)["image"]  # transformations with Albumentations
 
         label = torch.tensor(label)
@@ -53,43 +55,21 @@ def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
     ])
 
 
-def get_train_valid_dataset_sampler_loader(dataset: ImgDataset):
-    # load the data
-    # data_dir = dataset_config["data_dir"]
-    # metadata_file = dataset_config["metadata_file"]
-    # images_dir = dataset_config["images_dir"]
-    # img_shape = dataset_config["img_shape"]
-    # mean = dataset_config["mean"]
-    # std = dataset_config["std"]
-    dataset = pd.read_csv(os.path.join(data_dir, metadata_file), delimiter=",")
+def get_train_valid_dataset_sampler_loader(dataset: ImgDataset) \
+        -> Tuple[
+            BodmasDataset, RandomSampler, DataLoader,
+            BodmasDataset, RandomSampler, DataLoader]:
+    df = dataset.read_ground_truth()
+    df_filtered, families_to_keep, family_index = filter_ds_having_at_column_min_occurencies(
+        df, "family", 100)
 
-    def set_to_dict(s):
-        keys = list(s)
-        print("Number of unique filtered families:")
-        print(len(s))
-        values = range(0, len(s))
-        return {k: v for k, v in zip(keys, values)}
-
-    # filtering out families with less than 100 samples:
-    family_counts = dataset['family'].value_counts()
-    families_to_keep = family_counts[family_counts >= 100].index
-    # family_counts.to_csv('out.csv')
-
-    dataset_filtered = dataset[dataset['family'].isin(families_to_keep)]
-    labels_filtered = dataset_filtered["family"]
-    unique_filtered_labels = set(labels_filtered.unique())
-    # dataset_filtered['family'].value_counts().to_csv('filtered_families.csv')
-
-    BODMAS_FILTERED_LABEL_MAPPINGS = set_to_dict(unique_filtered_labels)
-    print(BODMAS_FILTERED_LABEL_MAPPINGS)
-
-    ds_train, ds_valid = train_test_split(dataset_filtered, stratify=labels_filtered, test_size=0.25)
+    ds_train, ds_valid = train_test_split(df_filtered, stratify=families_to_keep, test_size=0.25)
 
     # train set
-    train_dataset = BodmasDataset(df=ds_train, transform=get_transform_alb_norm(mean, std))
-
+    train_dataset = BodmasDataset(dataset=dataset, df=ds_train,
+                                  family_index=family_index,
+                                  transform=get_transform_alb_norm(dataset.mean, dataset.std))
     train_sampler = RandomSampler(train_dataset, replacement=False, num_samples=5000)
-
     train_loader = DataLoader(train_dataset, batch_size=Datasets.BODMAS.value.train_batch_size,
                               # when running with a subset of the dataset, set Shuffle to False, otherwise to True
                               shuffle=True,
@@ -97,7 +77,11 @@ def get_train_valid_dataset_sampler_loader(dataset: ImgDataset):
                               )
 
     # validation set
-    valid_dataset = BodmasDataset(df=ds_valid, transform=get_transform_alb_norm(mean, std))
+    valid_dataset = BodmasDataset(dataset=dataset, df=ds_valid,
+                                  family_index=family_index,
+                                  transform=get_transform_alb_norm(dataset.mean, dataset.std))
     valid_sampler = RandomSampler(valid_dataset, replacement=False, num_samples=500)
     valid_loader = DataLoader(valid_dataset, batch_size=Datasets.BODMAS.value.test_batch_size,
                               shuffle=True)  # sampler=valid_sampler,
+
+    return train_dataset, train_sampler, train_loader, valid_dataset, valid_sampler, valid_loader

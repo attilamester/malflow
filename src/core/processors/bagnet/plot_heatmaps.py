@@ -9,8 +9,7 @@ import torch
 from skimage import feature, transform
 
 import dataset.dataloader as dl
-import pytorchnet
-from dataset import config
+from dataset import dataset
 
 
 def plot_heatmap(heatmap, original, ax, cmap="RdBu_r", percentile=99, dilation=0.5, alpha=0.25):
