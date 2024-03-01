@@ -1,11 +1,14 @@
-name: malcallgraph-train
+name: malflow-train
 channels:
   - anaconda
   - conda-forge
   - pytorch
 dependencies:
   - albumentations==1.3.1
+  - conda-pack==0.7.1
   - cudatoolkit==11.8.0
+  - libffi==3.2.1 # needed for cv2
+  - libstdcxx-ng=12 # needed for albumentations and cv2
   - matplotlib==3.7.2
   - numpy==1.24.3
   - pandas==1.5.3
@@ -13,10 +16,8 @@ dependencies:
   - python==3.8
   - python-dotenv==0.21.0
   - scikit-learn==1.3.0
-  - tensorflow==2.4.1
-  - tensorflow-datasets==1.2.0
   - pip:
-    - opencv-python==4.9.0.80
+    - opencv-python-headless==4.9.0.80
     - --extra-index-url https://download.pytorch.org/whl/cu118
     - torch==2.0.1+cu118
     - torchvision==0.15.2+cu118

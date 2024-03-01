@@ -1,10 +1,12 @@
 version: '3.8'
 services:
 
-  malcallgraph_train:
-    image: image_malcallgraph_train
-    container_name: container_malcallgraph_train
+  malflow_train:
+    image: image_malflow_train
+    container_name: container_malflow_train
     build:
       context: .
       network: host
       dockerfile: ./Dockerfile
+    env_file:
+      - dataset.env
