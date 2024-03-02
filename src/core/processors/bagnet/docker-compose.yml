@@ -14,4 +14,7 @@ services:
       python3 -m core.processors.bagnet.main -m core.processors.bagnet.train_definitions
       "
     env_file:
-      - dataset.env
+      - .env
+    volumes:
+      - $DATASETS_BODMAS_GROUND_TRUTH_PATH:$DATASETS_BODMAS_GROUND_TRUTH_PATH
+      - $DATASETS_BODMAS_IMG_DIR_PATH:$DATASETS_BODMAS_IMG_DIR_PATH

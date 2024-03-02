@@ -165,11 +165,11 @@ class BagNet(nn.Module):
 
 
 def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=False, pretrained_model_name=None,
-                        **kwargs):
+                        **kwargs) -> BagNet:
     """
     Constructs a Bagnet model.
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a model pretrained on ImageNet
     """
     if not strides:
         strides = [2, 2, 2, 1]
@@ -189,16 +189,16 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
     return model
 
 
-def bagnet9(dataset: ImgDataset, strides=None, pretrained=False, **kwargs):
+def bagnet9(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
     return create_bagnet_model(dataset, kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet9", **kwargs)
 
 
-def bagnet17(dataset: ImgDataset, strides=None, pretrained=False, **kwargs):
+def bagnet17(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
     return create_bagnet_model(dataset, kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet17", **kwargs)
 
 
-def bagnet33(dataset: ImgDataset, strides=None, pretrained=False, **kwargs):
+def bagnet33(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
     return create_bagnet_model(dataset, kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet33", **kwargs)

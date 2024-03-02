@@ -7,11 +7,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from util import config
 from util.logger import Logger
 from util.validators import Validator
-
-config.load_env("core/processors/bagnet/dataset.env")
 
 
 @dataclass

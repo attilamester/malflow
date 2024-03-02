@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, DataLoader, RandomSampler
 
 from core.processors.bagnet.dataset.dataset import Datasets, ImgDataset
 from core.processors.bagnet.dataset.preprocess import filter_ds_having_at_column_min_occurencies
+from util.logger import Logger
 
 
 class BodmasDataset(Dataset):
@@ -59,6 +60,7 @@ def get_train_valid_dataset_sampler_loader(dataset: ImgDataset) \
         -> Tuple[
             BodmasDataset, RandomSampler, DataLoader,
             BodmasDataset, RandomSampler, DataLoader]:
+    Logger.info("Loading the dataset...")
     df = dataset.read_ground_truth()
     df_filtered, families_to_keep, family_index = filter_ds_having_at_column_min_occurencies(
         df, "family", 100)
