@@ -8,5 +8,10 @@ services:
       context: ../../../
       network: host
       dockerfile: ./core/processors/bagnet/Dockerfile
+#    entrypoint: /bin/bash --login -c "source /root/.bashrc"
+#    command: /bin/bash -c "source /root/.bashrc && python3 -c \"import torch; print('Works!')\""
+    command: /bin/bash -c "source /root/.bashrc &&
+      python3 -m core.processors.bagnet.main -m core.processors.bagnet.train_definitions
+      "
     env_file:
       - dataset.env
