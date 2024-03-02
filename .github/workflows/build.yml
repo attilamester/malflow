@@ -27,18 +27,18 @@ jobs:
       uses: actions/cache@v3
       with:
         key: ${{ runner.os }}--${{ hashFiles('build/radare2-5.8.8/Dockerfile', 'Dockerfile', 'docker-compose.yml') }}
-        path: ~/image_malcallgraph.tar
+        path: ~/image_malflow.tar
 
     - name: Building the test container - `docker build` & `docker save`
       if: ${{ steps.cache-docker-build.outputs.cache-hit != 'true' }}
       run: |
-        docker compose build --no-cache malcallgraph_test
-        docker save image_malcallgraph > ~/image_malcallgraph.tar
+        docker compose build --no-cache malflow_test
+        docker save image_malflow > ~/image_malflow.tar
 
     - name: Testing
       run: |
-        docker load --input ~/image_malcallgraph.tar
-        docker compose up malcallgraph_test
+        docker load --input ~/image_malflow.tar
+        docker compose up malflow_test
 
     - name: Code Coverage Report
       if: ${{ github.event_name == 'pull_request' }}
