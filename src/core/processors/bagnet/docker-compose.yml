@@ -11,10 +11,23 @@ services:
 #    entrypoint: /bin/bash --login -c "source /root/.bashrc"
 #    command: /bin/bash -c "source /root/.bashrc && python3 -c \"import torch; print('Works!')\""
     command: /bin/bash -c "source /root/.bashrc &&
-      python3 -m core.processors.bagnet.main -m core.processors.bagnet.train_definitions
+      python3 -m core.processors.bagnet.main \
+        -m core.processors.bagnet.train_definitions \
+        -tb /tb_log_dir
       "
     env_file:
       - .env
     volumes:
+      - ./tensorboard/log_dir:/tb_log_dir:z
       - $DATASETS_BODMAS_GROUND_TRUTH_PATH:$DATASETS_BODMAS_GROUND_TRUTH_PATH
       - $DATASETS_BODMAS_IMG_DIR_PATH:$DATASETS_BODMAS_IMG_DIR_PATH
+
+  tensorboard:
+    image: image_tensorboard
+    container_name: container_tensorboard
+    build:
+      context: ./tensorboard
+    volumes:
+        - ./tensorboard/log_dir:/log_dir:z
+    ports:
+      - 6006:6006
