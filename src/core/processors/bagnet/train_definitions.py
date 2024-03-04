@@ -1,3 +1,5 @@
+from typing import Dict
+
 import torch.utils.data
 
 from core.processors.bagnet.dataset import Datasets
@@ -28,6 +30,9 @@ def get_train_loader() -> torch.utils.data.DataLoader:
 
 def get_val_loader() -> torch.utils.data.DataLoader:
     return valid_loader
+
+def target_class_translations() -> Dict[int, str]:
+    return train_dataset.index_family
 
 
 # =======================================================

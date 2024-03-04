@@ -19,12 +19,14 @@ class BodmasDataset(Dataset):
     df: pd.DataFrame  # a subset of the ground-truth dataframe
     transform: alb.Compose
     family_index: Dict[str, int]
+    index_family: Dict[int, str]
 
     def __init__(self, dataset: ImgDataset, df: pd.DataFrame, family_index: Dict[str, int],
                  transform: alb.Compose = None):
         self.dataset = dataset
         self.df = df
         self.family_index = family_index
+        self.index_family = {v: k for k, v in family_index.items()}
         self.transform = transform
 
     def __len__(self):
