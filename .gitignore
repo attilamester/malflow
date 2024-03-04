@@ -39,3 +39,10 @@ env/
 *.svg
 .coverage
 *.lcov
+
+# Tensorboard log
+**/events.out.tfevents.*
+
+# Pytorch model checkpoints
+
+**/*.pth.tar
