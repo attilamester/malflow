@@ -71,6 +71,9 @@ class ImgDataset:
         self._mean = np.mean(channels_mean, axis=1) / 256  # 8-bit images
         self._std = np.mean(channels_std, axis=1) / 256
 
+    def get_info(self) -> str:
+        return f"{self.img_shape[0]}x{self.img_shape[1]}x{self.img_color_channels}:{self.train_batch_size}"
+
 
 class Datasets(Enum):
     BODMAS = ImgDataset(

@@ -45,6 +45,9 @@ class BodmasDataset(Dataset):
 
         return image, label
 
+    def get_info(self) -> str:
+        return f"Bodmas-{self.dataset.get_info()}"
+
 
 def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
     return alb.Compose([
