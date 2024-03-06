@@ -1,6 +1,6 @@
 log() {
     local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[$timestamp] [Train dockerless] $1"
+    echo "[$timestamp] [Train dockerless CPU] $1"
 }
 
 if [ $# -ne 1 ]; then
@@ -8,7 +8,6 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-python3 -c "import torch; print(f'Cuda: {torch.cuda.is_available()}')"
 ./download_dependencies.sh main.py
 
 (

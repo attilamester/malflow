@@ -25,7 +25,7 @@ __pypackages__/
 
 # Environments
 env/
-.env
+*.env
 
 # IDEA
 

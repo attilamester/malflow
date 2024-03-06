@@ -58,14 +58,14 @@ def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
     ])
 
 
-def get_train_valid_dataset_sampler_loader(dataset: ImgDataset) \
+def get_train_valid_dataset_sampler_loader(dataset: ImgDataset, items_per_class: int) \
         -> Tuple[
             BodmasDataset, RandomSampler, DataLoader,
             BodmasDataset, RandomSampler, DataLoader]:
-    Logger.info("Loading the dataset...")
+    Logger.info(f"Loading the dataset with items per class {items_per_class}")
     df = dataset.read_ground_truth()
     df_filtered, families_to_keep, family_index = filter_ds_having_at_column_min_occurencies(
-        df, "family", 100)
+        df, "family", items_per_class)
 
     ds_train, ds_valid = train_test_split(df_filtered, stratify=families_to_keep, test_size=0.25)
 
