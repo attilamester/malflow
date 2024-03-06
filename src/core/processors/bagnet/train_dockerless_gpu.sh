@@ -1,5 +1,5 @@
 log() {
-    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
     echo "[$timestamp] [Train dockerless GPU] $1"
 }
 
