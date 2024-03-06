@@ -24,7 +24,7 @@ def run_train_native(hparam: Dict[str, int]):
 
 def hparam_tuner():
     hparams_names = [hparam.name for hparam in HPARAMS]
-    for item in itertools.product(*[hparam.value for hparam in HPARAMS]):
+    for item in itertools.product(*[hparam.value.values for hparam in HPARAMS]):
         hparam = {name: value for name, value in zip(hparams_names, item)}
         try:
             run_train_native(hparam)
