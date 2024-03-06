@@ -23,4 +23,4 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-download_file $1 https://raw.githubusercontent.com/attilamester/pytorch-examples/feature/83/imagenet/main.py?v=3
+download_file $1 https://raw.githubusercontent.com/attilamester/pytorch-examples/feature/83/imagenet/main.py?v=546e6295

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
+from core.processors.bagnet.hparams import HPARAMS, get_hparam_value
 from util.logger import Logger
 from util.validators import Validator
 
@@ -78,6 +79,6 @@ class Datasets(Enum):
         img_shape=Validator.validate_shape(os.environ["DATASETS_BODMAS_IMG_SHAPE"]),
         img_color_channels=Validator.validate_int(os.environ["DATASETS_BODMAS_IMG_COLOR_CHANNELS"]),
         augm=Validator.validate_bool(os.environ["DATASETS_BODMAS_IMG_AUGM"]),
-        train_batch_size=Validator.validate_int(os.environ["DATASETS_BODMAS_TRAIN_BATCH_SIZE"]),
-        test_batch_size=Validator.validate_int(os.environ["DATASETS_BODMAS_TEST_BATCH_SIZE"])
+        train_batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE),
+        test_batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE)
     )
