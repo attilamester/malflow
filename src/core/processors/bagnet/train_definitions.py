@@ -1,5 +1,4 @@
 import logging
-import types
 from typing import Dict, Union
 
 import torch.utils.data
@@ -20,20 +19,20 @@ def get_model() -> torch.nn.Module:
     hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
     hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
 
-    def get_info(self) -> str:
-        return f"Bagnet-{hp_model_bagnet}{hp_model_pretrained}"
-
     if hp_model_bagnet == 9:
-        model = bagnet9(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+        return bagnet9(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
     elif hp_model_bagnet == 17:
-        model = bagnet17(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+        return bagnet17(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
     elif hp_model_bagnet == 33:
-        model = bagnet33(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+        return bagnet33(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
     else:
         raise Exception(f"Unknown model: {hp_model_bagnet}")
 
-    model.get_info = types.MethodType(get_info, model)
-    return model
+
+def get_model_info() -> str:
+    hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
+    hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
+    return f"Bagnet-{hp_model_bagnet}{hp_model_pretrained}"
 
 
 def get_train_dataset() -> torch.utils.data.Dataset:
