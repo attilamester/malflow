@@ -43,7 +43,6 @@ def hparam_tuner():
             run_train_dockerless_gpu(hparam)
         except Exception as e:
             Logger.warning(f"Could not run train with hparam: {hparam} [{e}]")
-        break
 
 
 if __name__ == "__main__":
