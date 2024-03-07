@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from core.processors.bagnet.hparams import HPARAMS, get_hparam_value
 from util.logger import Logger
 from util.validators import Validator
 
@@ -20,9 +19,6 @@ class ImgDataset:
     img_color_channels: int
 
     augm: bool
-
-    train_batch_size: int
-    test_batch_size: int
 
     _mean: Tuple[float, float, float] = field(default=None)
     _std: Tuple[float, float, float] = field(default=None)
@@ -71,9 +67,6 @@ class ImgDataset:
         self._mean = np.mean(channels_mean, axis=1) / 256  # 8-bit images
         self._std = np.mean(channels_std, axis=1) / 256
 
-    def get_info(self) -> str:
-        return f"{self.img_shape[0]}x{self.img_shape[1]}x{self.img_color_channels}:{self.train_batch_size}"
-
 
 class Datasets(Enum):
     BODMAS = ImgDataset(
@@ -82,6 +75,4 @@ class Datasets(Enum):
         img_shape=Validator.validate_shape(os.environ["DATASETS_BODMAS_IMG_SHAPE"]),
         img_color_channels=Validator.validate_int(os.environ["DATASETS_BODMAS_IMG_COLOR_CHANNELS"]),
         augm=Validator.validate_bool(os.environ["DATASETS_BODMAS_IMG_AUGM"]),
-        train_batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE),
-        test_batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE)
     )

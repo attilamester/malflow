@@ -8,9 +8,12 @@ import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 
-from core.processors.bagnet.dataset import ImgDataset
+from core.processors.cg_image_classification.dataset import ImgDataset
+from core.processors.cg_image_classification.paths import get_cg_image_classification_tb_log_dir
 
 __all__ = ["bagnet9", "bagnet17", "bagnet33"]
+
+from util.logger import Logger
 
 model_urls = {
     "bagnet9": "https://bitbucket.org/wielandbrendel/bag-of-feature-pretrained-models/raw/249e8fa82c0913623a807d9d35eeab9da7dcc2a8/bagnet8-34f4ccd2.pth.tar",
@@ -26,9 +29,7 @@ class Bottleneck(nn.Module):
             self, inplanes, planes, stride=1, downsample=None, kernel_size=1
     ):
         super(Bottleneck, self).__init__()
-        # print(f"""Creating bottleneck
-        #   with kernel size {kernel_size} and stride {stride}
-        #   with padding {(kernel_size - 1) // 2}""")
+
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel_size, stride=stride, padding=0,
@@ -175,9 +176,14 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
         strides = [2, 2, 2, 1]
     model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, kernel3=kernel3, **kwargs)
     if pretrained:
-        state = model.load_state_dict(model_zoo.load_url(model_urls[pretrained_model_name]))
+        state = model.load_state_dict(
+            model_zoo.load_url(model_urls[pretrained_model_name],
+                               model_dir=get_cg_image_classification_tb_log_dir(),
+                               map_location=torch.device("cpu") if not torch.cuda.is_available() else torch.device(
+                                   "cuda:0"),
+                               check_hash=True))
         if dataset.img_color_channels == 1:  # greyscale
-            print("Adding the first three conv. weights of the pretrained BagNet model")
+            Logger.info("Adding the first three conv. weights of the pretrained BagNet model")
             state.pop("fc.weight")
             state.pop("fc.bias")
             if model.conv1.weight.size(1) == 1:

@@ -11,11 +11,11 @@ fi
 ./download_dependencies.sh main.py
 
 (
-  export $(cat .env | xargs)
   cd ../../../ && \
-  python3 -m core.processors.bagnet.main \
+  python3 -m core.processors.cg_image_classification.main \
     --multiprocessing-distributed --rank=0 --world-size=1 --dist-url='tcp://localhost:29500'\
-    -m core.processors.bagnet.train_definitions \
+    -m core.processors.cg_image_classification.train_definitions \
     -tb $1 \
-    --checkpoints $1
+    --checkpoints $1 \
+    --print-freq 100
 )
