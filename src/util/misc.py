@@ -7,8 +7,6 @@ import numpy as np
 def get_project_root():
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def get_bagnet_folder():
-    return os.path.join(get_project_root(), "src/core/processors/bagnet")
 
 def ensure_dir(path):
     try:

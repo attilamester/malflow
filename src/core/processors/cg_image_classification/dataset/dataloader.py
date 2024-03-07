@@ -7,10 +7,10 @@ import pandas as pd
 import torch
 from albumentations.pytorch import ToTensorV2
 from sklearn.model_selection import train_test_split
-from torch.utils.data import Dataset, DataLoader, RandomSampler
+from torch.utils.data import Dataset, DataLoader
 
-from core.processors.bagnet.dataset.dataset import Datasets, ImgDataset
-from core.processors.bagnet.dataset.preprocess import filter_ds_having_at_column_min_occurencies
+from core.processors.cg_image_classification.dataset.dataset import ImgDataset
+from core.processors.cg_image_classification.dataset.preprocess import filter_ds_having_at_column_min_occurencies
 from util.logger import Logger
 
 
@@ -45,9 +45,6 @@ class BodmasDataset(Dataset):
 
         return image, label
 
-    def get_info(self) -> str:
-        return f"Bodmas-{self.dataset.get_info()}"
-
 
 def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
     return alb.Compose([
@@ -61,10 +58,10 @@ def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
     ])
 
 
-def get_train_valid_dataset_sampler_loader(dataset: ImgDataset, items_per_class: int) \
+def get_train_valid_dataset_sampler_loader(dataset: ImgDataset, items_per_class: int, batch_size: int) \
         -> Tuple[
-            BodmasDataset, RandomSampler, DataLoader,
-            BodmasDataset, RandomSampler, DataLoader]:
+            BodmasDataset, DataLoader,
+            BodmasDataset, DataLoader]:
     Logger.info(f"Loading the dataset with items per class {items_per_class}")
     df = dataset.read_ground_truth()
     df_filtered, families_to_keep, family_index = filter_ds_having_at_column_min_occurencies(
@@ -76,19 +73,12 @@ def get_train_valid_dataset_sampler_loader(dataset: ImgDataset, items_per_class:
     train_dataset = BodmasDataset(dataset=dataset, df=ds_train,
                                   family_index=family_index,
                                   transform=get_transform_alb_norm(dataset.mean, dataset.std))
-    train_sampler = RandomSampler(train_dataset, replacement=False, num_samples=5000)
-    train_loader = DataLoader(train_dataset, batch_size=Datasets.BODMAS.value.train_batch_size,
-                              # when running with a subset of the dataset, set Shuffle to False, otherwise to True
-                              shuffle=True,
-                              # sampler=train_sampler,  # OPTIONAL; for running with a subset of the whole dataset
-                              )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     # validation set
     valid_dataset = BodmasDataset(dataset=dataset, df=ds_valid,
                                   family_index=family_index,
                                   transform=get_transform_alb_norm(dataset.mean, dataset.std))
-    valid_sampler = RandomSampler(valid_dataset, replacement=False, num_samples=500)
-    valid_loader = DataLoader(valid_dataset, batch_size=Datasets.BODMAS.value.test_batch_size,
-                              shuffle=True)  # sampler=valid_sampler,
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)  # sampler=valid_sampler,
 
-    return train_dataset, train_sampler, train_loader, valid_dataset, valid_sampler, valid_loader
+    return train_dataset, train_loader, valid_dataset, valid_loader

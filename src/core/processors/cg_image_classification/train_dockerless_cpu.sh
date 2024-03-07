@@ -11,10 +11,10 @@ fi
 ./download_dependencies.sh main.py
 
 (
-  export $(cat .env | xargs)
   cd ../../../ && \
-  python3 -m core.processors.bagnet.main \
-    -m core.processors.bagnet.train_definitions \
+  python3 -m core.processors.cg_image_classification.main \
+    -m core.processors.cg_image_classification.train_definitions \
     -tb $1 \
-    --checkpoints $1
+    --checkpoints $1 \
+    --print-freq 100
 )

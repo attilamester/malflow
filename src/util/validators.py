@@ -1,5 +1,5 @@
 import re
-from typing import Tuple
+from typing import Tuple, Type, List
 
 
 class HashValidator:
@@ -40,3 +40,10 @@ class Validator:
             raise ValueError(f"Cannot convert {e!r} to shape")
 
         return int(tokens[0]), int(tokens[1])
+
+    @staticmethod
+    def validate_list(e: str, type_: Type) -> List:
+        if not isinstance(e, str):
+            raise ValueError(f"Cannot convert {e!r} to list")
+        tokens = e.split(",")
+        return [type_(t.strip()) for t in tokens]
