@@ -67,6 +67,8 @@ def get_train_valid_dataset_sampler_loader(dataset: ImgDataset, items_per_class:
     df_filtered, families_to_keep, family_index = filter_ds_having_at_column_min_occurencies(
         df, "family", items_per_class)
 
+    dataset.num_classes = len(family_index)
+
     ds_train, ds_valid = train_test_split(df_filtered, stratify=families_to_keep, test_size=0.25)
 
     # train set

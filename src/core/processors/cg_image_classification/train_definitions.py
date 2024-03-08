@@ -27,6 +27,9 @@ from util.logger import Logger
 # =======================================================
 
 def get_model() -> torch.nn.Module:
+    if not dataset_loaded:
+        init_train_valid_loader()
+
     hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
     hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
 
@@ -112,7 +115,7 @@ def init_train_valid_loader():
     files = os.listdir(paths.get_cg_image_classification_tb_log_dir())
     for file in files:
         if get_model_info() in file and get_dataset_info() in file:
-            Logger.info(f"Model and dataset already trained: {file}")
+            Logger.warning(f"Exiting | Model and dataset already trained: {file}")
             exit(0)
     (train_dataset, train_loader,
      valid_dataset, valid_loader) = \
