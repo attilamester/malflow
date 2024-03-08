@@ -70,7 +70,7 @@ class Bottleneck(nn.Module):
 
 class BagNet(nn.Module):
     def __init__(self, dataset: ImgDataset, block, layers, strides=[1, 2, 2, 2], kernel3=[0, 0, 0, 0], num_classes=1000,
-                 avg_pool=True, ):
+                 avg_pool=True):
         super(BagNet, self).__init__()
 
         self.inplanes = 64
@@ -174,7 +174,8 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
     """
     if not strides:
         strides = [2, 2, 2, 1]
-    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, kernel3=kernel3, **kwargs)
+    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, kernel3=kernel3, num_classes=dataset.num_classes,
+                   **kwargs)
     if pretrained:
         state = model.load_state_dict(
             model_zoo.load_url(model_urls[pretrained_model_name],

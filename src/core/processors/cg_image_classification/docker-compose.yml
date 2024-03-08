@@ -7,17 +7,19 @@ services:
     build:
       context: ../../../
       network: host
-      dockerfile: ./core/processors/bagnet/Dockerfile
+      dockerfile: ./core/processors/cg_image_classification/Dockerfile
 #    entrypoint: /bin/bash --login -c "source /root/.bashrc"
 #    command: /bin/bash -c "source /root/.bashrc && python3 -c \"import torch; print('Works!')\""
     command: /bin/bash -c "source /root/.bashrc && \
       python3 -m core.processors.cg_image_classification.main \
         -m core.processors.cg_image_classification.train_definitions \
-        -tb /tb_log_dir
-        --checkpoints /tb_log_dir
+        -tb /tb_log_dir \
+        --checkpoints /tb_log_dir \
+        --print-freq 10
       "
     env_file:
       - .env
+      - hparams.env
     volumes:
       - ./tensorboard/log_dir:/tb_log_dir:z
       - $DATASETS_BODMAS_GROUND_TRUTH_PATH:$DATASETS_BODMAS_GROUND_TRUTH_PATH

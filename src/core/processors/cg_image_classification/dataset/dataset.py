@@ -22,6 +22,17 @@ class ImgDataset:
 
     _mean: Tuple[float, float, float] = field(default=None)
     _std: Tuple[float, float, float] = field(default=None)
+    _num_classes: int = field(default=None)
+
+    @property
+    def num_classes(self):
+        if self._num_classes is None:
+            raise Exception("num_classes is not set yet")
+        return self._num_classes
+
+    @num_classes.setter
+    def num_classes(self, value):
+        self._num_classes = value
 
     @property
     def mean(self):
