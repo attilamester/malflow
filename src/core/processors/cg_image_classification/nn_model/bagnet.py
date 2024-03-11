@@ -68,13 +68,14 @@ class Bottleneck(nn.Module):
 
 
 class BagNet(nn.Module):
-    def __init__(self, dataset: ImgDataset, block: Type[Bottleneck], layers, strides=[1, 2, 2, 2], kernel3=[0, 0, 0, 0],
-                 avg_pool=True):
+    def __init__(self, dataset: ImgDataset, block: Type[Bottleneck], layers, strides=[1, 2, 2, 2], patch_size: int = 3,
+                 kernel3=[0, 0, 0, 0], avg_pool=True):
         super(BagNet, self).__init__()
 
         self.inplanes = 64
         self.dataset = dataset
         self.num_classes = dataset.num_classes
+        self.patch_size = patch_size
 
         self.conv1 = nn.Conv2d(dataset.img_color_channels, 64, kernel_size=1, stride=1, padding=0, bias=False)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0, bias=False)
@@ -139,7 +140,8 @@ class BagNet(nn.Module):
         return x
 
 
-def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=False, pretrained_model_name=None,
+def create_bagnet_model(dataset: ImgDataset, patch_size: int, kernel3, strides=None, pretrained=False,
+                        pretrained_model_name=None,
                         **kwargs) -> BagNet:
     """
     Constructs a Bagnet model.
@@ -148,7 +150,7 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
     """
     if not strides:
         strides = [2, 2, 2, 1]
-    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, kernel3=kernel3, **kwargs)
+    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, patch_size=patch_size, kernel3=kernel3, **kwargs)
     if pretrained:
         state = model.load_state_dict(
             model_zoo.load_url(model_urls[pretrained_model_name],
@@ -170,15 +172,15 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
 
 
 def bagnet9(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 9, kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet9", **kwargs)
 
 
 def bagnet17(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 17, kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet17", **kwargs)
 
 
 def bagnet33(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 33, kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet33", **kwargs)
