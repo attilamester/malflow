@@ -23,9 +23,11 @@ class HPARAMS(Enum):
     First item is the default value
     """
     MODEL_BAGNET = HParamSpace(int, [9, 17, 33])
-    MODEL_PRETRAINED = HParamSpace(bool, [True, False])
-    DATA_MIN_ITEM_PER_CLASS = HParamSpace(int, [100, 50, 200])
-    DATA_BATCH_SIZE = HParamSpace(int, Validator.validate_list(os.environ["HPARAM_SPACE_BATCH_SIZE"], int))
+    MODEL_PRETRAINED = HParamSpace(bool, [False])
+    DATA_MIN_ITEM_PER_CLASS = HParamSpace(
+        int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_MIN_ITEM_PER_CLASS"], int))
+    DATA_BATCH_SIZE = HParamSpace(
+        int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_BATCH_SIZE"], int))
 
 
 def get_hparam_name(hparam: HPARAMS):
