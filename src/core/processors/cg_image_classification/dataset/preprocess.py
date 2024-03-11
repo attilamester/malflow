@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Dict
 
 import pandas as pd
 import torch
@@ -8,15 +8,11 @@ def list_to_dict_keys(l: List[str]) -> Dict[str, int]:
     return {v: i for i, v in enumerate(sorted(l))}
 
 
-def filter_ds_having_at_column_min_occurencies(df: pd.DataFrame, column: str, min_occurencies: int) \
-        -> Tuple[pd.DataFrame, pd.Series, Dict[str, int]]:
+def df_filter_having_at_column_min_occurencies(df: pd.DataFrame, column: str, min_occurencies: int) -> pd.DataFrame:
     value_counts = df[column].value_counts()
     values_to_keep = value_counts[value_counts >= min_occurencies].index
 
-    dataset_filtered = df[df[column].isin(values_to_keep)]
-    values_filtered = dataset_filtered[column]
-
-    return dataset_filtered, values_filtered, list_to_dict_keys(list(values_filtered.unique()))
+    return df[df[column].isin(values_to_keep)]
 
 
 def preprocess(x: torch.tensor, mean, std):

@@ -1,6 +1,7 @@
 """
 Based on https://github.com/wielandbrendel/bag-of-local-features-models
 """
+import copy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +45,7 @@ def plot_heatmap(heatmap, original, ax, cmap="RdBu_r", percentile=99, dilation=0
     yy = np.arange(0.0, heatmap.shape[0], dy)
     xmin, xmax, ymin, ymax = np.amin(xx), np.amax(xx), np.amin(yy), np.amax(yy)
     extent = xmin, xmax, ymin, ymax
-    cmap_original = plt.get_cmap("Greys_r")
+    cmap_original = copy.copy(plt.get_cmap("Greys_r"))
     cmap_original.set_bad(alpha=0)
     overlay = None
     if original is not None:

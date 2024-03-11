@@ -23,7 +23,8 @@ def run_train_dockerless_gpu(hparam: Dict[HPARAMS, int]):
         time.sleep(1)
     Logger.info(f"Running train with HPARAMS: \n<<\n{buff}>>\n")
 
-    subprocess.run(["/bin/sh", "train_dockerless_gpu.sh", get_cg_image_classification_tb_log_dir()],
+    # --multiprocessing-distributed --rank=0 --world-size=1 --dist-url='tcp://localhost:29500'
+    subprocess.run(["/bin/sh", "train_dockerless.sh", get_cg_image_classification_tb_log_dir()],
                    cwd=get_cg_image_classification_folder())
 
 

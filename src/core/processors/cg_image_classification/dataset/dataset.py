@@ -1,12 +1,14 @@
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Tuple
+from typing import Tuple, Dict
 
 import cv2
 import numpy as np
 import pandas as pd
 
+from core.processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies, \
+    list_to_dict_keys
 from util.logger import Logger
 from util.validators import Validator
 
@@ -23,6 +25,12 @@ class ImgDataset:
     _mean: Tuple[float, float, float] = field(default=None)
     _std: Tuple[float, float, float] = field(default=None)
     _num_classes: int = field(default=None)
+
+    initialized: bool = field(default=False)
+    data_df_gt: pd.DataFrame = field(default=None)
+    data_df_gt_filtered: pd.DataFrame = field(default=None)
+    data_class2index: Dict[str, int] = field(default=None)
+    data_index2class: Dict[int, str] = field(default=None)
 
     @property
     def num_classes(self):
@@ -58,8 +66,23 @@ class ImgDataset:
             f"Manually setting the `std` value of the dataset ({self.img_dir_path}) from {self._std} to {value}.")
         self._std = value
 
-    def read_ground_truth(self) -> pd.DataFrame:
-        return pd.read_csv(self.ground_truth_path, delimiter=",")
+    def get_ground_truth(self) -> pd.DataFrame:
+        if self.data_df_gt is None:
+            self.data_df_gt = pd.read_csv(self.ground_truth_path, delimiter=",")
+        return self.data_df_gt
+
+    def filter_ground_truth(self, items_per_class: int) -> pd.DataFrame:
+        Logger.info(f"Filtering ImgDataset with items_per_class:{items_per_class}")
+        df = self.get_ground_truth()
+        df_filtered = df_filter_having_at_column_min_occurencies(df, "family", items_per_class)
+        family_index = list_to_dict_keys(list(df_filtered["family"].unique()))
+
+        self.num_classes = len(family_index)
+        self.data_df_gt_filtered = df_filtered
+        self.data_class2index = family_index
+        self.data_index2class = {v: k for k, v in family_index.items()}
+        self.initialized = True
+        return df_filtered
 
     def calculate_mean_std(self):
         channels_mean = [[], [], []]

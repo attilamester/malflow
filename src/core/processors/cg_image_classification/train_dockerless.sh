@@ -1,6 +1,6 @@
 log() {
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[$timestamp] [Train dockerless CPU] $1"
+    echo "[$timestamp] [Train dockerless] $1"
 }
 
 if [ $# -ne 1 ]; then
@@ -16,5 +16,6 @@ fi
     -m core.processors.cg_image_classification.train_definitions \
     -tb $1 \
     --checkpoints $1 \
-    --print-freq 100
+    --print-freq 100 \
+    "${1:-''}"
 )
