@@ -15,7 +15,7 @@ import torch.utils.data
 
 from core.processors.cg_image_classification import paths
 from core.processors.cg_image_classification.dataset import Datasets
-from core.processors.cg_image_classification.dataset.dataloader import get_train_valid_dataset_sampler_loader
+from core.processors.cg_image_classification.dataset.dataloader import create_bodmas_train_val_loader
 from core.processors.cg_image_classification.hparams import HPARAMS, get_hparam_value
 from core.processors.cg_image_classification.nn_model import bagnet17, bagnet9, bagnet33
 from util.logger import Logger
@@ -27,7 +27,7 @@ from util.logger import Logger
 # =======================================================
 
 def get_model() -> torch.nn.Module:
-    if not dataset_loaded:
+    if not Datasets.BODMAS.value.initialized:
         init_train_valid_loader()
 
     hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
@@ -91,7 +91,9 @@ def get_hparams() -> Dict[str, Union[int, float, bool, str]]:
 
 
 def target_class_translations() -> Dict[int, str]:
-    return train_dataset.index_family
+    if not Datasets.BODMAS.value.initialized:
+        init_train_valid_loader()
+    return train_dataset.dataset.data_index2class
 
 
 # =======================================================
@@ -119,8 +121,8 @@ def init_train_valid_loader():
             exit(0)
     (train_dataset, train_loader,
      valid_dataset, valid_loader) = \
-        get_train_valid_dataset_sampler_loader(Datasets.BODMAS.value,
-                                               items_per_class=get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS),
-                                               batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE))
+        create_bodmas_train_val_loader(Datasets.BODMAS.value,
+                                       items_per_class=get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS),
+                                       batch_size=get_hparam_value(HPARAMS.DATA_BATCH_SIZE))
 
     dataset_loaded = True

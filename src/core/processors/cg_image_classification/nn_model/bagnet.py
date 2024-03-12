@@ -3,6 +3,7 @@ Based on https://github.com/wielandbrendel/bag-of-local-features-models
 """
 
 import math
+from typing import Type
 
 import torch
 import torch.nn as nn
@@ -25,18 +26,16 @@ model_urls = {
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(
-            self, inplanes, planes, stride=1, downsample=None, kernel_size=1
-    ):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, kernel_size=1):
         super(Bottleneck, self).__init__()
 
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel_size, stride=stride, padding=0,
-                               bias=False)  # changed padding from (kernel_size - 1) // 2
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel_size, stride=stride, padding=(kernel_size - 1) // 2,
+                               bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.conv3 = nn.Conv2d(planes, planes * Bottleneck.expansion, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * Bottleneck.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -69,12 +68,15 @@ class Bottleneck(nn.Module):
 
 
 class BagNet(nn.Module):
-    def __init__(self, dataset: ImgDataset, block, layers, strides=[1, 2, 2, 2], kernel3=[0, 0, 0, 0], num_classes=1000,
-                 avg_pool=True):
+    def __init__(self, dataset: ImgDataset, block: Type[Bottleneck], layers, strides=[1, 2, 2, 2], patch_size: int = 3,
+                 kernel3=[0, 0, 0, 0], avg_pool=True):
         super(BagNet, self).__init__()
 
         self.inplanes = 64
         self.dataset = dataset
+        self.num_classes = dataset.num_classes
+        self.patch_size = patch_size
+
         self.conv1 = nn.Conv2d(dataset.img_color_channels, 64, kernel_size=1, stride=1, padding=0, bias=False)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0, bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=0.001)
@@ -86,32 +88,9 @@ class BagNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=strides[3], kernel3=kernel3[3], prefix="layer4")
         self.avgpool = nn.AvgPool2d(1, stride=1)
 
-        # TODO
-        tmp_model = nn.Sequential(
-            self.conv1,
-            self.conv2,
-            self.bn1,
-            self.relu,
-            self.layer1,
-            self.layer2,
-            self.layer3,
-            self.layer4,
-        )
-
-        # gen. input of zeros with (img_shape)
-        tmp_input = torch.zeros(
-            1,
-            self.dataset.img_color_channels,
-            *self.dataset.img_shape,
-        )
-
-        tmp_input = tmp_model(tmp_input)
-
-        # self.fc = nn.Linear(512 * block.expansion, num_classes)
-        self.fc = nn.Linear(tmp_input.size()[1], num_classes)
+        self.fc = nn.Linear(512 * block.expansion, self.num_classes)
         self.avg_pool = avg_pool
         self.block = block
-        self.num_classes = num_classes
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -121,7 +100,7 @@ class BagNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def _make_layer(self, block, planes, blocks, stride=1, kernel3=0, prefix=""):
+    def _make_layer(self, block: Type[Bottleneck], planes, blocks, stride=1, kernel3=0, prefix=""):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -131,11 +110,7 @@ class BagNet(nn.Module):
 
         layers = []
         kernel = 1 if kernel3 == 0 else 3
-        layers.append(
-            block(
-                self.inplanes, planes, stride, downsample, kernel_size=kernel
-            )
-        )
+        layers.append(block(self.inplanes, planes, stride, downsample, kernel_size=kernel))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             kernel = 1 if kernel3 <= i else 3
@@ -165,7 +140,8 @@ class BagNet(nn.Module):
         return x
 
 
-def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=False, pretrained_model_name=None,
+def create_bagnet_model(dataset: ImgDataset, patch_size: int, kernel3, strides=None, pretrained=False,
+                        pretrained_model_name=None,
                         **kwargs) -> BagNet:
     """
     Constructs a Bagnet model.
@@ -174,8 +150,7 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
     """
     if not strides:
         strides = [2, 2, 2, 1]
-    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, kernel3=kernel3, num_classes=dataset.num_classes,
-                   **kwargs)
+    model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, patch_size=patch_size, kernel3=kernel3, **kwargs)
     if pretrained:
         state = model.load_state_dict(
             model_zoo.load_url(model_urls[pretrained_model_name],
@@ -197,15 +172,15 @@ def create_bagnet_model(dataset: ImgDataset, kernel3, strides=None, pretrained=F
 
 
 def bagnet9(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 9, kernel3=[1, 1, 0, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet9", **kwargs)
 
 
 def bagnet17(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 17, kernel3=[1, 1, 1, 0], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet17", **kwargs)
 
 
 def bagnet33(dataset: ImgDataset, strides=None, pretrained=False, **kwargs) -> BagNet:
-    return create_bagnet_model(dataset, kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
+    return create_bagnet_model(dataset, 33, kernel3=[1, 1, 1, 1], strides=strides, pretrained=pretrained,
                                pretrained_model_name="bagnet33", **kwargs)

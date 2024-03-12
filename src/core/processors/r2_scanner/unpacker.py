@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from typing import Type
@@ -153,9 +154,36 @@ def tmp_plot_unpacked_samples_comparison():
         plt.close(fig)
 
 
+def replace_unpacked_images(original_images_dir, unpacked_images_dir, dim, delete_original_packed=False):
+    import pandas as pd
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV)
+    df.set_index("md5", inplace=True)
+
+    n = 0
+    for index, row in df.iterrows():
+        if pd.notna(row["unpacked-md5"]):
+            n += 1
+            file_to_copy = f"{row['unpacked-md5']}_{dim[0]}x{dim[1]}_True_True.png"
+            path_to_copy_from = os.path.join(unpacked_images_dir, file_to_copy)
+            path_to_copy_to = os.path.join(original_images_dir, file_to_copy)
+            path_to_delete = os.path.join(original_images_dir, f"{row.name}_{dim[0]}x{dim[1]}_True_True.png")
+
+            if not os.path.isfile(path_to_copy_from) or not os.path.isfile(path_to_delete):
+                print(f"Error: File not found: {path_to_copy_from} or {path_to_delete}")
+                continue
+
+            shutil.copy(path_to_copy_from, path_to_copy_to)
+            if delete_original_packed:
+                os.remove(path_to_delete)
+            print(f"{n} Replaced & Deleted({delete_original_packed}) \n\t{path_to_delete} with \n\t{path_to_copy_to}")
+
+
 if __name__ == "__main__":
     config.load_env()
     # __arm_samples()
     # __unpack_samples()
     # process_samples(BodmasUnpacked, scan_unpacked_bodmas_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
+
+    # replace_unpacked_images(os.path.join(Bodmas.get_dir_images(), "images_30x30_with_unpacked"),
+    #                         os.path.join(BodmasUnpacked.get_dir_images(), "images_30x30"), (30, 30))
