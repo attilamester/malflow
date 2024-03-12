@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from core.processors.cg_image_classification.dataset import Datasets, ImgDataset
 from core.processors.cg_image_classification.nn_model.bagnet_heatmaps import generate_heatmap_pytorch, plot_heatmap
 from core.processors.cg_image_classification.train_definitions import get_model
-from core.processors.cg_image_classification.dataset.dataloader import create_torch_bodmas_dataset_loader
+from core.processors.cg_image_classification.dataset.dataloader import create_torch_bodmas_dataset_loader, BodmasDataset
 
 
 def get_state_dict(state_dict) -> OrderedDict:
@@ -28,7 +28,7 @@ def get_state_dict(state_dict) -> OrderedDict:
     return new_state_dict
 
 
-def plot_heatmap_on_model(model: torch, checkpoint_path: str, dataset: ImgDataset,
+def plot_heatmap_on_model(model: torch.nn.Module, checkpoint_path: str, dataset: ImgDataset,
                           dataloader: torch.utils.data.DataLoader):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -37,37 +37,42 @@ def plot_heatmap_on_model(model: torch, checkpoint_path: str, dataset: ImgDatase
     model.to(device)
     model.eval()
 
-    for i, (images, target, details) in enumerate(dataloader):
+    def show_heatmap(model, dataset, images: torch.tensor, details: BodmasDataset.ItemDetails, image_title: str,
+                     subplot_index: int):
         image = images.numpy()
-        target_num = target.detach().cpu().numpy()[0].item()
-        images = images.to(device, non_blocking=True)
-        output = model(images)
-
+        image_to_plot = image[0].transpose([1, 2, 0])
+        output = model(images.to(device, non_blocking=True))
         pred = output.detach().cpu().numpy()[0].argmax()
         pred = int(pred)
-
-        original_image = image[0].transpose([1, 2, 0])
+        target_num = target.detach().cpu().numpy()[0].item()
 
         heatmap_pred = generate_heatmap_pytorch(model, dataset, image, pred)
+        ax = plt.subplot(231 + subplot_index)
+        ax.set_title(image_title)
+        plt.imshow(image_to_plot)
+
+        ax = plt.subplot(232 + subplot_index)
+        ax.set_title(
+            f"heatmap: according to Predicted (correct: {target_num == pred}) {dataset.data_index2class[pred]}")
+        plot_heatmap(heatmap_pred, image_to_plot, ax)
+        if target_num != pred:
+            heatmap_gt = generate_heatmap_pytorch(model, dataset, image, target_num)
+            ax = plt.subplot(233 + subplot_index)
+            ax.set_title(f"heatmap: according to GT {dataset.data_index2class[target_num]}")
+            plot_heatmap(heatmap_gt, image_to_plot, ax)
+
+    details: BodmasDataset.ItemDetails
+    for i, (images, target, details) in enumerate(dataloader):
+        # To exam only the packed samples
+        if not details.packed.packed:
+            continue
 
         fig = plt.figure(figsize=(10, 10))
-        ax = plt.subplot(131)
-        ax.set_title(f"original\n{details['md5']}")
-        plt.imshow(original_image)
+        show_heatmap(model, dataset, images, details, f"Sample\n{details.md5}", 0)
 
-        if target_num == pred:
-            ax = plt.subplot(132)
-            ax.set_title(f"heatmap: according to Predicted=GT {dataset.data_index2class[target_num]}")
-            plot_heatmap(heatmap_pred, original_image, ax)
-        else:
-            heatmap_gt = generate_heatmap_pytorch(model, dataset, image, target_num)
-
-            ax = plt.subplot(132)
-            ax.set_title(f"heatmap: according to Predicted {dataset.data_index2class[pred]}")
-            plot_heatmap(heatmap_pred, original_image, ax)
-            ax = plt.subplot(133)
-            ax.set_title(f"heatmap: according to GT {dataset.data_index2class[target_num]}")
-            plot_heatmap(heatmap_gt, original_image, ax)
+        if details.packed.packed:
+            show_heatmap(model, dataset, details.packed.orig_image, details,
+                         f"Packed original\n{details.packed.orig_md5}", 3)
 
         plt.show()
 

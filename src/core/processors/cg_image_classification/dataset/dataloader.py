@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, NamedTuple
 
 import albumentations as alb
 import cv2
@@ -33,21 +33,60 @@ class BodmasDataset(Dataset):
         """
         self.iter_get_details = flag
 
+    class ItemDetailsPacked(NamedTuple):
+        packed: bool
+        orig_md5: str = ""
+        orig_filename: str = ""
+        orig_image: torch.Tensor = ""
+
+    class ItemDetails(NamedTuple):
+        md5: str
+        filename: str
+        packed: "BodmasDataset.ItemDetailsPacked"
+
     def __getitem__(self, index):
         line = self.df.iloc[index]
         label = self.dataset.data_class2index[line["family"]]
-        filename = f"{line['md5']}_{self.dataset.img_shape[0]}x{self.dataset.img_shape[1]}_True_True.png"
-        image = cv2.imread(os.path.join(self.dataset.img_dir_path, filename))
-
-        if self.transform is not None:
-            image = self.transform(image=image)["image"]  # transformations with Albumentations
-
         label = torch.tensor(label)
 
-        if self.iter_get_details:
-            return image, label, {"md5": line["md5"], "filename": filename}
+        def get_filename(md5):
+            return f"{md5}_{self.dataset.img_shape[0]}x{self.dataset.img_shape[1]}_True_True.png"
 
-        return image, label
+        def read_image(filename):
+            image = cv2.imread(os.path.join(self.dataset.img_dir_path, filename))
+            if self.transform is not None:
+                image = self.transform(image=image)["image"]
+            return image
+
+        if pd.notna(line["unpacked-md5"]):
+            md5 = line["unpacked-md5"]
+        else:
+            md5 = line["md5"]
+
+        filename = get_filename(md5)
+        image = read_image(filename)
+
+        if not self.iter_get_details:
+            """
+            Normal flow | during training / evaluating
+            """
+            return image, label
+
+        """
+        Debug flow | when we want to get more details about the sample
+        """
+
+        if pd.notna(line["unpacked-md5"]):
+            # we already have the unpacked-md5 + image above
+            filename_original = get_filename(line["md5"])
+            image_original = read_image(filename_original)
+            details = BodmasDataset.ItemDetails(md5, filename,
+                                                BodmasDataset.ItemDetailsPacked(True, line["md5"], filename_original,
+                                                                                image_original))
+        else:
+            details = BodmasDataset.ItemDetails(md5, filename, BodmasDataset.ItemDetailsPacked(False))
+
+        return image, label, details
 
 
 def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
