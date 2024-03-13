@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, Type, List
+from typing import Tuple, Type, List, Union, Callable
 
 
 class HashValidator:
@@ -42,7 +42,7 @@ class Validator:
         return int(tokens[0]), int(tokens[1])
 
     @staticmethod
-    def validate_list(e: str, type_: Type) -> List:
+    def validate_list(e: str, type_: Union[Type, Callable]) -> List:
         if not isinstance(e, str):
             raise ValueError(f"Cannot convert {e!r} to list")
         tokens = e.split(",")

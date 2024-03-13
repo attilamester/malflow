@@ -140,11 +140,17 @@ class BagNet(nn.Module):
         return x
 
 
+def weight_init(layer: nn.Linear):
+    if isinstance(layer, nn.Linear):
+        nn.init.xavier_uniform_(layer.weight)
+        nn.init.constant_(layer.bias, 0.)
+
+
 def create_bagnet_model(dataset: ImgDataset, patch_size: int, kernel3, strides=None, pretrained=False,
                         pretrained_model_name=None,
                         **kwargs) -> BagNet:
     """
-    Constructs a Bagnet model.
+    Constructs a BagNet model.
     Args:
         pretrained (bool): If True, returns a model pretrained on ImageNet
     """
@@ -152,22 +158,27 @@ def create_bagnet_model(dataset: ImgDataset, patch_size: int, kernel3, strides=N
         strides = [2, 2, 2, 1]
     model = BagNet(dataset, Bottleneck, [3, 4, 6, 3], strides=strides, patch_size=patch_size, kernel3=kernel3, **kwargs)
     if pretrained:
-        state = model.load_state_dict(
-            model_zoo.load_url(model_urls[pretrained_model_name],
-                               model_dir=get_cg_image_classification_tb_log_dir(),
-                               map_location=torch.device("cpu") if not torch.cuda.is_available() else torch.device(
-                                   "cuda:0"),
-                               check_hash=True))
-        if dataset.img_color_channels == 1:  # greyscale
-            Logger.info("Adding the first three conv. weights of the pretrained BagNet model")
-            state.pop("fc.weight")
-            state.pop("fc.bias")
-            if model.conv1.weight.size(1) == 1:
-                conv1_w = state.pop("conv1.weight")
-                conv1_w = torch.sum(conv1_w, dim=1, keepdim=True)
-                state["conv1.weight"] = conv1_w
+        pretrained_state_dict = model_zoo.load_url(
+            model_urls[pretrained_model_name],
+            model_dir=get_cg_image_classification_tb_log_dir(),
+            map_location=torch.device("cpu") if not torch.cuda.is_available() else torch.device(
+                "cuda:0"),
+            check_hash=True)
 
-            model.load_state_dict(state, strict=False)
+        Logger.info("Dropping the last fc layer weight&bias of the pretrained BagNet model")
+        pretrained_state_dict.pop("fc.weight")
+        pretrained_state_dict.pop("fc.bias")
+
+        if model.conv1.weight.size(1) == 1:
+            Logger.info(
+                "Converting the pretrained BagNet model's first conv layer weight to greyscale by summing up the channels")
+            conv1_weight = pretrained_state_dict.pop("conv1.weight")
+            conv1_weight = torch.sum(conv1_weight, dim=1, keepdim=True)
+            pretrained_state_dict["conv1.weight"] = conv1_weight
+
+        model.load_state_dict(pretrained_state_dict, strict=False)
+        weight_init(model.fc)
+
     return model
 
 

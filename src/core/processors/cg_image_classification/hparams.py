@@ -23,7 +23,8 @@ class HPARAMS(Enum):
     First item is the default value
     """
     MODEL_BAGNET = HParamSpace(int, [9, 17, 33])
-    MODEL_PRETRAINED = HParamSpace(bool, [False])
+    MODEL_PRETRAINED = HParamSpace(
+        bool, Validator.validate_list(os.environ["HPARAM_SPACE_MODEL_PRETRAINED"], Validator.validate_bool))
     DATA_MIN_ITEM_PER_CLASS = HParamSpace(
         int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_MIN_ITEM_PER_CLASS"], int))
     DATA_BATCH_SIZE = HParamSpace(
