@@ -12,6 +12,7 @@ import os
 from typing import Dict, Union
 
 import torch.utils.data
+import torchvision
 
 from core.processors.cg_image_classification import paths
 from core.processors.cg_image_classification.dataset import Datasets
@@ -30,23 +31,33 @@ def get_model() -> torch.nn.Module:
     if not Datasets.BODMAS.value.initialized:
         init_train_valid_loader()
 
-    hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
+    hp_model = get_hparam_value(HPARAMS.MODEL)
     hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
 
-    if hp_model_bagnet == 9:
-        return bagnet9(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
-    elif hp_model_bagnet == 17:
-        return bagnet17(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
-    elif hp_model_bagnet == 33:
-        return bagnet33(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
-    else:
-        raise Exception(f"Unknown model: {hp_model_bagnet}")
+    if hp_model.startswith("bagnet"):
+        if hp_model == "bagnet9":
+            return bagnet9(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+        elif hp_model == "bagnet17":
+            return bagnet17(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+        elif hp_model == "bagnet33":
+            return bagnet33(Datasets.BODMAS.value, pretrained=hp_model_pretrained)
+    elif hp_model.startswith("resnet"):
+        if hp_model == "resnet18":
+            m = torchvision.models.resnet18(pretrained=hp_model_pretrained)
+            m.fc = torch.nn.Linear(512 * 1, Datasets.BODMAS.value.num_classes)
+            return m
+        elif hp_model == "resnet50":
+            m = torchvision.models.resnet50(pretrained=hp_model_pretrained)
+            m.fc = torch.nn.Linear(512 * 4, Datasets.BODMAS.value.num_classes)
+            return m
+
+    raise Exception(f"Unknown model: {hp_model}")
 
 
 def get_model_info() -> str:
-    hp_model_bagnet = get_hparam_value(HPARAMS.MODEL_BAGNET)
+    hp_model = get_hparam_value(HPARAMS.MODEL)
     hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
-    return f"Bagnet-{hp_model_bagnet}:{hp_model_pretrained}"
+    return f"{hp_model}:{hp_model_pretrained}"
 
 
 def get_dataset_info() -> str:
@@ -116,9 +127,9 @@ def init_train_valid_loader():
 
     files = os.listdir(paths.get_cg_image_classification_tb_log_dir())
     for file in files:
-        if get_model_info() in file and get_dataset_info() in file:
-            Logger.warning(f"Exiting | Model and dataset already trained: {file}")
-            exit(0)
+        if os.path.isdir(file) and get_model_info() in file and get_dataset_info() in file:
+            Logger.warning(f"Model and dataset already trained: {file}")
+
     (train_dataset, train_loader,
      valid_dataset, valid_loader) = \
         create_bodmas_train_val_loader(Datasets.BODMAS.value,
