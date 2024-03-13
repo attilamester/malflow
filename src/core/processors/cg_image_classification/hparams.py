@@ -22,7 +22,8 @@ class HPARAMS(Enum):
     """
     First item is the default value
     """
-    MODEL_BAGNET = HParamSpace(int, [9, 17, 33])
+    MODEL = HParamSpace(
+        str, Validator.validate_list(os.environ["HPARAM_SPACE_MODEL"], str))
     MODEL_PRETRAINED = HParamSpace(
         bool, Validator.validate_list(os.environ["HPARAM_SPACE_MODEL_PRETRAINED"], Validator.validate_bool))
     DATA_MIN_ITEM_PER_CLASS = HParamSpace(
@@ -43,6 +44,8 @@ def get_hparam_value(hparam: HPARAMS, custom_env_name: str = None):
             validator = Validator.validate_int
         elif hparam.value.type_ == bool:
             validator = Validator.validate_bool
+        elif hparam.value.type_ == str:
+            validator = str
         else:
             raise Exception(f"Unknown hparam type: {hparam}")
 

@@ -17,3 +17,6 @@ def get_cg_image_classification_env_hparams():
 
 def get_cg_image_classification_tb_log_dir():
     return os.path.join(get_cg_image_classification_folder(), "tensorboard/log_dir")
+
+def get_cg_image_classification_checkpoints_dir():
+    return os.path.join(get_cg_image_classification_folder(), "nn_model/checkpoints")
