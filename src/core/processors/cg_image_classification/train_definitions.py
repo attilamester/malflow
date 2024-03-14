@@ -4,6 +4,7 @@ Ensure the envs are loaded.
 """
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env
 from util import config
+from util.validators import Validator
 
 config.load_env(get_cg_image_classification_env())
 
@@ -158,18 +159,11 @@ def get_batch_size(ds: ImgDataset):
     # model = get_model()
     # get_batch_size(model, torch.device("cpu"), (3, 300, 300), (Datasets.BODMAS.value.num_classes,), 1000, 8, 128)
     batch_size = get_hparam_value(HPARAMS.DATA_BATCH_SIZE)
-    if ds.img_shape == (300, 300):
-        if batch_size > 16:
-            Logger.warning("[TrainDef] Batch size is too high for 300x300 image size")
-            return 16
-    elif ds.img_shape == (224, 224):
-        if batch_size > 32:
-            Logger.warning("[TrainDef] Batch size is too high for 224x224 image size")
-            return 32
-    elif ds.img_shape == (100, 100):
-        if batch_size > 64:
-            Logger.warning("[TrainDef] Batch size is too high for 30x30 image size")
-            return 64
+    for shape, max_batch in [((300, 300), 16), ((224, 224), 32), ((100, 100), 64)]:
+        if ds.img_shape == shape and batch_size > max_batch:
+            Logger.warning(
+                f"[TrainDef] HPARAM batch_size ({batch_size}) is too large for {shape} images. Using {max_batch}.")
+            return max_batch
 
     return batch_size
 
@@ -192,6 +186,9 @@ def init_train_valid_loader():
     for file in files:
         if os.path.isdir(file) and get_model_info() in file and get_dataset_info() in file:
             Logger.warning(f"[TrainDef] Model and dataset already trained: {file}")
+            if Validator.validate_bool(os.environ.get("TRAIN_SKIP_EXISTING", "t")):
+                Logger.warning(f"[TrainDef] Skipping training")
+                exit(0)
 
     (TRAIN_DS, TRAIN_LOADER,
      VALID_DS, VALID_LOADER) = \
