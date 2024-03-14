@@ -145,6 +145,8 @@ def get_dataset() -> ImgDataset:
     if DATASET is not None:
         return DATASET
 
+    get_hparams()
+
     DATASET = Datasets.BODMAS.value
     DATASET.filter_ground_truth(get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS))
 
