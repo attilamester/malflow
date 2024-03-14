@@ -9,7 +9,7 @@ from .bagnet import BagNet, bagnet9, bagnet17, bagnet33
 
 
 def get_batch_size(model: nn.Module, device: torch.device, input_shape: Tuple[int, int, int], output_shape: Tuple[int],
-                   dataset_size: int, max_batch_size: int = None, num_iterations: int = 5) -> int:
+                   dataset_size: int, min_batch_size: int = 8, max_batch_size: int = 256, num_iterations: int = 5) -> int:
     """
     https://towardsdatascience.com/a-batch-too-large-finding-the-batch-size-that-fits-on-gpus-aef70902a9f1
     """
@@ -17,7 +17,7 @@ def get_batch_size(model: nn.Module, device: torch.device, input_shape: Tuple[in
     model.train(True)
     optimizer = torch.optim.Adam(model.parameters())
 
-    batch_size = 2
+    batch_size = min_batch_size
     while True:
         Logger.info(f"Trying batch size {batch_size}")
         if max_batch_size is not None and batch_size >= max_batch_size:

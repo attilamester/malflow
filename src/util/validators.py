@@ -46,4 +46,4 @@ class Validator:
         if not isinstance(e, str):
             raise ValueError(f"Cannot convert {e!r} to list")
         tokens = e.split(",")
-        return [type_(t.strip()) for t in tokens]
+        return list(set(type_(t.strip()) for t in tokens))

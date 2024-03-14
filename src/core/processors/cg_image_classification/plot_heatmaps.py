@@ -9,9 +9,9 @@ import torch
 import torch.utils.data
 import matplotlib.pyplot as plt
 
-from core.processors.cg_image_classification.dataset import Datasets, ImgDataset
+from core.processors.cg_image_classification.dataset import ImgDataset
 from core.processors.cg_image_classification.nn_model.bagnet_heatmaps import generate_heatmap_pytorch, plot_heatmap
-from core.processors.cg_image_classification.train_definitions import get_model
+from core.processors.cg_image_classification.train_definitions import get_model, get_dataset
 from core.processors.cg_image_classification.dataset.dataloader import create_torch_bodmas_dataset_loader, BodmasDataset
 
 
@@ -53,12 +53,12 @@ def plot_heatmap_on_model(model: torch.nn.Module, checkpoint_path: str, dataset:
 
         ax = plt.subplot(232 + subplot_index)
         ax.set_title(
-            f"heatmap: according to Predicted (correct: {target_num == pred}) {dataset.data_index2class[pred]}")
+            f"heatmap: according to Predicted (correct: {target_num == pred}) {dataset._data_index2class[pred]}")
         plot_heatmap(heatmap_pred, image_to_plot, ax)
         if target_num != pred:
             heatmap_gt = generate_heatmap_pytorch(model, dataset, image, target_num)
             ax = plt.subplot(233 + subplot_index)
-            ax.set_title(f"heatmap: according to GT {dataset.data_index2class[target_num]}")
+            ax.set_title(f"heatmap: according to GT {dataset._data_index2class[target_num]}")
             plot_heatmap(heatmap_gt, image_to_plot, ax)
 
     details: BodmasDataset.ItemDetails
@@ -79,9 +79,9 @@ def plot_heatmap_on_model(model: torch.nn.Module, checkpoint_path: str, dataset:
 
 if __name__ == "__main__":
     chkpt = "./nn_model/0309-2032_Bagnet-9_False_Bodmas-30x30x3_32_100-train-38980-val-12994_model_best.pth.tar"
-    bodmas = Datasets.BODMAS.value
-    bodmas.filter_ground_truth(100)
-    ds, dl = create_torch_bodmas_dataset_loader(bodmas, bodmas.data_df_gt_filtered, 1)
+    MODEL = get_model()
+    bodmas = get_dataset()
+    ds, dl = create_torch_bodmas_dataset_loader(bodmas, bodmas._data_df_gt_filtered, 1)
     ds.set_iter_details(True)
-    model = get_model()
-    plot_heatmap_on_model(model, chkpt, bodmas, dl)
+
+    plot_heatmap_on_model(MODEL, chkpt, bodmas, dl)
