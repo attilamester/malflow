@@ -1,8 +1,6 @@
-import os
 from typing import Tuple, NamedTuple
 
 import albumentations as alb
-import cv2
 import pandas as pd
 import torch
 from albumentations.pytorch import ToTensorV2
@@ -22,7 +20,7 @@ class BodmasDataset(Dataset):
         self.dataset = dataset
         self.df = df
         self.transform = transform
-        self.iter_get_details = False
+        self.iter_details = False
 
     def __len__(self):
         return len(self.df)
@@ -31,7 +29,7 @@ class BodmasDataset(Dataset):
         """
         Setting True should be used only for debugging purposes - on train loop, this will raise an exception
         """
-        self.iter_get_details = flag
+        self.iter_details = flag
 
     class ItemDetailsPacked(NamedTuple):
         packed: bool
@@ -46,27 +44,20 @@ class BodmasDataset(Dataset):
 
     def __getitem__(self, index):
         line = self.df.iloc[index]
-        label = self.dataset.data_class2index[line["family"]]
+        label = self.dataset._data_class2index[line["family"]]
         label = torch.tensor(label)
 
-        def get_filename(md5):
-            return f"{md5}_{self.dataset.img_shape[0]}x{self.dataset.img_shape[1]}_True_True.png"
-
         def read_image(filename):
-            image = cv2.imread(os.path.join(self.dataset.img_dir_path, filename))
+            image = self.dataset.read_image(filename)
             if self.transform is not None:
                 image = self.transform(image=image)["image"]
             return image
 
-        if pd.notna(line["unpacked-md5"]):
-            md5 = line["unpacked-md5"]
-        else:
-            md5 = line["md5"]
-
-        filename = get_filename(md5)
+        md5 = self.dataset.get_row_id(line)
+        filename = self.dataset.get_filename(md5)
         image = read_image(filename)
 
-        if not self.iter_get_details:
+        if not self.iter_details:
             """
             Normal flow | during training / evaluating
             """
@@ -78,7 +69,7 @@ class BodmasDataset(Dataset):
 
         if pd.notna(line["unpacked-md5"]):
             # we already have the unpacked-md5 + image above
-            filename_original = get_filename(line["md5"])
+            filename_original = self.dataset.get_filename(line["md5"])
             image_original = read_image(filename_original)
             details = BodmasDataset.ItemDetails(md5, filename,
                                                 BodmasDataset.ItemDetailsPacked(True, line["md5"], filename_original,
@@ -108,15 +99,15 @@ def create_torch_bodmas_dataset_loader(dataset: ImgDataset, subset_df: pd.DataFr
     return ds, dl
 
 
-def create_bodmas_train_val_loader(dataset: ImgDataset, items_per_class: int, batch_size: int) \
+def create_bodmas_train_val_loader(dataset: ImgDataset, batch_size: int) \
         -> Tuple[
             BodmasDataset, DataLoader,
             BodmasDataset, DataLoader]:
-    Logger.info(f"Creating dataset & loader with items_per_class:{items_per_class}, batch_size:{batch_size}")
+    Logger.info(f"[Dataloader] Creating dataset loader with batch:{batch_size}")
 
-    df_filtered = dataset.filter_ground_truth(items_per_class)
-
-    ds_train, ds_valid = train_test_split(df_filtered, stratify=df_filtered["family"], test_size=0.25)
+    ds_train, ds_valid = train_test_split(dataset._data_df_gt_filtered,
+                                          stratify=dataset._data_df_gt_filtered["family"],
+                                          test_size=0.25)
 
     ds_tr, dl_tr = create_torch_bodmas_dataset_loader(dataset, ds_train, batch_size)
     ds_va, dl_va = create_torch_bodmas_dataset_loader(dataset, ds_valid, batch_size)
