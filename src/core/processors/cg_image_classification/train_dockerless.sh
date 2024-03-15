@@ -11,6 +11,8 @@ fi
 ./download_dependencies.sh main.py
 
 (
+  log "Running main training script with the hyperparameters:"
+  printenv | grep HPARAM
   cd ../../../ && \
   python3 -m core.processors.cg_image_classification.main \
     -m core.processors.cg_image_classification.train_definitions \
