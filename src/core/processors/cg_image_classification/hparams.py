@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Type, List
 
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env, \
-    get_cg_image_classification_folder
+    get_cg_image_classification_env_hparams
 from util import config
 from util.logger import Logger
 from util.validators import Validator
@@ -38,8 +38,12 @@ def get_hparam_name(hparam: HPARAMS):
 
 def get_hparam_value(hparam: HPARAMS, custom_env_name: str = None):
     if hparam not in __hparams:
-        config.load_env(os.path.join(get_cg_image_classification_folder(), "hparams.env"))
         env_name = get_hparam_name(hparam) if custom_env_name is None else custom_env_name
+        if env_name not in os.environ:
+            config.load_env(get_cg_image_classification_env_hparams())
+
+        env_value = os.environ[env_name]
+
         if hparam.value.type_ == int:
             validator = Validator.validate_int
         elif hparam.value.type_ == bool:
@@ -49,7 +53,7 @@ def get_hparam_value(hparam: HPARAMS, custom_env_name: str = None):
         else:
             raise Exception(f"Unknown hparam type: {hparam}")
 
-        env_value = validator(os.environ[env_name])
+        env_value = validator(env_value)
         Logger.info(f"Loaded hparam {env_name}={env_value}")
 
         __hparams[hparam] = env_value
