@@ -109,8 +109,13 @@ def get_logger() -> logging.Logger:
 
 
 def get_hparams() -> Dict[str, Union[int, float, bool, str]]:
+    if DATASET is None:
+        get_dataset()
+
     return {
-        hp.name: get_hparam_value(hp) for hp in HPARAMS
+        **{hp.name: get_hparam_value(hp) for hp in HPARAMS},
+        "DATA_IMG_SHAPE": f"{DATASET.img_shape[0]}x{DATASET.img_shape[1]}",
+        "DATA_NUM_CLASSES": get_dataset().num_classes
     }
 
 
@@ -144,8 +149,6 @@ def get_dataset() -> ImgDataset:
     global DATASET, BATCH_SIZE
     if DATASET is not None:
         return DATASET
-
-    get_hparams()
 
     DATASET = Datasets.BODMAS.value
     DATASET.filter_ground_truth(get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS))
