@@ -103,6 +103,18 @@ def __arm_samples():
         f.write(BUFF)
 
 
+def __add_packer_info_to_gt():
+    import pandas as pd
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col="md5")
+
+    for sample in Bodmas.get_samples():
+        packed, packer_name = is_sample_packed(sample)
+        if packed:
+            df.loc[sample.md5, "packer"] = packer_name.lower()
+
+    df.to_csv(BODMAS_GROUND_TRUTH_CSV + "_")
+
+
 def __unpack_samples():
     Logger.set_file_logging("unpacker.log")
     process_samples(BodmasArmed, unpack_sample, batch_size=1000, max_batches=None, pool=None)
@@ -182,6 +194,8 @@ if __name__ == "__main__":
     config.load_env()
     # __arm_samples()
     # __unpack_samples()
+    # __add_packer_info_to_gt()
+
     # process_samples(BodmasUnpacked, scan_unpacked_bodmas_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
 
