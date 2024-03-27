@@ -51,10 +51,12 @@ def get_model() -> torch.nn.Module:
             MODEL = bagnet33(DATASET, pretrained=hp_model_pretrained)
     elif hp_model.startswith("resnet"):
         if hp_model == "resnet18":
-            MODEL = torchvision.models.resnet18(pretrained=hp_model_pretrained)
+            weights = None if not hp_model_pretrained else torchvision.models.ResNet18_Weights.IMAGENET1K_V1
+            MODEL = torchvision.models.resnet18(weights=weights)
             MODEL.fc = torch.nn.Linear(512 * 1, DATASET.num_classes)
         elif hp_model == "resnet50":
-            MODEL = torchvision.models.resnet50(pretrained=hp_model_pretrained)
+            weights = None if not hp_model_pretrained else torchvision.models.ResNet50_Weights.IMAGENET1K_V2
+            MODEL = torchvision.models.resnet50(weights=weights)
             MODEL.fc = torch.nn.Linear(512 * 4, DATASET.num_classes)
 
     if MODEL is None:
