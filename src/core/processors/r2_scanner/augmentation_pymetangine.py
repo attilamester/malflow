@@ -36,7 +36,7 @@ def get_augmented_filename(dirpath, filename: str):
         i += 1
 
 
-def augment_pymetangine(input_path: str, output_path: str):
+def augment_pymetangine(input_path: str, output_path: str, random: bool = True):
     input_dir = os.path.dirname(input_path)
     input_name = os.path.basename(input_path)
     output_dir = os.path.dirname(output_path)
@@ -46,23 +46,48 @@ def augment_pymetangine(input_path: str, output_path: str):
                     "-v", f"{output_dir}:/output",
                     "attilamester/pymetangine",
                     "-i", os.path.join("/input", input_name),
-                    "-o", os.path.join("/output", output_name)])
+                    "-o", os.path.join("/output", output_name),
+                    "--random", "y" if random else "n"  # if `n`, then each mutable instruction will be mutated
+                    # "--debug" # uncomment for debug info
+                    # e.g.
+                    # [-] Mutating instruction (0x4039a8): mov eax, edx                        89d0 --> 89d0                mov eax, edx
+                    # [*] Mutating instruction (0x4039aa): xor edx, edx                        33d2 --> 29d2                sub edx, edx
+                    ])
 
 
 def augment_pymetangine_sample(sample: Sample):
     input_path = sample.filepath
     output_path = get_augmented_filename(BodmasPymetangined.get_dir_samples(), os.path.basename(input_path))
-    augment_pymetangine(input_path, output_path)
-    if os.path.isfile(output_path):
+
+    augmented = False
+    for trial in range(2):
+        # 3 trials should be enough. But, some files are slow to scan so after the first error, we try with force
+        # If the sample has no possible mutation options, then it does not matter how many times we try
+        # But if it has N mutation options,
+        #  then the chance that we did not mutate after 3 trials is
+        #  at most (0.5^N) ^3  (at most - bc. each mutation has more than one mutation options and one original)
+        # - 1 mutation option: 12.5%
+        # - 2 mutation options: 1.5%
+        # - 3 mutation options: 0.2% [...]
+
+        augment_pymetangine(input_path, output_path, random=(trial == 0))
+        if not os.path.isfile(output_path):
+            continue
+
+        augmented = True
+
         augmented_sample = Sample(filepath=output_path, sha256=None, check_hashes=False)
         if augmented_sample.sha256 == sample.sha256:
-            Logger.warning(f"Augmenting sample failed: {sample.sha256} has the same sha256")
             os.remove(output_path)
-            return None, None
-        Logger.info(f"Augmenting sample OK: {sample.sha256} -> {augmented_sample.sha256}")
+            continue
+        Logger.info(f"Augmenting sample OK   : {sample.filepath} SHA256: {sample.sha256} -> {augmented_sample.sha256}")
         return sample, augmented_sample
+
+    if not augmented:
+        Logger.error(f"Augmenting sample ERROR: {sample.filepath} could not scan")
     else:
-        return None, None
+        Logger.warning(f"Augmenting sample WARN : {sample.filepath} had no mutation option with pymetangine")
+    return None, None
 
 
 def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int = 100):
