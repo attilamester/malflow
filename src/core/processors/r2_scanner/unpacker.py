@@ -12,7 +12,7 @@ from core.processors.r2_scanner.create_dfs import create_callgraph_dfs
 from core.processors.r2_scanner.paths import get_path_image
 from core.processors.r2_scanner.scan_samples import scan_sample
 from core.processors.util import process_samples, decorator_callgraph_processor, decorator_sample_processor
-from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV
+from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GT_COL0
 from util import config
 from util.logger import Logger
 
@@ -31,7 +31,7 @@ def is_sample_packed(sample: Sample):
             line = line.strip()
             if line.startswith("Packer;"):
                 tokens = line.split(";")
-                packer_name = tokens[1].strip()
+                packer_name = tokens[1].strip().lower()
                 packer_info = tokens[4].replace("Packer:", "").strip()
                 return True, packer_name
     if not packed:
@@ -65,7 +65,6 @@ def unpack_sample(sample: Sample):
 
     Logger.info(f"Unpacking sample [{packer_name}]: {sample.md5} {sample.sha256} {sample.filepath}")
 
-    packer_name = packer_name.lower()
     upx_args = ["upx", "-d", "-o", dest_path, sample.filepath]
     unipacker_args = ["unipacker", "--dest", dset_unpacked.get_dir_samples(), sample.filepath]
     for unpacker_args in [upx_args]:
@@ -112,7 +111,7 @@ def __add_packer_info_to_gt():
         if packed:
             df.loc[sample.md5, "packer"] = packer_name.lower()
 
-    df.to_csv(BODMAS_GROUND_TRUTH_CSV + "_")
+    df.to_csv(BODMAS_GROUND_TRUTH_CSV)
 
 
 def __unpack_samples():
@@ -120,8 +119,7 @@ def __unpack_samples():
     process_samples(BodmasArmed, unpack_sample, batch_size=1000, max_batches=None, pool=None)
 
     import pandas as pd
-    index_col_sha = "filename(original sha256)"
-    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col=index_col_sha)
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col=BODMAS_GT_COL0)
     for sample in BodmasUnpacked.get_samples():
         original_sha = BodmasUnpacked.sha256_from_filename(os.path.basename(sample.filepath))
 
@@ -193,8 +191,8 @@ def replace_unpacked_images(original_images_dir, unpacked_images_dir, dim, delet
 if __name__ == "__main__":
     config.load_env()
     # __arm_samples()
-    # __unpack_samples()
     # __add_packer_info_to_gt()
+    # __unpack_samples()
 
     # process_samples(BodmasUnpacked, scan_unpacked_bodmas_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))

@@ -13,16 +13,23 @@ from core.model.sample import Sample
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env
 from core.processors.r2_scanner.scan_samples import scan_sample
 from core.processors.util import decorator_sample_processor
-from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV
+from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_EXT_AUGM_CSV
+from helpers.ground_truth import (BODMAS_GT_COL0,
+                                  BODMAS_GT_COL1_ts,
+                                  BODMAS_GT_COL2_fam,
+                                  BODMAS_GT_COL3_md5,
+                                  BODMAS_GT_COL4_sha,
+                                  BODMAS_GT_COL5_up_md5,
+                                  BODMAS_GT_COL6_up_sha,
+                                  BODMAS_GT_COL7_packer,
+                                  BODMAS_GT_COL8_augmof_md5,
+                                  BODMAS_GT_COL9_augmof_sha)
 from util import config
 from util.logger import Logger
 
 config.load_env(get_cg_image_classification_env())
 
 from core.processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies
-
-BODMAS_GROUND_TRUTH_AUGMENTATION_PYMETANGINE_CSV = os.path.join(
-    os.path.dirname(BODMAS_GROUND_TRUTH_CSV), "BODMAS_ground_truth_augmentation_pymetangine.csv")
 
 
 def get_augmented_filename(dirpath, filename: str):
@@ -103,9 +110,9 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
 
         rows_with_family = df_filtered[df_filtered["family"] == family]
         ids_not_packed = rows_with_family[rows_with_family["packer"].isna()][
-            "filename(original sha256)"]
+            BODMAS_GT_COL0]
         ids_successfully_unpacked = rows_with_family[~ rows_with_family["unpacked-md5"].isna()][
-            "filename(original sha256)"]
+            BODMAS_GT_COL0]
 
         Logger.info(f"Family {family} | Augmentation needed: {augm_needed}\n"
                     f"\tsamples:            {count:>5}\n"
@@ -126,7 +133,7 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
 
 
 def create_augmentation_ground_truth():
-    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col="filename(original sha256)")
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col=BODMAS_GT_COL0)
     augm_data = []
     for filename in os.listdir(BodmasPymetangined.get_dir_samples()):
         if "_augm" in filename:
@@ -138,11 +145,24 @@ def create_augmentation_ground_truth():
                                                                BodmasPymetangined.filename_from_sha256(
                                                                    augm_sample.sha256)))
             family = df.loc[original_sha256, "family"]
-            augm_data.append([family, augm_sample.md5, augm_sample.sha256, orig_sample.md5, orig_sample.sha256])
-    df_augm = pd.DataFrame(data=augm_data,
-                           columns=["family", "md5", "sha256", "augmentation_of_md5", "augmentation_of_sha256"])
-    df_augm.sort_values(by="family", inplace=True)
-    df_augm.to_csv(BODMAS_GROUND_TRUTH_AUGMENTATION_PYMETANGINE_CSV, index=False)
+            augm_data.append([original_sha256, None, family,
+                              augm_sample.md5, augm_sample.sha256,
+                              None, None, None,
+                              orig_sample.md5, orig_sample.sha256])
+
+    column_order = [BODMAS_GT_COL0, BODMAS_GT_COL1_ts, BODMAS_GT_COL2_fam,
+                    BODMAS_GT_COL3_md5, BODMAS_GT_COL4_sha,
+                    BODMAS_GT_COL5_up_md5, BODMAS_GT_COL6_up_sha, BODMAS_GT_COL7_packer,
+                    BODMAS_GT_COL8_augmof_md5, BODMAS_GT_COL9_augmof_sha]
+    df_augm = pd.DataFrame(data=augm_data, columns=column_order)
+    df_augm.sort_values(by=BODMAS_GT_COL2_fam, inplace=True)
+
+    df.reset_index(inplace=True)
+    df[BODMAS_GT_COL8_augmof_md5] = ""
+    df[BODMAS_GT_COL9_augmof_sha] = ""
+    df_augm = pd.concat([df, df_augm], ignore_index=True)
+    df_augm = df_augm[column_order]
+    df_augm.to_csv(BODMAS_GROUND_TRUTH_EXT_AUGM_CSV, index=False)
 
 
 @decorator_sample_processor(BodmasPymetangined)
