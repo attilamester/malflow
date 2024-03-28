@@ -108,13 +108,13 @@ class BodmasUnpacked(BodmasArmed):
         return f"unpacked_{sha256}.exe"
 
 
-class BodmasPymetangined(Bodmas):
+class BodmasAugmented(Bodmas):
 
     @classmethod
     def get_dir_samples(cls):
-        return os.path.join(os.path.dirname(Bodmas.get_dir_samples()), "pymetangined")
+        return os.path.join(os.path.dirname(Bodmas.get_dir_samples()), "augmented")
 
     @classmethod
     def get_dir_analysis(cls):
         return os.path.join(os.path.dirname(Bodmas.get_dir_analysis()),
-                            os.path.basename(Bodmas.get_dir_analysis()) + "_pymetangined")
+                            os.path.basename(Bodmas.get_dir_analysis()) + "_augmented")

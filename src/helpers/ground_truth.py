@@ -12,7 +12,7 @@ config.load_env()
 
 BODMAS_METADATA_CSV = "/opt/work/bd/BODMAS/bodmas_metadata.csv"
 BODMAS_GROUND_TRUTH_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth.csv"
-BODMAS_GROUND_TRUTH_EXT_AUGM_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth_ext-augm.csv"
+BODMAS_GROUND_TRUTH_WITH_AUGM_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth_with_augm.csv"
 """
 extended with unpacked and augmented samples
 """

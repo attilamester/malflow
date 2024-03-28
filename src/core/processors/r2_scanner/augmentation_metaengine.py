@@ -2,18 +2,18 @@ import os.path
 import random
 import shutil
 import subprocess
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import Type
 
 import pandas as pd
 
 from core.data import DatasetProvider
-from core.data.bodmas import Bodmas, BodmasPymetangined
+from core.data.bodmas import Bodmas, BodmasAugmented
 from core.model.sample import Sample
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env
 from core.processors.r2_scanner.scan_samples import scan_sample
-from core.processors.util import decorator_sample_processor
-from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_EXT_AUGM_CSV
+from core.processors.util import decorator_sample_processor, process_samples
+from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_WITH_AUGM_CSV
 from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL1_ts,
                                   BODMAS_GT_COL2_fam,
@@ -65,7 +65,7 @@ def augment_pymetangine(input_path: str, output_path: str, random: bool = True):
 
 def augment_pymetangine_sample(sample: Sample):
     input_path = sample.filepath
-    output_path = get_augmented_filename(BodmasPymetangined.get_dir_samples(), os.path.basename(input_path))
+    output_path = get_augmented_filename(BodmasAugmented.get_dir_samples(), os.path.basename(input_path))
 
     augmented = False
     for trial in range(2):
@@ -136,14 +136,14 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
 def create_augmentation_ground_truth():
     df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col=BODMAS_GT_COL0)
     augm_data = []
-    for filename in os.listdir(BodmasPymetangined.get_dir_samples()):
+    for filename in os.listdir(BodmasAugmented.get_dir_samples()):
         if "_augm" in filename:
             original_sha256 = filename.split("_")[0]
             orig_sample = Bodmas.get_sample(sha256=original_sha256)
-            augm_sample = Sample(filepath=os.path.join(BodmasPymetangined.get_dir_samples(), filename),
+            augm_sample = Sample(filepath=os.path.join(BodmasAugmented.get_dir_samples(), filename),
                                  sha256=None, check_hashes=False)
-            shutil.copyfile(augm_sample.filepath, os.path.join(BodmasPymetangined.get_dir_samples(),
-                                                               BodmasPymetangined.filename_from_sha256(
+            shutil.copyfile(augm_sample.filepath, os.path.join(BodmasAugmented.get_dir_samples(),
+                                                               BodmasAugmented.filename_from_sha256(
                                                                    augm_sample.sha256)))
             family = df.loc[original_sha256, "family"]
             augm_data.append([original_sha256, None, family,
@@ -163,14 +163,14 @@ def create_augmentation_ground_truth():
     df[BODMAS_GT_COL9_augmof_sha] = ""
     df_augm = pd.concat([df, df_augm], ignore_index=True)
     df_augm = df_augm[column_order]
-    df_augm.to_csv(BODMAS_GROUND_TRUTH_EXT_AUGM_CSV, index=False)
+    df_augm.to_csv(BODMAS_GROUND_TRUTH_WITH_AUGM_CSV, index=False)
 
 
-def complete_image_collection(original_images_dir, augm_images_dir, subdir, dim):
-    df = pd.read_csv(BODMAS_GROUND_TRUTH_EXT_AUGM_CSV)
+def complete_image_collection(augm_images_dir, dim):
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_WITH_AUGM_CSV)
     df.set_index("md5", inplace=True)
 
-    original_images_dir = os.path.join(original_images_dir, f"{subdir}_with_augm")
+    original_images_dir = os.path.join(Bodmas.get_dir_images(), f"images_{dim[0]}x{dim[1]}_with_augm")
     ensure_dir(original_images_dir)
 
     n = 0
@@ -181,17 +181,17 @@ def complete_image_collection(original_images_dir, augm_images_dir, subdir, dim)
             path_to_copy_to = os.path.join(original_images_dir, file_to_copy)
             path_to_copy_from = os.path.join(augm_images_dir, subdir, file_to_copy)
 
-            if not os.path.isfile(path_to_copy_from) or not os.path.isfile(path_to_copy_to):
-                print(f"{n} Error: File not found: {path_to_copy_from} or {path_to_copy_to}")
+            if not os.path.isfile(path_to_copy_from):
+                print(f"{n} Error: File not found: {path_to_copy_from}")
                 continue
 
-            # shutil.copy(path_to_copy_from, path_to_copy_to)
+            shutil.copy(path_to_copy_from, path_to_copy_to)
 
-            print(f"{n} Copied \n\t{path_to_copy_from}) --> \n\t {path_to_copy_to}")
+            print(f"{n} Copied \n\t{path_to_copy_from} --> \n\t{path_to_copy_to}")
 
 
-@decorator_sample_processor(BodmasPymetangined)
-def scan_pymetangine_sample(dset: Type[DatasetProvider], sample: Sample):
+@decorator_sample_processor(BodmasAugmented)
+def scan_augmented_sample(dset: Type[DatasetProvider], sample: Sample):
     scan_sample(dset, sample)
 
 
@@ -200,10 +200,7 @@ if __name__ == "__main__":
     # create_augmentation_with_pymetangine()
     # create_augmentation_ground_truth()
 
-    # process_samples(BodmasPymetangined, scan_pymetangine_sample, batch_size=1000, max_batches=None,
+    # process_samples(BodmasAugmented, scan_augmented_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
 
-    complete_image_collection(Bodmas.get_dir_images(),
-                              BodmasPymetangined.get_dir_images(),
-                              "images_30x30",
-                              (30, 30))
+    # complete_image_collection(BodmasAugmented.get_dir_images(), (100, 100))
