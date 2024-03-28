@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 from enum import Enum
 from typing import Type, List
 
@@ -12,10 +11,13 @@ from util.validators import Validator
 config.load_env(get_cg_image_classification_env())
 
 
-@dataclass
 class HParamSpace:
     type_: Type
     values: List
+
+    def __init__(self, type_, values):
+        self.type_ = type_
+        self.values = values
 
 
 class HPARAMS(Enum):
