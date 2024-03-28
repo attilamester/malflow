@@ -9,6 +9,7 @@ import pandas as pd
 
 from core.processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies, \
     list_to_dict_keys
+from helpers.ground_truth import BODMAS_GT_COL8_augmof_md5
 from util.logger import Logger
 from util.validators import Validator
 
@@ -19,8 +20,6 @@ class ImgDataset:
     img_dir_path: str
     img_shape: Tuple[int, int]
     img_color_channels: int
-
-    augm: bool
 
     initialized: bool = field(default=False)
     _data_num_classes: int = field(default=None)
@@ -65,9 +64,19 @@ class ImgDataset:
     # Below, methods are domain-specific. Maybe they should be moved to a subclass
     # =================
 
-    def get_ground_truth(self) -> pd.DataFrame:
+    def get_ground_truth(self, augmentation: bool = False) -> pd.DataFrame:
         if self._data_df_gt is None:
-            self._data_df_gt = pd.read_csv(self.ground_truth_path, delimiter=",")
+            df = pd.read_csv(self.ground_truth_path, delimiter=",")
+
+            if augmentation:
+                if BODMAS_GT_COL8_augmof_md5 not in df.columns:
+                    Logger.warning(f"Ground truth does not contain augmented information ({self.ground_truth_path}")
+            else:
+                if BODMAS_GT_COL8_augmof_md5 in df.columns:
+                    df = df[df[BODMAS_GT_COL8_augmof_md5].isnull()]
+
+            self._data_df_gt = df
+
         return self._data_df_gt
 
     def get_row_id(self, row: pd.Series) -> str:
@@ -79,8 +88,8 @@ class ImgDataset:
     def get_filename(self, md5):
         return f"{md5}_{self.img_shape[0]}x{self.img_shape[1]}_True_True.png"
 
-    def filter_ground_truth(self, items_per_class: int) -> pd.DataFrame:
-        df = self.get_ground_truth()
+    def filter_ground_truth(self, items_per_class: int, augmentation: bool = False) -> pd.DataFrame:
+        df = self.get_ground_truth(augmentation)
         df_filtered = df_filter_having_at_column_min_occurencies(df, "family", items_per_class)
         family_index = list_to_dict_keys(list(df_filtered["family"].unique()))
 
@@ -129,6 +138,5 @@ class Datasets(Enum):
         ground_truth_path=os.environ["DATASETS_BODMAS_GROUND_TRUTH_PATH"],
         img_dir_path=os.environ["DATASETS_BODMAS_IMG_DIR_PATH"],
         img_shape=Validator.validate_shape(os.environ["DATASETS_BODMAS_IMG_SHAPE"]),
-        img_color_channels=Validator.validate_int(os.environ["DATASETS_BODMAS_IMG_COLOR_CHANNELS"]),
-        augm=Validator.validate_bool(os.environ["DATASETS_BODMAS_IMG_AUGM"]),
+        img_color_channels=Validator.validate_int(os.environ["DATASETS_BODMAS_IMG_COLOR_CHANNELS"])
     )

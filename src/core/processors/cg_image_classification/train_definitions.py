@@ -76,7 +76,8 @@ def get_dataset_info() -> str:
         get_dataset()
     ds = DATASET
     items_per_class = get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS)
-    return f"Bodmas-{ds.img_shape[0]}x{ds.img_shape[1]}x{ds.img_color_channels}:{BATCH_SIZE}:{items_per_class}"
+    augm = "augm" if get_hparam_value(HPARAMS.DATA_AUGM) else "noaugm"
+    return f"Bodmas-{ds.img_shape[0]}x{ds.img_shape[1]}x{ds.img_color_channels}:{BATCH_SIZE}:{items_per_class}:{augm}"
 
 
 def get_train_dataset() -> torch.utils.data.Dataset:
@@ -153,7 +154,8 @@ def get_dataset() -> ImgDataset:
         return DATASET
 
     DATASET = Datasets.BODMAS.value
-    DATASET.filter_ground_truth(get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS))
+    DATASET.filter_ground_truth(get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS),
+                                get_hparam_value(HPARAMS.DATA_AUGM))
 
     BATCH_SIZE = get_batch_size(DATASET)
 

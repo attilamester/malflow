@@ -12,6 +12,21 @@ config.load_env()
 
 BODMAS_METADATA_CSV = "/opt/work/bd/BODMAS/bodmas_metadata.csv"
 BODMAS_GROUND_TRUTH_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth.csv"
+BODMAS_GROUND_TRUTH_EXT_AUGM_CSV = "/opt/work/bd/BODMAS_ground_truth/BODMAS_ground_truth_ext-augm.csv"
+"""
+extended with unpacked and augmented samples
+"""
+BODMAS_GT_COL0 = "filename(original sha256)"
+BODMAS_GT_COL1_ts = "timestamp"
+BODMAS_GT_COL2_fam = "family"
+BODMAS_GT_COL3_md5 = "md5"
+BODMAS_GT_COL4_sha = "sha256"
+BODMAS_GT_COL5_up_md5 = "unpacked-md5"
+BODMAS_GT_COL6_up_sha = "unpacked-sha256"
+BODMAS_GT_COL7_packer = "packer"
+BODMAS_GT_COL8_augmof_md5 = "augmentation_of_md5"
+BODMAS_GT_COL9_augmof_sha = "augmentation_of_sha256"
+
 
 def read_bodmas_metadata(bodmas_meta_csv: str):
     import pandas as pd
@@ -30,7 +45,7 @@ def create_ground_truth_bodmas(bodmas_meta_csv: str):
         if i % 1000 == 0:
             Logger.info(f"Processed {i} samples up to {sha}")
 
-    df.index.rename("filename(original sha256)", inplace=True)
+    df.index.rename(BODMAS_GT_COL0, inplace=True)
     df.to_csv(BODMAS_GROUND_TRUTH_CSV)
 
 

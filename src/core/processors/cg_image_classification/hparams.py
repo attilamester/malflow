@@ -30,6 +30,8 @@ class HPARAMS(Enum):
         int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_MIN_ITEM_PER_CLASS"], int))
     DATA_BATCH_SIZE = HParamSpace(
         int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_BATCH_SIZE"], int))
+    DATA_AUGM = HParamSpace(
+        bool, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_AUGM"], Validator.validate_bool))
 
 
 def get_hparam_name(hparam: HPARAMS):
