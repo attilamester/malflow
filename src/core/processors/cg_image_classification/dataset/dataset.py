@@ -9,10 +9,10 @@ import pandas as pd
 
 from core.processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies, \
     list_to_dict_keys
-from helpers.ground_truth import BODMAS_GT_COL8_augmof_md5
 from util.logger import Logger
 from util.validators import Validator
 
+BODMAS_GT_COL8_augmof_md5 = "augmentation_of_md5"
 
 @dataclass
 class ImgDataset:
