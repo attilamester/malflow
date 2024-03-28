@@ -26,6 +26,7 @@ from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL9_augmof_sha)
 from util import config
 from util.logger import Logger
+from util.misc import ensure_dir
 
 config.load_env(get_cg_image_classification_env())
 
@@ -165,6 +166,30 @@ def create_augmentation_ground_truth():
     df_augm.to_csv(BODMAS_GROUND_TRUTH_EXT_AUGM_CSV, index=False)
 
 
+def complete_image_collection(original_images_dir, augm_images_dir, subdir, dim):
+    df = pd.read_csv(BODMAS_GROUND_TRUTH_EXT_AUGM_CSV)
+    df.set_index("md5", inplace=True)
+
+    original_images_dir = os.path.join(original_images_dir, f"{subdir}_with_augm")
+    ensure_dir(original_images_dir)
+
+    n = 0
+    for index, row in df.iterrows():
+        if pd.notna(row[BODMAS_GT_COL8_augmof_md5]):
+            n += 1
+            file_to_copy = f"{index}_{dim[0]}x{dim[1]}_True_True.png"
+            path_to_copy_to = os.path.join(original_images_dir, file_to_copy)
+            path_to_copy_from = os.path.join(augm_images_dir, subdir, file_to_copy)
+
+            if not os.path.isfile(path_to_copy_from) or not os.path.isfile(path_to_copy_to):
+                print(f"{n} Error: File not found: {path_to_copy_from} or {path_to_copy_to}")
+                continue
+
+            # shutil.copy(path_to_copy_from, path_to_copy_to)
+
+            print(f"{n} Copied \n\t{path_to_copy_from}) --> \n\t {path_to_copy_to}")
+
+
 @decorator_sample_processor(BodmasPymetangined)
 def scan_pymetangine_sample(dset: Type[DatasetProvider], sample: Sample):
     scan_sample(dset, sample)
@@ -177,3 +202,8 @@ if __name__ == "__main__":
 
     # process_samples(BodmasPymetangined, scan_pymetangine_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
+
+    complete_image_collection(Bodmas.get_dir_images(),
+                              BodmasPymetangined.get_dir_images(),
+                              "images_30x30",
+                              (30, 30))
