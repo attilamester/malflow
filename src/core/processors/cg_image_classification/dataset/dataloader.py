@@ -105,9 +105,11 @@ def create_bodmas_train_val_loader(dataset: ImgDataset, batch_size: int) \
             BodmasDataset, DataLoader]:
     Logger.info(f"[Dataloader] Creating dataset loader with batch:{batch_size}")
 
-    ds_train, ds_valid = train_test_split(dataset._data_df_gt_filtered,
-                                          stratify=dataset._data_df_gt_filtered["family"],
+    ds_train, ds_valid = train_test_split(dataset._data_df_gt_filtered_noaugm,
+                                          stratify=dataset._data_df_gt_filtered_noaugm["family"],
                                           test_size=0.25)
+
+    ds_train = pd.concat([ds_train, dataset._data_df_gt_filtered_augm])
 
     ds_tr, dl_tr = create_torch_bodmas_dataset_loader(dataset, ds_train, batch_size)
     ds_va, dl_va = create_torch_bodmas_dataset_loader(dataset, ds_valid, batch_size)
