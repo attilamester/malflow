@@ -19,7 +19,7 @@ from core.processors.cg_image_classification import paths
 from core.processors.cg_image_classification.dataset import Datasets, ImgDataset
 from core.processors.cg_image_classification.dataset.dataloader import create_bodmas_train_val_loader
 from core.processors.cg_image_classification.hparams import HPARAMS, get_hparam_value
-from core.processors.cg_image_classification.nn_model import bagnet17, bagnet9, bagnet33
+from core.processors.cg_image_classification.nn_model import bagnet17, bagnet9, bagnet33, SimpleCNN
 from util.logger import Logger
 
 
@@ -58,6 +58,43 @@ def get_model() -> torch.nn.Module:
             weights = None if not hp_model_pretrained else torchvision.models.ResNet50_Weights.IMAGENET1K_V2
             MODEL = torchvision.models.resnet50(weights=weights)
             MODEL.fc = torch.nn.Linear(512 * 4, DATASET.num_classes)
+    elif hp_model.startswith("alexnet"):
+        weights = None if not hp_model_pretrained else torchvision.models.AlexNet_Weights.IMAGENET1K_V1
+        MODEL = torchvision.models.alexnet(weights=weights)
+        MODEL.classifier[6] = torch.nn.Linear(4096, DATASET.num_classes)
+    elif hp_model.startswith("densenet"):
+        if hp_model == "densenet121":
+            weights = None if not hp_model_pretrained else torchvision.models.DenseNet121_Weights.IMAGENET1K_V1
+            MODEL = torchvision.models.densenet121(weights=weights)
+            MODEL.classifier = torch.nn.Linear(MODEL.classifier.in_features, DATASET.num_classes)
+        elif hp_model == "densenet161":
+            weights = None if not hp_model_pretrained else torchvision.models.DenseNet161_Weights.IMAGENET1K_V1
+            MODEL = torchvision.models.densenet161(weights=weights)
+            MODEL.classifier = torch.nn.Linear(MODEL.classifier.in_features, DATASET.num_classes)
+    elif hp_model.startswith("efficientnet"):
+        weights = None if not hp_model_pretrained else torchvision.models.EfficientNet_V2_S_Weights.IMAGENET1K_V1
+        MODEL = torchvision.models.efficientnet_v2_s(weights=weights)
+        MODEL.classifier[1] = torch.nn.Linear(MODEL.classifier[1].in_features, DATASET.num_classes)
+    elif hp_model.startswith("googlenet"):
+        weights = None if not hp_model_pretrained else torchvision.models.GoogLeNet_Weights.IMAGENET1K_V1
+        MODEL = torchvision.models.googlenet(weights=weights)
+        MODEL.fc = torch.nn.Linear(1024, DATASET.num_classes)
+    # elif hp_model.startswith("inception"):
+    #     weights = None if not hp_model_pretrained else torchvision.models.Inception_V3_Weights.IMAGENET1K_V1
+    #     MODEL = torchvision.models.inception_v3(weights=weights)
+    #     MODEL.AuxLogits = InceptionAux(768, DATASET.num_classes)
+    #     MODEL.fc = torch.nn.Linear(2048, DATASET.num_classes)
+    elif hp_model.startswith("mobilenet"):
+        weights = None if not hp_model_pretrained else torchvision.models.MobileNet_V3_Small_Weights.IMAGENET1K_V1
+        MODEL = torchvision.models.mobilenet_v3_small(weights=weights)
+        MODEL.classifier[-1] = torch.nn.Linear(MODEL.classifier[-1].in_features, DATASET.num_classes)
+    elif hp_model.startswith("vgg"):
+        weights = None if not hp_model_pretrained else torchvision.models.VGG11_Weights.IMAGENET1K_V1
+        MODEL = torchvision.models.vgg11(weights=weights)
+        MODEL.classifier[-1] = torch.nn.Linear(4096, DATASET.num_classes)
+
+    elif hp_model.startswith("simplecnn"):
+        MODEL = SimpleCNN(DATASET, 32, dropout=0.5)
 
     if MODEL is None:
         raise Exception(f"Unknown model: {hp_model}")

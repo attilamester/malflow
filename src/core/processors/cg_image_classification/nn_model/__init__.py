@@ -6,10 +6,12 @@ import torch.nn.functional as F
 
 from util.logger import Logger
 from .bagnet import BagNet, bagnet9, bagnet17, bagnet33
+from .simple_cnn import SimpleCNN
 
 
 def get_batch_size(model: nn.Module, device: torch.device, input_shape: Tuple[int, int, int], output_shape: Tuple[int],
-                   dataset_size: int, min_batch_size: int = 8, max_batch_size: int = 256, num_iterations: int = 5) -> int:
+                   dataset_size: int, min_batch_size: int = 8, max_batch_size: int = 256,
+                   num_iterations: int = 5) -> int:
     """
     https://towardsdatascience.com/a-batch-too-large-finding-the-batch-size-that-fits-on-gpus-aef70902a9f1
     """
