@@ -14,6 +14,7 @@ from util.validators import Validator
 
 BODMAS_GT_COL8_augmof_md5 = "augmentation_of_md5"
 
+
 @dataclass
 class ImgDataset:
     ground_truth_path: str
@@ -64,18 +65,9 @@ class ImgDataset:
     # Below, methods are domain-specific. Maybe they should be moved to a subclass
     # =================
 
-    def get_ground_truth(self, augmentation: bool = False) -> pd.DataFrame:
+    def get_ground_truth(self) -> pd.DataFrame:
         if self._data_df_gt is None:
-            df = pd.read_csv(self.ground_truth_path, delimiter=",")
-
-            if augmentation:
-                if BODMAS_GT_COL8_augmof_md5 not in df.columns:
-                    Logger.warning(f"Ground truth does not contain augmented information ({self.ground_truth_path}")
-            else:
-                if BODMAS_GT_COL8_augmof_md5 in df.columns:
-                    df = df[df[BODMAS_GT_COL8_augmof_md5].isnull()]
-
-            self._data_df_gt = df
+            self._data_df_gt = pd.read_csv(self.ground_truth_path, delimiter=",")
 
         return self._data_df_gt
 
@@ -89,12 +81,25 @@ class ImgDataset:
         return f"{md5}_{self.img_shape[0]}x{self.img_shape[1]}_True_True.png"
 
     def filter_ground_truth(self, items_per_class: int, augmentation: bool = False) -> pd.DataFrame:
-        df = self.get_ground_truth(augmentation)
+        df = self.get_ground_truth()
         df_filtered = df_filter_having_at_column_min_occurencies(df, "family", items_per_class)
         family_index = list_to_dict_keys(list(df_filtered["family"].unique()))
 
         self._data_num_classes = len(family_index)
         self._data_df_gt_filtered = df_filtered
+
+        if BODMAS_GT_COL8_augmof_md5 not in df_filtered.columns:
+            self._data_df_gt_filtered_augm = pd.DataFrame()
+            self._data_df_gt_filtered_noaugm = df_filtered
+            if augmentation:
+                Logger.warning(f"Ground truth does not contain augmented information ({self.ground_truth_path}")
+        else:
+            self._data_df_gt_filtered_noaugm = df_filtered[df_filtered[BODMAS_GT_COL8_augmof_md5].isnull()]
+            if augmentation:
+                self._data_df_gt_filtered_augm = df_filtered[df_filtered[BODMAS_GT_COL8_augmof_md5].notna()]
+            else:
+                self._data_df_gt_filtered_augm = pd.DataFrame()
+
         self._data_class2index = family_index
         self._data_index2class = {v: k for k, v in family_index.items()}
         self.initialized = True
@@ -113,7 +118,7 @@ class ImgDataset:
 
         channels_mean = [[], [], []]
         channels_std = [[], [], []]
-        for i, row in self._data_df_gt_filtered.iterrows():
+        for i, row in self._data_df_gt_filtered_noaugm.iterrows():
             md5 = self.get_row_id(row)
             filename = self.get_filename(md5)
             filepath = os.path.join(self.img_dir_path, filename)

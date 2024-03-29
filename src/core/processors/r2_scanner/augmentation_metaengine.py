@@ -170,7 +170,8 @@ def complete_image_collection(augm_images_dir, dim):
     df = pd.read_csv(BODMAS_GROUND_TRUTH_WITH_AUGM_CSV)
     df.set_index("md5", inplace=True)
 
-    original_images_dir = os.path.join(Bodmas.get_dir_images(), f"images_{dim[0]}x{dim[1]}_with_augm")
+    subdir = f"images_{dim[0]}x{dim[1]}"
+    original_images_dir = os.path.join(Bodmas.get_dir_images(), subdir + "_with_augm")
     ensure_dir(original_images_dir)
 
     n = 0
@@ -203,4 +204,5 @@ if __name__ == "__main__":
     # process_samples(BodmasAugmented, scan_augmented_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
 
+    # complete_image_collection(BodmasAugmented.get_dir_images(), (30, 30))
     # complete_image_collection(BodmasAugmented.get_dir_images(), (100, 100))
