@@ -61,7 +61,7 @@ def get_model() -> torch.nn.Module:
     elif hp_model.startswith("alexnet"):
         weights = None if not hp_model_pretrained else torchvision.models.AlexNet_Weights.IMAGENET1K_V1
         MODEL = torchvision.models.alexnet(weights=weights)
-        MODEL.classifier[6] = torch.nn.Linear(4096, DATASET.num_classes)
+        MODEL.classifier[-1] = torch.nn.Linear(MODEL.classifier[-1].in_features, DATASET.num_classes)
     elif hp_model.startswith("densenet"):
         if hp_model == "densenet121":
             weights = None if not hp_model_pretrained else torchvision.models.DenseNet121_Weights.IMAGENET1K_V1
@@ -78,7 +78,7 @@ def get_model() -> torch.nn.Module:
     elif hp_model.startswith("googlenet"):
         weights = None if not hp_model_pretrained else torchvision.models.GoogLeNet_Weights.IMAGENET1K_V1
         MODEL = torchvision.models.googlenet(weights=weights)
-        MODEL.fc = torch.nn.Linear(1024, DATASET.num_classes)
+        MODEL.fc = torch.nn.Linear(MODEL.fc.in_features, DATASET.num_classes)
     # elif hp_model.startswith("inception"):
     #     weights = None if not hp_model_pretrained else torchvision.models.Inception_V3_Weights.IMAGENET1K_V1
     #     MODEL = torchvision.models.inception_v3(weights=weights)
