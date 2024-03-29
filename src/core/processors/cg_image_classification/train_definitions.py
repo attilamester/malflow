@@ -105,7 +105,8 @@ def get_model() -> torch.nn.Module:
 def get_model_info() -> str:
     hp_model = get_hparam_value(HPARAMS.MODEL)
     hp_model_pretrained = get_hparam_value(HPARAMS.MODEL_PRETRAINED)
-    return f"{hp_model}:{hp_model_pretrained}"
+    pretrained = "pretr" if hp_model_pretrained else "nopre"
+    return f"{hp_model}:{pretrained}"
 
 
 def get_dataset_info() -> str:
@@ -113,7 +114,7 @@ def get_dataset_info() -> str:
         get_dataset()
     ds = DATASET
     items_per_class = get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS)
-    augm = "augm" if get_hparam_value(HPARAMS.DATA_AUGM) else "noaugm"
+    augm = "augmen" if get_hparam_value(HPARAMS.DATA_AUGM) else "noaugm"
     return f"Bodmas-{ds.img_shape[0]}x{ds.img_shape[1]}x{ds.img_color_channels}:{BATCH_SIZE}:{items_per_class}:{augm}"
 
 
