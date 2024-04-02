@@ -1,6 +1,7 @@
-from typing import Tuple, NamedTuple
+from typing import Tuple, NamedTuple, Dict
 
 import albumentations as alb
+import cv2
 import pandas as pd
 import torch
 from albumentations.pytorch import ToTensorV2
@@ -80,26 +81,29 @@ class BodmasDataset(Dataset):
         return image, label, details
 
 
-def get_transform_alb_norm(mean: float, std: float) -> alb.Compose:
+def get_transform(mean: float, std: float, min_size: Tuple[int, int] = None) -> alb.Compose:
+    if not min_size:
+        min_size = (1, 1)
+
     return alb.Compose([
-        alb.ToFloat(max_value=256),  # [0..256] --> [0..1]
+        # alb.ToFloat(max_value=256),  # [0..256] --> [0..1]
         alb.Normalize(mean=mean, std=std, max_pixel_value=1.0, p=1.0),
-        # remove cropping according to device GPU ram
-        # A.crops.transforms.CenterCrop(
-        #     256, 256, always_apply=True, p=1.0
-        # ),
+        alb.PadIfNeeded(min_height=min_size[0], min_width=min_size[1], position=alb.PadIfNeeded.PositionType.TOP_LEFT,
+                        border_mode=cv2.BORDER_REFLECT_101),
         alb.pytorch.ToTensorV2(),
     ])
 
 
-def create_torch_bodmas_dataset_loader(dataset: ImgDataset, subset_df: pd.DataFrame, batch_size: int) -> Tuple[
+def create_torch_bodmas_dataset_loader(dataset: ImgDataset, subset_df: pd.DataFrame, batch_size: int,
+                                       model_requirements: Dict = None) -> Tuple[
     BodmasDataset, DataLoader]:
-    ds = BodmasDataset(dataset=dataset, df=subset_df, transform=get_transform_alb_norm(dataset.mean, dataset.std))
+    ds = BodmasDataset(dataset=dataset, df=subset_df,
+                       transform=get_transform(dataset.mean, dataset.std, model_requirements.get("min_size", None)))
     dl = DataLoader(ds, batch_size=batch_size, shuffle=True)
     return ds, dl
 
 
-def create_bodmas_train_val_loader(dataset: ImgDataset, batch_size: int) \
+def create_bodmas_train_val_loader(dataset: ImgDataset, batch_size: int, model_requirements: Dict = None) \
         -> Tuple[
             BodmasDataset, DataLoader,
             BodmasDataset, DataLoader]:
@@ -111,7 +115,7 @@ def create_bodmas_train_val_loader(dataset: ImgDataset, batch_size: int) \
 
     ds_train = pd.concat([ds_train, dataset._data_df_gt_filtered_augm])
 
-    ds_tr, dl_tr = create_torch_bodmas_dataset_loader(dataset, ds_train, batch_size)
-    ds_va, dl_va = create_torch_bodmas_dataset_loader(dataset, ds_valid, batch_size)
+    ds_tr, dl_tr = create_torch_bodmas_dataset_loader(dataset, ds_train, batch_size, model_requirements)
+    ds_va, dl_va = create_torch_bodmas_dataset_loader(dataset, ds_valid, batch_size, model_requirements)
 
     return ds_tr, dl_tr, ds_va, dl_va

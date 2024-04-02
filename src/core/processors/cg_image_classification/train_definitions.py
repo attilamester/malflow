@@ -184,6 +184,21 @@ DATALOADER_LOADED = False
 # \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 # =======================================================
 
+
+def get_model_requirements() -> Dict:
+    """
+    https://pytorch.org/vision/main/models.html
+    """
+    req = {}
+    hp_model = get_hparam_value(HPARAMS.MODEL)
+    if "alexnet" in hp_model:
+        req["min_size"] = (63, 63)
+    elif "vgg" in hp_model:
+        req["min_size"] = (32, 32)
+
+    return req
+
+
 def get_dataset() -> ImgDataset:
     """depends on: -"""
 
@@ -239,6 +254,6 @@ def init_train_valid_loader():
 
     (TRAIN_DS, TRAIN_LOADER,
      VALID_DS, VALID_LOADER) = \
-        create_bodmas_train_val_loader(DATASET, batch_size=BATCH_SIZE)
+        create_bodmas_train_val_loader(DATASET, batch_size=BATCH_SIZE, model_requirements=get_model_requirements())
 
     DATALOADER_LOADED = True

@@ -21,7 +21,7 @@ class SimpleCNN(torch.nn.Module):
         layers.append(nn.AvgPool2d(1, stride=1))
 
         self.stack = nn.Sequential(*layers)
-        self.fc = nn.Linear(size_hid * 10000, dataset.num_classes)
+        self.fc = nn.Linear(size_hid * dataset.img_shape[0] * dataset.img_shape[1], dataset.num_classes)
 
     def forward(self, x):
         x = self.stack(x)
