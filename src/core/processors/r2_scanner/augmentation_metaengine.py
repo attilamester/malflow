@@ -206,3 +206,4 @@ if __name__ == "__main__":
 
     # complete_image_collection(BodmasAugmented.get_dir_images(), (30, 30))
     # complete_image_collection(BodmasAugmented.get_dir_images(), (100, 100))
+    # complete_image_collection(BodmasAugmented.get_dir_images(), (224, 224))
