@@ -97,6 +97,8 @@ def get_transform(mean: float, std: float, min_size: Tuple[int, int] = None) -> 
 def create_torch_bodmas_dataset_loader(dataset: ImgDataset, subset_df: pd.DataFrame, batch_size: int,
                                        model_requirements: Dict = None) -> Tuple[
     BodmasDataset, DataLoader]:
+    if not model_requirements:
+        model_requirements = {}
     ds = BodmasDataset(dataset=dataset, df=subset_df,
                        transform=get_transform(dataset.mean, dataset.std, model_requirements.get("min_size", None)))
     dl = DataLoader(ds, batch_size=batch_size, shuffle=True)

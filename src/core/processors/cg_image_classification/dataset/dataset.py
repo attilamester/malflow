@@ -56,7 +56,7 @@ class ImgDataset:
             raise Exception("Dataset is not initialized")
         return self._data_std
 
-    def read_image(self, filename):
+    def read_image(self, filename) -> np.ndarray:
         image = cv2.imread(os.path.join(self.img_dir_path, filename))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
