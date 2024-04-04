@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List, Tuple
 
 import numpy as np
@@ -13,6 +14,24 @@ def get_instruction_token_RG(mnemonic: str, prefix: str, bnd: bool) -> str:
 
 def get_intruction_token_B(parameters: List[InstructionParameter]) -> str:
     return ",".join([p.value for p in parameters[:2]])
+
+
+def split_instruction_token_RG(token: str) -> Tuple[str, str, bool]:
+    tokens = token.split("_")
+    mnemonic = tokens[0]
+    if len(tokens) == 1:
+        return mnemonic, "", False
+
+    prefix = tokens[1]
+    if prefix == "bnd":
+        return mnemonic, "", True
+    if len(tokens) == 1:
+        return mnemonic, prefix, False
+    return mnemonic, prefix, True
+
+
+def split_instruction_token_B(token: str) -> List[InstructionParameter]:
+    return [InstructionParameter(p) for p in token.split(",") if p]
 
 
 PREFIX_INDEX = {prefix.value: i + 1 for i, prefix in enumerate(InstructionPrefix)}
@@ -78,3 +97,23 @@ class CallGraphImage:
         rg = rg_value.to_bytes(2, byteorder="big")
         b = b_value.to_bytes(1, byteorder="big")
         return rg + b[:]
+
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def decode_rgb(r: int = None, g: int = None, b: int = None, rgb: bytes = None) -> Instruction:
+        if rgb:
+            rg_value = int.from_bytes(rgb[:2], byteorder="big")
+            b_value = int.from_bytes(rgb[2:], byteorder="big")
+        else:
+            rg_value = r * 256 + g
+            b_value = b
+        rg_token = list(MNEMONIC_PREFIX_BND_INDEX.keys())[rg_value]
+        b_token = list(PARAMETERIZATION_INDEX.keys())[b_value]
+        mnemonic, prefix, bnd = split_instruction_token_RG(rg_token)
+        parameters = split_instruction_token_B(b_token)
+        i = Instruction("nop", b"0", [])
+        i.mnemonic = mnemonic
+        i.prefix = InstructionPrefix(prefix) if prefix else None
+        i.has_bnd = bnd
+        i.parameters = parameters
+        return i

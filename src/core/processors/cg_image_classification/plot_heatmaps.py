@@ -1,14 +1,24 @@
+import os
+from collections import OrderedDict
+from typing import Type
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import plotly
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import torch
+import torch.utils.data
+
+from core.data import DatasetProvider
 from core.processors.cg_image_classification import paths
 from util import config
 
+config.load_env()
 config.load_env(paths.get_cg_image_classification_env())
 
-from collections import OrderedDict
-
-import torch
-import torch.utils.data
-import matplotlib.pyplot as plt
-
+from core.model.call_graph_image import CallGraphImage
 from core.processors.cg_image_classification.dataset import ImgDataset
 from core.processors.cg_image_classification.nn_model.bagnet_heatmaps import generate_heatmap_pytorch, plot_heatmap
 from core.processors.cg_image_classification.train_definitions import get_model, get_dataset
@@ -75,6 +85,52 @@ def plot_heatmap_on_model(model: torch.nn.Module, checkpoint_path: str, dataset:
                          f"Packed original\n{details.packed.orig_md5}", 3)
 
         plt.show()
+
+
+def read_image(filepath) -> np.ndarray:
+    image = cv2.imread(filepath)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+
+def plotly_of_sample(dset: Type[DatasetProvider], md5: str):
+    """
+    # TODO: add test for this
+    # for i_data in INSTRUCTIONS:
+    #     i = Instruction(i_data.disasm, b"0", [])
+    #     enc = CallGraphImage.encode_instruction_rgb(i)
+    #     print(f"Instruction: {i_data.disasm} | RGB: {enc}\n"
+    #           f"Decoded    : {CallGraphImage.decode_rgb(rgb=enc)}")
+    # Example output:
+    # Instruction: ljmp 4:0xc2811a31 | RGB: b'"8\t'
+    # Decoded    : [jmp] ADDR_FAR
+    # Instruction: notrack jmp 0xfb7508c5 | RGB: b'"<\x19'
+    # Decoded    : [bnd] [notrack] [jmp] CONST
+    """
+    plotly_images = []
+    for dim in [(30, 30), (100, 100), (224, 224)]:
+        img_path = os.path.join(dset.get_dir_images(), f"images_{dim[0]}x{dim[1]}",
+                                f"{md5}_{dim[0]}x{dim[1]}_True_True.png")
+        if not os.path.isfile(img_path):
+            print(f"File not found: {img_path}")
+            continue
+        np_img = read_image(img_path)
+        hover_text = [[str(CallGraphImage.decode_rgb(r=np_img[i, j, 0],
+                                                     g=np_img[i, j, 1],
+                                                     b=np_img[i, j, 2])) for j in
+                       range(np_img.shape[1])] for i in range(np_img.shape[0])]
+        plotly_img = go.Image(
+            z=np_img,
+            hoverinfo="x,y,text",
+            text=hover_text
+        )
+        plotly_images.append((plotly_img, f"{dim[0]}x{dim[1]}"))
+
+    fig = make_subplots(rows=1, cols=len(plotly_images), subplot_titles=[i[1] for i in plotly_images])
+    for i, (plotly_img, dim) in enumerate(plotly_images):
+        fig.add_trace(plotly_img, row=1, col=i + 1)
+
+    plotly.offline.plot(fig, filename=f"{md5}_plotly.html", auto_open=False)
 
 
 if __name__ == "__main__":
