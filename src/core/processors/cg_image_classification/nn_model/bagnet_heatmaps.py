@@ -68,7 +68,7 @@ def plot_heatmap(heatmap, original, ax, cmap="RdBu_r", percentile=99, dilation=0
         ax.imshow(overlay, extent=extent, interpolation="none", cmap=cmap_original, alpha=alpha)
 
 
-def generate_heatmap_pytorch(model: BagNet, dataset: ImgDataset, image, target):
+def generate_heatmap_pytorch(model: BagNet, image, target):
     """
     Generates high-resolution heatmap for a BagNet by decomposing the
     image into all possible patches and by computing the logits for
@@ -86,6 +86,7 @@ def generate_heatmap_pytorch(model: BagNet, dataset: ImgDataset, image, target):
         The size of the receptive field of the given BagNet.
     """
     patchsize = model.patch_size
+    image_dim = image.shape[2:]
 
     with torch.no_grad():
         # pad with zeros
@@ -112,4 +113,4 @@ def generate_heatmap_pytorch(model: BagNet, dataset: ImgDataset, image, target):
             logits_list.append(logits.data.cpu().numpy().copy())
 
         logits = np.hstack(logits_list)
-        return logits.reshape(dataset.img_shape)
+        return logits.reshape(image_dim)
