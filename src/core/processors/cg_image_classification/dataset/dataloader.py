@@ -2,6 +2,7 @@ from typing import Tuple, NamedTuple, Dict
 
 import albumentations as alb
 import cv2
+import numpy as np
 import pandas as pd
 import torch
 from albumentations.pytorch import ToTensorV2
@@ -32,16 +33,12 @@ class BodmasDataset(Dataset):
         """
         self.iter_details = flag
 
-    class ItemDetailsPacked(NamedTuple):
-        packed: bool
-        orig_md5: str = ""
-        orig_filename: str = ""
-        orig_image: torch.Tensor = ""
-
     class ItemDetails(NamedTuple):
-        md5: str
-        filename: str
-        packed: "BodmasDataset.ItemDetailsPacked"
+        index: int
+        packed: bool
+        image_disk: np.ndarray
+        image_packed_disk: np.ndarray
+        image_packed_tf: torch.Tensor
 
     def __getitem__(self, index):
         line = self.df.iloc[index]
@@ -50,19 +47,20 @@ class BodmasDataset(Dataset):
 
         def read_image(filename):
             image = self.dataset.read_image(filename)
+            image_tf = image
             if self.transform is not None:
-                image = self.transform(image=image)["image"]
-            return image
+                image_tf = self.transform(image=image)["image"]
+            return image_tf, image
 
         md5 = self.dataset.get_row_id(line)
         filename = self.dataset.get_filename(md5)
-        image = read_image(filename)
+        image_tf, image = read_image(filename)
 
         if not self.iter_details:
             """
             Normal flow | during training / evaluating
             """
-            return image, label
+            return image_tf, label
 
         """
         Debug flow | when we want to get more details about the sample
@@ -71,14 +69,13 @@ class BodmasDataset(Dataset):
         if pd.notna(line["unpacked-md5"]):
             # we already have the unpacked-md5 + image above
             filename_original = self.dataset.get_filename(line["md5"])
-            image_original = read_image(filename_original)
-            details = BodmasDataset.ItemDetails(md5, filename,
-                                                BodmasDataset.ItemDetailsPacked(True, line["md5"], filename_original,
-                                                                                image_original))
+            image_packed_tf, image_packed_disk = read_image(filename_original)
+            details = BodmasDataset.ItemDetails(index, True, image, image_packed_disk, image_packed_tf)
         else:
-            details = BodmasDataset.ItemDetails(md5, filename, BodmasDataset.ItemDetailsPacked(False))
+            details = BodmasDataset.ItemDetails(index, False, image, np.empty(image.shape, dtype=np.uint8),
+                                                torch.empty(image_tf.shape))
 
-        return image, label, details
+        return image_tf, label, details
 
 
 def get_transform(mean: float, std: float, min_size: Tuple[int, int] = None) -> alb.Compose:
