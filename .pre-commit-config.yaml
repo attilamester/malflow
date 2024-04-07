@@ -10,11 +10,21 @@ repos:
       - id: requirements-txt-fixer
   - repo: local
     hooks:
-      - id: run-unittests
-        name: run unittests
+      - id: unittests
+        name: unittests
         entry: bash -c "docker compose up --build malflow_test --exit-code-from malflow_test"
         require_serial: true
         verbose: true
         language: system
         types: [ python ]
         exclude: ^.*/processors/.*$
+  - repo: local
+    hooks:
+      - id: unittests-image-classification
+        name: unittests on image classification module
+        entry: bash -c "docker compose up --build malflow_image_classification_test --exit-code-from malflow_image_classification_test"
+        require_serial: true
+        verbose: true
+        language: system
+        types: [ python ]
+        files: ^(.*/processors/cg_image_classification.*)|(.*core/model.*)$

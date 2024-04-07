@@ -25,7 +25,7 @@ def split_instruction_token_RG(token: str) -> Tuple[str, str, bool]:
     prefix = tokens[1]
     if prefix == "bnd":
         return mnemonic, "", True
-    if len(tokens) == 1:
+    if len(tokens) == 2:
         return mnemonic, prefix, False
     return mnemonic, prefix, True
 

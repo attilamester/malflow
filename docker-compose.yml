@@ -19,3 +19,19 @@ services:
     environment:
       - MBAZAAR_DIR_SAMPLES=/usr/callgraph/mbazaar
       - MBAZAAR_DIR_R2_SCANS=/usr/callgraph/mbazaar
+
+  malflow_image_classification_test:
+    image: image_malflow_image_classification
+    container_name: container_malflow_image_classification
+    build:
+      context: .
+      network: host
+      dockerfile: ./Dockerfile
+    command: sh -c "
+      coverage run --omit=./test/*,__init__.py -m pytest -ra ./test/test_image_classification.py &&
+      coverage lcov -o ./test/coverage_img_cl.lcov
+      "
+    volumes:
+      - ./src:/usr/callgraph/src
+      - ./test:/usr/callgraph/test
+    network_mode: "host"

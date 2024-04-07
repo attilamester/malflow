@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Build & Test
 
 on:
@@ -20,29 +17,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Cache `docker build`
-      id: cache-docker-build
-      uses: actions/cache@v3
-      with:
-        key: ${{ runner.os }}--${{ hashFiles('build/radare2-5.8.8/Dockerfile', 'Dockerfile', 'docker-compose.yml') }}
-        path: ~/image_malflow.tar
+      - name: Cache `docker build`
+        id: cache-docker-build
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}--${{ hashFiles('build/radare2-5.8.8/Dockerfile', 'Dockerfile', 'docker-compose.yml') }}
+          path: ~/image_malflow.tar
 
-    - name: Building the test container - `docker build` & `docker save`
-      if: ${{ steps.cache-docker-build.outputs.cache-hit != 'true' }}
-      run: |
-        docker compose build --no-cache malflow_test
-        docker save image_malflow > ~/image_malflow.tar
+      - name: Building the test container - `docker build` & `docker save`
+        if: ${{ steps.cache-docker-build.outputs.cache-hit != 'true' }}
+        run: |
+          docker compose build --no-cache malflow_test
+          docker save image_malflow > ~/image_malflow.tar
 
-    - name: Testing
-      run: |
-        docker load --input ~/image_malflow.tar
-        docker compose up malflow_test
+      - name: Testing
+        run: |
+          docker load --input ~/image_malflow.tar
+          docker compose up malflow_test --exit-code-from malflow_test
 
-    - name: Code Coverage Report
-      if: ${{ github.event_name == 'pull_request' }}
-      uses: romeovs/lcov-reporter-action@v0.2.11
-      with:
-        lcov-file: ./test/coverage.lcov
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Testing on image classification module
+        run: |
+          docker load --input ~/image_malflow.tar
+          docker compose up malflow_image_classification_test --exit-code-from malflow_image_classification_test
+
+      - name: Code Coverage Report
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: romeovs/lcov-reporter-action@v0.2.11
+        with:
+          lcov-file: ./test/coverage.lcov
+          github-token: ${{ secrets.GITHUB_TOKEN }}

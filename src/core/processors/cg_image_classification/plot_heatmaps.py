@@ -167,19 +167,6 @@ def plotly_create_image_of_heatmap(np_img: np.ndarray, trace_name: str, visible:
 
 
 def plotly_html_of_sample(dset: Type[DatasetProvider], md5: str):
-    """
-    # TODO: add test for this
-    # for i_data in INSTRUCTIONS:
-    #     i = Instruction(i_data.disasm, b"0", [])
-    #     enc = CallGraphImage.encode_instruction_rgb(i)
-    #     print(f"Instruction: {i_data.disasm} | RGB: {enc}\n"
-    #           f"Decoded    : {CallGraphImage.decode_rgb(rgb=enc)}")
-    # Example output:
-    # Instruction: ljmp 4:0xc2811a31 | RGB: b'"8\t'
-    # Decoded    : [jmp] ADDR_FAR
-    # Instruction: notrack jmp 0xfb7508c5 | RGB: b'"<\x19'
-    # Decoded    : [bnd] [notrack] [jmp] CONST
-    """
     plotly_images = []
     for dim in [(30, 30), (100, 100), (224, 224)]:
         img_path = os.path.join(dset.get_dir_images(), f"images_{dim[0]}x{dim[1]}",
