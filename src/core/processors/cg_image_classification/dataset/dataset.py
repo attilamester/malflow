@@ -80,9 +80,9 @@ class ImgDataset:
     def get_filename(self, md5):
         return f"{md5}_{self.img_shape[0]}x{self.img_shape[1]}_True_True.png"
 
-    def filter_ground_truth(self, items_per_class: int, augmentation: bool = False) -> pd.DataFrame:
+    def filter_ground_truth(self, min_samples_per_class: int, augmentation: bool = False, samples_per_class: int = None) -> pd.DataFrame:
         df = self.get_ground_truth()
-        df_filtered = df_filter_having_at_column_min_occurencies(df, "family", items_per_class)
+        df_filtered = df_filter_having_at_column_min_occurencies(df, "family", min_samples_per_class, samples_per_class)
         family_index = list_to_dict_keys(list(df_filtered["family"].unique()))
 
         self._data_num_classes = len(family_index)
@@ -105,7 +105,7 @@ class ImgDataset:
         self.initialized = True
 
         Logger.info(
-            f"[Dataset] Filtered ImgDataset with items_per_class:{items_per_class}. "
+            f"[Dataset] Filtered ImgDataset with items_per_class:{min_samples_per_class}. "
             f"Samples: {len(df_filtered)} | Classes: {self.num_classes}")
 
         self._calculate_mean_std()
