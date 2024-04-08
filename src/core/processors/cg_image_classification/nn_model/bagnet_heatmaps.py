@@ -2,6 +2,7 @@
 Based on https://github.com/wielandbrendel/bag-of-local-features-models
 """
 import copy
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -68,7 +69,7 @@ def plot_heatmap(heatmap, original, ax, cmap="RdBu_r", percentile=99, dilation=0
         ax.imshow(overlay, extent=extent, interpolation="none", cmap=cmap_original, alpha=alpha)
 
 
-def generate_heatmap_pytorch(model: BagNet, image, target):
+def generate_heatmap_pytorch(model: BagNet, image: np.ndarray, target: List[int]):
     """
     Generates high-resolution heatmap for a BagNet by decomposing the
     image into all possible patches and by computing the logits for
@@ -80,13 +81,22 @@ def generate_heatmap_pytorch(model: BagNet, image, target):
         This should be one of the BagNets.
     image : Numpy array of shape [1, 3, X, X]
         The image for which we want to compute the heatmap.
-    target : int
-        Class for which the heatmap is computed.
+    target : List[int]
+        Target class(s) for which the heatmap is computed.
     patchsize : int
         The size of the receptive field of the given BagNet.
+
+    Returns
+    -------
+    heatmaps : Numpy array of shape [X, X]
+        The heatmap for the given image and target class n.
+        len(heatmaps) == len(target)
     """
     patchsize = model.patch_size
     image_dim = image.shape[2:]
+
+    if isinstance(target, int):
+        target = [target]
 
     with torch.no_grad():
         # pad with zeros
@@ -113,4 +123,7 @@ def generate_heatmap_pytorch(model: BagNet, image, target):
             logits_list.append(logits.data.cpu().numpy().copy())
 
         logits = np.hstack(logits_list)
-        return logits.reshape(image_dim)
+
+        return np.array([
+            logits[:, i].reshape(image_dim) for i in range(len(target))
+        ])

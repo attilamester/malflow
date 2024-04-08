@@ -2,7 +2,7 @@ import os.path
 import random
 import shutil
 import subprocess
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from typing import Type
 
 import pandas as pd
@@ -12,7 +12,7 @@ from core.data.bodmas import Bodmas, BodmasAugmented
 from core.model.sample import Sample
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env
 from core.processors.r2_scanner.scan_samples import scan_sample
-from core.processors.util import decorator_sample_processor, process_samples
+from core.processors.util import decorator_sample_processor
 from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_WITH_AUGM_CSV
 from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL1_ts,
@@ -105,9 +105,12 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
     value_counts.sort_values(ascending=True, inplace=True)
 
     max_occurrence = value_counts.max()
-
+    min_occurrence = value_counts.min()
+    min_augmentations = int(min_occurrence * (1 + pct))
+    total = 0
     for family, count in value_counts.items():
-        augm_needed = int(((1 + pct) * max_occurrence / count))
+        # augm_needed = int(((1 + pct) * max_occurrence / count))
+        augm_needed = int(min_augmentations * (min_occurrence / count))
 
         rows_with_family = df_filtered[df_filtered["family"] == family]
         ids_not_packed = rows_with_family[rows_with_family["packer"].isna()][
@@ -123,6 +126,8 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
         if len(ids_not_packed) == 0:
             continue
 
+        total += augm_needed
+
         ids_to_augment = random.choices(ids_not_packed, k=augm_needed)
         samples_to_augment = [Bodmas.get_sample(sha256=id_) for id_ in ids_to_augment]
 
@@ -131,6 +136,8 @@ def create_augmentation_with_pymetangine(pct=0.2, original_min_occurencies: int 
             for sample, augmented_sample in results:
                 if sample is None:
                     continue
+
+    Logger.info(f"Total augmentation needed: {total}")
 
 
 def create_augmentation_ground_truth():
