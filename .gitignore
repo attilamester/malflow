@@ -39,6 +39,10 @@ env/
 *.svg
 .coverage
 *.lcov
+*plotly.html
+
+dist/
+*egg-info/
 
 # Tensorboard log
 **/events.out.tfevents.*
