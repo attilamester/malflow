@@ -15,6 +15,9 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
+!*GIT-TRACKED.ipynb
+
 
 # IPython
 profile_default/
