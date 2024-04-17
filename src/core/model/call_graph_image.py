@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import numpy as np
 
@@ -37,11 +37,13 @@ def split_instruction_token_B(token: str) -> List[InstructionParameter]:
 PREFIX_INDEX = {prefix.value: i + 1 for i, prefix in enumerate(InstructionPrefix)}
 PREFIX_INDEX[""] = 0
 MNEMONIC_INDEX = {mnemonic: i for i, mnemonic in enumerate(sorted(Mnemonics._ALL.value))}
+MNEMONIC_INDEX_INVERSE = {i: mnemonic for mnemonic, i in MNEMONIC_INDEX.items()}
 MNEMONIC_PREFIX_BND_INDEX = {token: i for i, token in enumerate(sorted([
     get_instruction_token_RG(mnemonic, prefix, bnd)
     for mnemonic in MNEMONIC_INDEX.keys()
     for prefix in PREFIX_INDEX.keys()
     for bnd in [False, True]]))}
+MNEMONIC_PREFIX_BND_INDEX_INVERSE = {i: token for token, i in MNEMONIC_PREFIX_BND_INDEX.items()}
 PARAMETER_INDEX = {parameter.value: i + 1 for i, parameter in enumerate(InstructionParameter)}
 PARAMETER_INDEX[""] = 0
 PARAMETERIZATION_INDEX = {token: i for i, token in enumerate(sorted(
@@ -52,13 +54,78 @@ PARAMETERIZATION_INDEX = {token: i for i, token in enumerate(sorted(
      for p1 in PARAMETER_INDEX.keys()
      for p2 in PARAMETER_INDEX.keys()
      if not (p1 == "" or p2 == "")]))}
+PARAMETERIZATION_INDEX_INVERSE = {i: token for token, i in PARAMETERIZATION_INDEX.items()}
 
 
 class InstructionEncoder:
 
-    @staticmethod
-    def encode_into_RGB(i: Instruction) -> bytes:
-        pass
+    @classmethod
+    def encode(cls, i: Instruction) -> bytes:
+        raise NotImplementedError()
+
+    @classmethod
+    def _decode(cls, r: int, g: int, b: int) -> Instruction:
+        raise NotImplementedError()
+
+    @classmethod
+    def decode(cls, r: int = None, g: int = None, b: int = None, rgb: bytes = None):
+        if rgb:
+            r = int.from_bytes(rgb[:1], byteorder="big")
+            g = int.from_bytes(rgb[1:2], byteorder="big")
+            b = int.from_bytes(rgb[2:], byteorder="big")
+        return cls._decode(r, g, b)
+
+
+class InstructionEncoderComplete(InstructionEncoder):
+    @classmethod
+    def encode(cls, i: Instruction) -> bytes:
+        insruction_token = get_instruction_token_RG(i.mnemonic, i.prefix.value if i.prefix else "", i.has_bnd)
+        parameter_token = get_intruction_token_B(i.parameters)
+        rg_value = MNEMONIC_PREFIX_BND_INDEX[insruction_token]
+        b_value = PARAMETERIZATION_INDEX[parameter_token]
+
+        rg = rg_value.to_bytes(2, byteorder="big")
+        b = b_value.to_bytes(1, byteorder="big")
+        return rg + b[:]
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _decode(cls, r: int, g: int, b: int):
+        rg_value = r * 256 + g
+        b_value = b
+
+        rg_token = MNEMONIC_PREFIX_BND_INDEX_INVERSE[rg_value]
+        b_token = PARAMETERIZATION_INDEX_INVERSE[b_value]
+
+        mnemonic, prefix, bnd = split_instruction_token_RG(rg_token)
+        parameters = split_instruction_token_B(b_token)
+
+        i = Instruction("nop", b"0", [])
+        i.mnemonic = mnemonic
+        i.prefix = InstructionPrefix(prefix) if prefix else None
+        i.has_bnd = bnd
+        i.parameters = parameters
+        return i
+
+
+class InstructionEncoderMnemonic(InstructionEncoder):
+    @classmethod
+    def encode(cls, i: Instruction) -> bytes:
+        instruction_token = i.mnemonic
+        gb_value = MNEMONIC_INDEX[instruction_token]
+        return gb_value.to_bytes(3, byteorder="big")
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _decode(cls, r: int, g: int, b: int):
+        if r != 0:
+            raise ValueError(f"R channel should be zero: {r} {g} {b}")
+        else:
+            rgb_value = g * 256 + b
+
+        i = Instruction("nop", b"0", [])
+        i.mnemonic = MNEMONIC_INDEX_INVERSE[rgb_value]
+        return i
 
 
 class CallGraphImage:
@@ -76,8 +143,9 @@ class CallGraphImage:
         return np_pixels
 
     @staticmethod
-    def get_image_from_instructions(img_size, instructions: List[Instruction]):
-        pixels = [CallGraphImage.encode_instruction_rgb(i) for i in instructions]
+    def get_image_from_instructions(img_size, instructions: List[Instruction],
+                                    instruction_encoder: Type[InstructionEncoder] = Type[InstructionEncoderComplete]):
+        pixels = [instruction_encoder.encode(i) for i in instructions]
 
         return CallGraphImage.get_image_from_pixels(img_size, pixels)
 
@@ -89,31 +157,9 @@ class CallGraphImage:
 
     @staticmethod
     def encode_instruction_rgb(i: Instruction) -> bytes:
-        insruction_token = get_instruction_token_RG(i.mnemonic, i.prefix.value if i.prefix else "", i.has_bnd)
-        parameter_token = get_intruction_token_B(i.parameters)
-        rg_value = MNEMONIC_PREFIX_BND_INDEX[insruction_token]
-        b_value = PARAMETERIZATION_INDEX[parameter_token]
-
-        rg = rg_value.to_bytes(2, byteorder="big")
-        b = b_value.to_bytes(1, byteorder="big")
-        return rg + b[:]
+        return InstructionEncoderComplete.encode(i)
 
     @staticmethod
     @lru_cache(maxsize=None)
     def decode_rgb(r: int = None, g: int = None, b: int = None, rgb: bytes = None) -> Instruction:
-        if rgb:
-            rg_value = int.from_bytes(rgb[:2], byteorder="big")
-            b_value = int.from_bytes(rgb[2:], byteorder="big")
-        else:
-            rg_value = r * 256 + g
-            b_value = b
-        rg_token = list(MNEMONIC_PREFIX_BND_INDEX.keys())[rg_value]
-        b_token = list(PARAMETERIZATION_INDEX.keys())[b_value]
-        mnemonic, prefix, bnd = split_instruction_token_RG(rg_token)
-        parameters = split_instruction_token_B(b_token)
-        i = Instruction("nop", b"0", [])
-        i.mnemonic = mnemonic
-        i.prefix = InstructionPrefix(prefix) if prefix else None
-        i.has_bnd = bnd
-        i.parameters = parameters
-        return i
+        return InstructionEncoderComplete.decode(r, g, b, rgb)
