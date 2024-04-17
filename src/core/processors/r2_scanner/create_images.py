@@ -1,7 +1,6 @@
 import json
 import os
-from concurrent.futures import ProcessPoolExecutor
-from typing import Tuple, Type
+from typing import Tuple, Type, List
 
 import numpy as np
 from PIL import Image
@@ -9,10 +8,11 @@ from PIL import Image
 from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
 from core.model import CallGraph
-from core.model.call_graph_image import CallGraphImage
+from core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonic
 from core.model.sample import Sample
-from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image
-from core.processors.util import process_samples, decorator_callgraph_processor
+from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image, get_path_instructions_dfs
+from core.processors.util import decorator_callgraph_processor, decorator_sample_processor
+from helpers.readme.load_instruction import load_instruction_pickle
 from util import config
 from util.logger import Logger
 from util.misc import dict_key_inc, dict_key_add, list_stats
@@ -36,9 +36,30 @@ def create_callgraph_image(dset: Type[DatasetProvider], cg: CallGraph, dim: Tupl
         json.dump(info, f)
 
 
+def create_callgraph_image_on_dfs_file(dset: Type[DatasetProvider], sample: Sample, img_dims: List[Tuple[int, int]],
+                                       instruction_encoder: Type[InstructionEncoder]):
+    dfs_path = get_path_instructions_dfs(dset, sample.md5)
+    if not os.path.isfile(dfs_path):
+        Logger.error(f"No DFS file found for {sample.filepath}")
+        return
+    instructions = load_instruction_pickle(dfs_path)
+    pixels = [instruction_encoder.encode(i) for i in instructions]
+    for dim in img_dims:
+        image_path = get_path_image(dset, sample.md5, dim, subdir=f"_{instruction_encoder.__name__}")
+        np_pixels = CallGraphImage.get_image_from_pixels(dim, pixels)
+        pil_image = Image.fromarray(np_pixels)
+        pil_image.save(image_path)
+
+
 @decorator_callgraph_processor(Bodmas, skip_load_if=lambda dset, md5: os.path.isfile(get_path_imageinfo(dset, md5)))
 def create_image(dset: Type[DatasetProvider], cg: CallGraph):
     create_callgraph_image(dset, cg, dim=(512, 512))
+
+
+@decorator_sample_processor(Bodmas)
+def create_image_on_dfs_files(dset: Type[DatasetProvider], sample: Sample):
+    create_callgraph_image_on_dfs_file(dset, sample, img_dims=[(30, 30), (100, 100), (224, 224)],
+                                       instruction_encoder=InstructionEncoderMnemonic)
 
 
 def tmp_count_rcalls(cg: CallGraph):
@@ -117,4 +138,6 @@ def tmp_display_image_stats():
 
 if __name__ == "__main__":
     config.load_env()
-    process_samples(Bodmas, create_image, batch_size=1000, max_batches=None, pool=ProcessPoolExecutor(max_workers=8))
+    # process_samples(Bodmas, create_image, batch_size=1000, max_batches=None, pool=ProcessPoolExecutor(max_workers=8))
+    # process_samples(Bodmas, create_image_on_dfs_files, batch_size=1000, max_batches=None,
+    #                 pool=ProcessPoolExecutor(max_workers=8))
