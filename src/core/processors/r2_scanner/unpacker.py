@@ -10,8 +10,7 @@ from core.model import CallGraph
 from core.model.sample import Sample
 from core.processors.r2_scanner.create_dfs import create_callgraph_dfs
 from core.processors.r2_scanner.paths import get_path_image
-from core.processors.r2_scanner.scan_samples import scan_sample
-from core.processors.util import process_samples, decorator_callgraph_processor, decorator_sample_processor
+from core.processors.util import process_samples, decorator_callgraph_processor
 from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GT_COL0
 from util import config
 from util.logger import Logger
@@ -52,7 +51,7 @@ def create_csv_for_arming_sample(dset: Type[DatasetProvider], sample: Sample):
     BUFF += f"{sample.filepath}\n"
 
 
-def unpack_sample(sample: Sample):
+def unpack_sample(dset, sample: Sample):
     packed, packer_name = is_sample_packed(sample)
     dset_unpacked = BodmasUnpacked
     dest_path = os.path.join(dset_unpacked.get_dir_samples(), f"unpacked_{os.path.basename(sample.filepath)}")
@@ -79,16 +78,6 @@ def unpack_sample(sample: Sample):
         Logger.error(f"Unpacking failed: {sample.md5} {sample.sha256} {sample.filepath}")
 
 
-@decorator_sample_processor(Bodmas)
-def create_csv_for_arming_samples(dset: Type[DatasetProvider], sample: Sample):
-    create_csv_for_arming_sample(dset, sample)
-
-
-@decorator_sample_processor(BodmasUnpacked)
-def scan_unpacked_bodmas_sample(dset: Type[DatasetProvider], sample: Sample):
-    scan_sample(dset, sample)
-
-
 @decorator_callgraph_processor(BodmasUnpacked, skip_load_if=lambda dset, md5: os.path.isfile(
     get_path_image(dset, md5, (300, 300), True, True)))
 def create_dfs(dset: Type[DatasetProvider], cg: CallGraph):
@@ -96,7 +85,7 @@ def create_dfs(dset: Type[DatasetProvider], cg: CallGraph):
 
 
 def __arm_samples():
-    process_samples(Bodmas, create_csv_for_arming_samples, batch_size=1000, max_batches=None,
+    process_samples(Bodmas, create_csv_for_arming_sample, batch_size=1000, max_batches=None,
                     pool=ThreadPoolExecutor(max_workers=8))
     with open(ARM_INFO, "w") as f:
         f.write(BUFF)
@@ -194,7 +183,7 @@ if __name__ == "__main__":
     # __add_packer_info_to_gt()
     # __unpack_samples()
 
-    # process_samples(BodmasUnpacked, scan_unpacked_bodmas_sample, batch_size=1000, max_batches=None,
+    # process_samples(BodmasUnpacked, scan_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
 
     # replace_unpacked_images(os.path.join(Bodmas.get_dir_images(), "images_30x30_with_unpacked"),

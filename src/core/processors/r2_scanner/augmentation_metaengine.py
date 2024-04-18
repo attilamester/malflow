@@ -3,16 +3,12 @@ import random
 import shutil
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
-from typing import Type
 
 import pandas as pd
 
-from core.data import DatasetProvider
 from core.data.bodmas import Bodmas, BodmasAugmented
 from core.model.sample import Sample
 from core.processors.cg_image_classification.paths import get_cg_image_classification_env
-from core.processors.r2_scanner.scan_samples import scan_sample
-from core.processors.util import decorator_sample_processor
 from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_WITH_AUGM_CSV
 from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL1_ts,
@@ -198,17 +194,12 @@ def complete_image_collection(augm_images_dir, dim):
             print(f"{n} Copied \n\t{path_to_copy_from} --> \n\t{path_to_copy_to}")
 
 
-@decorator_sample_processor(BodmasAugmented)
-def scan_augmented_sample(dset: Type[DatasetProvider], sample: Sample):
-    scan_sample(dset, sample)
-
-
 if __name__ == "__main__":
     pass
     # create_augmentation_with_pymetangine()
     # create_augmentation_ground_truth()
 
-    # process_samples(BodmasAugmented, scan_augmented_sample, batch_size=1000, max_batches=None,
+    # process_samples(BodmasAugmented, scan_sample, batch_size=1000, max_batches=None,
     #                 pool=ThreadPoolExecutor(max_workers=8))
 
     # complete_image_collection(BodmasAugmented.get_dir_images(), (30, 30))

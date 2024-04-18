@@ -8,7 +8,7 @@ from core.model import CallGraph, CallGraphCompressed
 from core.model.sample import Sample
 from core.processors.r2_scanner.create_dfs import create_callgraph_dfs
 from core.processors.r2_scanner.scan_instructions import extract_callgraph_instructions_stats
-from core.processors.util import process_samples, decorator_sample_processor
+from core.processors.util import process_samples
 from util import config
 from util.logger import Logger
 
@@ -34,11 +34,6 @@ def scan_sample(dset: Type[DatasetProvider], sample: Sample):
         Logger.info(f">> Already existing r2 found on disk: {md5}")
 
 
-@decorator_sample_processor(Bodmas)
-def _scan_sample(dset: Type[DatasetProvider], sample: Sample):
-    scan_sample(dset, sample)
-
-
 if __name__ == "__main__":
     config.load_env()
-    process_samples(Bodmas, _scan_sample, batch_size=1000, max_batches=None, pool=ThreadPoolExecutor(max_workers=8))
+    process_samples(Bodmas, scan_sample, batch_size=1000, max_batches=None, pool=ThreadPoolExecutor(max_workers=8))
