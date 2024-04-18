@@ -111,8 +111,7 @@ class InstructionEncoderComplete(InstructionEncoder):
 class InstructionEncoderMnemonic(InstructionEncoder):
     @classmethod
     def encode(cls, i: Instruction) -> bytes:
-        instruction_token = i.mnemonic
-        gb_value = MNEMONIC_INDEX[instruction_token]
+        gb_value = MNEMONIC_INDEX[i.mnemonic]
         return gb_value.to_bytes(3, byteorder="big")
 
     @classmethod
@@ -125,6 +124,32 @@ class InstructionEncoderMnemonic(InstructionEncoder):
 
         i = Instruction("nop", b"0", [])
         i.mnemonic = MNEMONIC_INDEX_INVERSE[rgb_value]
+        return i
+
+
+class InstructionEncoderMnemonicPrefixBnd(InstructionEncoder):
+
+    @classmethod
+    def encode(cls, i: Instruction) -> bytes:
+        insruction_token = get_instruction_token_RG(i.mnemonic, i.prefix.value if i.prefix else "", i.has_bnd)
+        gb_value = MNEMONIC_PREFIX_BND_INDEX[insruction_token]
+        return gb_value.to_bytes(3, byteorder="big")
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _decode(cls, r: int, g: int, b: int):
+        if r != 0:
+            raise ValueError(f"R channel should be zero: {r} {g} {b}")
+        else:
+            rgb_value = g * 256 + b
+
+        rg_token = MNEMONIC_PREFIX_BND_INDEX_INVERSE[rgb_value]
+        mnemonic, prefix, bnd = split_instruction_token_RG(rg_token)
+
+        i = Instruction("nop", b"0", [])
+        i.mnemonic = mnemonic
+        i.prefix = InstructionPrefix(prefix) if prefix else None
+        i.has_bnd = bnd
         return i
 
 

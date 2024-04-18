@@ -11,7 +11,7 @@ from core.model import CallGraph
 from core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonic
 from core.model.sample import Sample
 from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image, get_path_instructions_dfs
-from core.processors.util import decorator_callgraph_processor, decorator_sample_processor
+from core.processors.util import decorator_callgraph_processor
 from helpers.readme.load_instruction import load_instruction_pickle
 from util import config
 from util.logger import Logger
@@ -56,7 +56,6 @@ def create_image(dset: Type[DatasetProvider], cg: CallGraph):
     create_callgraph_image(dset, cg, dim=(512, 512))
 
 
-@decorator_sample_processor(Bodmas)
 def create_image_on_dfs_files(dset: Type[DatasetProvider], sample: Sample):
     create_callgraph_image_on_dfs_file(dset, sample, img_dims=[(30, 30), (100, 100), (224, 224)],
                                        instruction_encoder=InstructionEncoderMnemonic)
