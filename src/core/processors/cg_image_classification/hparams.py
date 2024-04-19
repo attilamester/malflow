@@ -30,6 +30,8 @@ class HPARAMS(Enum):
         bool, Validator.validate_list(os.environ["HPARAM_SPACE_MODEL_PRETRAINED"], Validator.validate_bool))
     DATA_MIN_ITEM_PER_CLASS = HParamSpace(
         int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_MIN_ITEM_PER_CLASS"], int))
+    DATA_MAX_ITEMS_PER_CLASS = HParamSpace(
+        int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_MAX_ITEM_PER_CLASS"], int))
     DATA_BATCH_SIZE = HParamSpace(
         int, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_BATCH_SIZE"], int))
     DATA_AUGM = HParamSpace(

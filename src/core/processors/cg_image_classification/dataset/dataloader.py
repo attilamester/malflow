@@ -82,8 +82,15 @@ def get_transform(mean: float, std: float, min_size: Tuple[int, int] = None) -> 
     if not min_size:
         min_size = (1, 1)
 
+    eps = 1e-6
+    if isinstance(std, float):
+        if std == 0:
+            std = eps
+    else:
+        std = [v if v != 0 else eps for v in std]
+
     return alb.Compose([
-        # alb.ToFloat(max_value=256),  # [0..256] --> [0..1]
+        alb.ToFloat(max_value=256),  # [0..256] --> [0..1]
         alb.Normalize(mean=mean, std=std, max_pixel_value=1.0, p=1.0),
         alb.PadIfNeeded(min_height=min_size[0], min_width=min_size[1], position=alb.PadIfNeeded.PositionType.TOP_LEFT,
                         border_mode=cv2.BORDER_REFLECT_101),
