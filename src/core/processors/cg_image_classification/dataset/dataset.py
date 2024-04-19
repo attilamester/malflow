@@ -61,6 +61,15 @@ class ImgDataset:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
 
+    def get_img_dir_name(self, from_begin: int = None, from_end: int = None) -> str:
+        dirname = os.path.basename(self.img_dir_path)
+        if from_begin is None or from_end is None:
+            return dirname
+        if from_begin + from_end >= len(dirname):
+            return dirname
+        dots = ".."
+        return dirname[:from_begin] + dots + dirname[-from_end:]
+
     # =================
     # Below, methods are domain-specific. Maybe they should be moved to a subclass
     # =================
@@ -80,7 +89,8 @@ class ImgDataset:
     def get_filename(self, md5):
         return f"{md5}_{self.img_shape[0]}x{self.img_shape[1]}_True_True.png"
 
-    def filter_ground_truth(self, min_samples_per_class: int, augmentation: bool = False, samples_per_class: int = None) -> pd.DataFrame:
+    def filter_ground_truth(self, min_samples_per_class: int, augmentation: bool = False,
+                            samples_per_class: int = None) -> pd.DataFrame:
         df = self.get_ground_truth()
         df_filtered = df_filter_having_at_column_min_occurencies(df, "family", min_samples_per_class, samples_per_class)
         family_index = list_to_dict_keys(list(df_filtered["family"].unique()))

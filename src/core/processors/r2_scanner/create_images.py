@@ -8,7 +8,7 @@ from PIL import Image
 from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
 from core.model import CallGraph
-from core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonic
+from core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonicPrefixBnd
 from core.model.sample import Sample
 from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image, get_path_instructions_dfs
 from core.processors.util import decorator_callgraph_processor
@@ -42,6 +42,17 @@ def create_callgraph_image_on_dfs_file(dset: Type[DatasetProvider], sample: Samp
     if not os.path.isfile(dfs_path):
         Logger.error(f"No DFS file found for {sample.filepath}")
         return
+
+    should_scan = False
+    for dim in img_dims:
+        image_path = get_path_image(dset, sample.md5, dim, subdir=f"_{instruction_encoder.__name__}")
+        if not os.path.isfile(image_path):
+            should_scan = True
+            break
+
+    if not should_scan:
+        return
+
     instructions = load_instruction_pickle(dfs_path)
     pixels = [instruction_encoder.encode(i) for i in instructions]
     for dim in img_dims:
@@ -58,7 +69,7 @@ def create_image(dset: Type[DatasetProvider], cg: CallGraph):
 
 def create_image_on_dfs_files(dset: Type[DatasetProvider], sample: Sample):
     create_callgraph_image_on_dfs_file(dset, sample, img_dims=[(30, 30), (100, 100), (224, 224)],
-                                       instruction_encoder=InstructionEncoderMnemonic)
+                                       instruction_encoder=InstructionEncoderMnemonicPrefixBnd)
 
 
 def tmp_count_rcalls(cg: CallGraph):
