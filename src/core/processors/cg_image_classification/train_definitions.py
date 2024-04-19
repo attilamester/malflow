@@ -210,7 +210,7 @@ def get_dataset() -> ImgDataset:
     DATASET = Datasets.BODMAS.value
     DATASET.filter_ground_truth(get_hparam_value(HPARAMS.DATA_MIN_ITEM_PER_CLASS),
                                 get_hparam_value(HPARAMS.DATA_AUGM),
-                                get_hparam_value(HPARAMS.DATA_MAX_ITEMS_PER_CLASS))
+                                get_hparam_value(HPARAMS.DATA_MAX_ITEM_PER_CLASS))
 
     BATCH_SIZE = get_batch_size(DATASET)
 
