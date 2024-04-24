@@ -78,22 +78,28 @@ class BodmasDataset(Dataset):
         return image_tf, label, details
 
 
-def get_transform(mean: float, std: float, min_size: Tuple[int, int] = None) -> alb.Compose:
+def get_transform(mean: Tuple[float, float, float], std: Tuple[float, float, float],
+                  min_size: Tuple[int, int] = None) -> alb.Compose:
     if not min_size:
         min_size = (1, 1)
 
+    def transform_red_channel(image: np.ndarray):
+        """
+        In case the dataset's RED channel is constant 0, set it to the average of the GREEN and BLUE channels
+        """
+        if mean[0] == 0.0 and std[0] == 0.0:
+            image[:, :, 0] = (image[:, :, 1] + image[:, :, 2]) / 2.0
+        return image
+
     eps = 1e-6
-    if isinstance(std, float):
-        if std == 0:
-            std = eps
-    else:
-        std = [v if v != 0 else eps for v in std]
+    std = [v if v != 0 else eps for v in std]
 
     return alb.Compose([
-        alb.ToFloat(max_value=256),  # [0..256] --> [0..1]
+        alb.ToFloat(max_value=255),
         alb.Normalize(mean=mean, std=std, max_pixel_value=1.0, p=1.0),
         alb.PadIfNeeded(min_height=min_size[0], min_width=min_size[1], position=alb.PadIfNeeded.PositionType.TOP_LEFT,
                         border_mode=cv2.BORDER_REFLECT_101),
+        # alb.Lambda(image=transform_red_channel),
         alb.pytorch.ToTensorV2(),
     ])
 

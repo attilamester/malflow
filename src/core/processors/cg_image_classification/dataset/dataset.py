@@ -140,8 +140,8 @@ class ImgDataset:
                 channels_mean[i].append(np.mean(channel))
                 channels_std[i].append(np.std(channel))
 
-        self._data_mean = np.mean(np.array(channels_mean), axis=1) / 256  # 8-bit images
-        self._data_std = np.mean(np.array(channels_std), axis=1) / 256
+        self._data_mean = np.mean(np.array(channels_mean), axis=1) / 255.0
+        self._data_std = np.mean(np.array(channels_std), axis=1) / 255.0
 
         Logger.info(f"[Dataset] Calculated mean&std on {len(channels_mean[0])} items from {self.img_dir_path}:\n"
                     f"\tmean: {self._data_mean}\n"
