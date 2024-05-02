@@ -45,7 +45,8 @@ class BodmasDataset(Dataset):
         label = self.dataset._data_class2index[line["family"]]
         label = torch.tensor(label)
 
-        def read_image(filename):
+        def read_image(md5):
+            filename = self.dataset.get_filename(md5)
             image = self.dataset.read_image(filename)
             image_tf = image
             if self.transform is not None:
@@ -53,8 +54,7 @@ class BodmasDataset(Dataset):
             return image_tf, image
 
         md5 = self.dataset.get_row_id(line)
-        filename = self.dataset.get_filename(md5)
-        image_tf, image = read_image(filename)
+        image_tf, image = read_image(md5)
 
         if not self.iter_details:
             """
