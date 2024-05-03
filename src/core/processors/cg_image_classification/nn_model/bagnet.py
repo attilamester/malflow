@@ -26,7 +26,7 @@ model_urls = {
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, kernel_size=1):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, kernel_size=1, debug=False):
         super(Bottleneck, self).__init__()
 
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
@@ -40,22 +40,34 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
+        self.debug = debug
+
     def forward(self, x, **kwargs):
         residual = x
-
+        self.debug and Logger.info(
+            f"{self.__class__.__name__} forward step: input tensor shape: {x.shape}") and Logger.info(x)
         out = self.conv1(x)
+        self.debug and Logger.info(f" - after conv1: {out.shape}")
         out = self.bn1(out)
+        # self.debug and Logger.info(f" - after bn1: {out.shape}")
         out = self.relu(out)
+        # self.debug and Logger.info(f" - after relu: {out.shape}")
 
         out = self.conv2(out)
+        self.debug and Logger.info(f" - after conv2: {out.shape}")
         out = self.bn2(out)
+        # self.debug and Logger.info(f" - after bn2: {out.shape}")
         out = self.relu(out)
+        # self.debug and Logger.info(f" - after relu: {out.shape}")
 
         out = self.conv3(out)
+        self.debug and Logger.info(f" - after conv3: {out.shape}")
         out = self.bn3(out)
+        # self.debug and Logger.info(f" - after bn3: {out.shape}")
 
         if self.downsample is not None:
             residual = self.downsample(x)
+            self.debug and Logger.info(f" - after downsample: {residual.shape}")
 
         if residual.size(-1) != out.size(-1):
             diff = residual.size(-1) - out.size(-1)
@@ -64,12 +76,14 @@ class Bottleneck(nn.Module):
         out += residual
         out = self.relu(out)
 
+        self.debug and Logger.info(f" - result: {out.shape}")
+
         return out
 
 
 class BagNet(nn.Module):
     def __init__(self, dataset: ImgDataset, block: Type[Bottleneck], layers, strides=[1, 2, 2, 2], patch_size: int = 3,
-                 kernel3=[0, 0, 0, 0], avg_pool=True):
+                 kernel3=[0, 0, 0, 0], avg_pool=True, debug: bool = False):
         super(BagNet, self).__init__()
 
         self.inplanes = 64
@@ -77,11 +91,18 @@ class BagNet(nn.Module):
         self.num_classes = dataset.num_classes
         self.patch_size = patch_size
 
+        self.debug = debug
+
         self.conv1 = nn.Conv2d(dataset.img_color_channels, 64, kernel_size=1, stride=1, padding=0, bias=False)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0, bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=0.001)
         self.relu = nn.ReLU(inplace=True)
 
+        # layers=[3,4,6,3] in all 9x9, 17x17, 33x33 models meaning the number of BottleNeck blocks in each layer
+        # kernel=[1,1,0,0] for 9x9, [1,1,1,0] for 17x17, [1,1,1,1] for 33x33 models
+        # - means how many BottleNeck blocks will have kernel size 3x3
+        # - eg. 0 => all will have 1x1
+        # - eg. 1 => 1st block will have 3x3, the rest 1x1
         self.layer1 = self._make_layer(block, 64, layers[0], stride=strides[0], kernel3=kernel3[0], prefix="layer1")
         self.layer2 = self._make_layer(block, 128, layers[1], stride=strides[1], kernel3=kernel3[1], prefix="layer2")
         self.layer3 = self._make_layer(block, 256, layers[2], stride=strides[2], kernel3=kernel3[2], prefix="layer3")
@@ -110,32 +131,49 @@ class BagNet(nn.Module):
 
         layers = []
         kernel = 1 if kernel3 == 0 else 3
-        layers.append(block(self.inplanes, planes, stride, downsample, kernel_size=kernel))
+        layers.append(block(self.inplanes, planes, stride, downsample, kernel_size=kernel, debug=self.debug))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             kernel = 1 if kernel3 <= i else 3
-            layers.append(block(self.inplanes, planes, kernel_size=kernel))
+            layers.append(block(self.inplanes, planes, kernel_size=kernel, debug=self.debug))
 
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        self.debug and Logger.info(
+            f"{self.__class__.__name__}{self.patch_size} forward step: input tensor shape: {x.shape}")
         x = self.conv1(x)
+        self.debug and Logger.info(f" - after conv1: {x.shape}")
         x = self.conv2(x)
+        self.debug and Logger.info(f" - after conv2: {x.shape}")
+
         x = self.bn1(x)
+        # self.debug and Logger.info(f" - after bn1: {x.shape}")
+
         x = self.relu(x)
+        # self.debug and Logger.info(f" - after relu: {x.shape}")
 
         x = self.layer1(x)
+        self.debug and Logger.info(f"-------- after layer1: {x.shape}")
+
         x = self.layer2(x)
+        self.debug and Logger.info(f"-------- after layer2: {x.shape}")
+
         x = self.layer3(x)
+        self.debug and Logger.info(f"-------- after layer3: {x.shape}")
+
         x = self.layer4(x)
+        self.debug and Logger.info(f"-------- after layer4: {x.shape}")
 
         if self.avg_pool:
             x = nn.AvgPool2d((x.size()[2], x.size()[3]), stride=1)(x)
+            self.debug and Logger.info(f" - after avgpool: {x.shape}")
             x = x.view(x.size(0), -1)
             x = self.fc(x)
         else:
             x = x.permute(0, 2, 3, 1)
             x = self.fc(x)
+        self.debug and Logger.info(f" - result: {x.shape}")
 
         return x
 

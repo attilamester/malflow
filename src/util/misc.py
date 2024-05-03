@@ -81,3 +81,9 @@ def dict_key_inc(d, key, inc: int = 1):
             d[key] += 1
         else:
             d[key] += inc
+
+
+def generator_list_batch(l, batch_size):
+    n = len(l)
+    for ndx in range(0, n, batch_size):
+        yield l[ndx: ndx + batch_size]
