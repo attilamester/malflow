@@ -28,7 +28,7 @@ from util.logger import Logger
 # see: https://github.com/attilamester/pytorch-examples/blob/feature/83/imagenet/main.py
 # =======================================================
 
-def get_model() -> torch.nn.Module:
+def get_model(debug: bool = False) -> torch.nn.Module:
     """depends on: DATASET"""
 
     global MODEL, DATASET
@@ -44,11 +44,11 @@ def get_model() -> torch.nn.Module:
 
     if hp_model.startswith("bagnet"):
         if hp_model == "bagnet9":
-            MODEL = bagnet9(DATASET, pretrained=hp_model_pretrained)
+            MODEL = bagnet9(DATASET, pretrained=hp_model_pretrained, debug=debug)
         elif hp_model == "bagnet17":
-            MODEL = bagnet17(DATASET, pretrained=hp_model_pretrained)
+            MODEL = bagnet17(DATASET, pretrained=hp_model_pretrained, debug=debug)
         elif hp_model == "bagnet33":
-            MODEL = bagnet33(DATASET, pretrained=hp_model_pretrained)
+            MODEL = bagnet33(DATASET, pretrained=hp_model_pretrained, debug=debug)
     elif hp_model.startswith("resnet"):
         if hp_model == "resnet18":
             weights = None if not hp_model_pretrained else torchvision.models.ResNet18_Weights.IMAGENET1K_V1
@@ -259,3 +259,21 @@ def init_train_valid_loader():
         create_bodmas_train_val_loader(DATASET, batch_size=BATCH_SIZE, model_requirements=get_model_requirements())
 
     DATALOADER_LOADED = True
+
+
+def debug_bagnet():
+    import numpy as np
+    init_train_valid_loader()
+    # loader = get_train_loader()
+
+    for model in [bagnet9(DATASET, pretrained=False, debug=True)]:
+        # bagnet17(DATASET, pretrained=False, debug=True),
+        # bagnet33(DATASET, pretrained=False, debug=True)]:
+
+        np_arr = np.zeros((1, 3, 11, 11), dtype=np.float32)
+        np_arr[0, :, 0, 0] = 1
+        images = torch.tensor(np_arr)
+        # (images, target) = next(iter(loader))
+        output = model(images)
+        # print(output)
+        # print(model)

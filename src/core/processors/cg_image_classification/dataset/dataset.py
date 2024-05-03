@@ -59,7 +59,27 @@ class ImgDataset:
     def read_image(self, filename) -> np.ndarray:
         image = cv2.imread(os.path.join(self.img_dir_path, filename))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         return image
+
+    def read_ember_features(self, md5) -> np.ndarray:
+        if not self._data_X:
+            self._data_X = np.load(os.path.join(os.path.dirname(self.ground_truth_path), "X.npy"))
+        index = self._data_df_gt[self._data_df_gt["md5"] == md5].index[0]
+        x = self._data_X[index]
+        x = np.concatenate((x, np.zeros(2500 - 2381)))
+        x = np.stack((x, x, x), axis=-1)
+        x = x.reshape((50, 50, 3))
+
+        # image_x = self.dataset.read_ember_features(md5)
+        # transform = alb.Compose([
+        #     alb.ToFloat(max_value=255),
+        #     alb.pytorch.ToTensorV2(),
+        # ])
+        # image_x = transform(image=image_x)["image"]
+        # image_tf[:, -24:, :] = image_x
+
+        return x
 
     def get_img_dir_name(self, from_begin: int = None, from_end: int = None) -> str:
         dirname = os.path.basename(self.img_dir_path)
@@ -116,7 +136,8 @@ class ImgDataset:
 
         Logger.info(
             f"[Dataset] Filtered ImgDataset with items_per_class:{min_samples_per_class}. "
-            f"Samples: {len(df_filtered)} | Classes: {self.num_classes}")
+            f"Samples: {len(self._data_df_gt_filtered_noaugm)} (without augm) + {len(self._data_df_gt_filtered_augm)} augm"
+            f" | Classes: {self.num_classes}")
 
         self._calculate_mean_std()
 
@@ -131,10 +152,7 @@ class ImgDataset:
         for i, row in self._data_df_gt_filtered_noaugm.iterrows():
             md5 = self.get_row_id(row)
             filename = self.get_filename(md5)
-            filepath = os.path.join(self.img_dir_path, filename)
-
-            image = cv2.imread(filepath, cv2.IMREAD_COLOR)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = self.read_image(filename)
 
             for i, channel in enumerate(cv2.split(image)):
                 channels_mean[i].append(np.mean(channel))
