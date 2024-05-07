@@ -72,6 +72,21 @@ def create_image_on_dfs_files(dset: Type[DatasetProvider], sample: Sample):
                                        instruction_encoder=InstructionEncoderMnemonicPrefixBnd)
 
 
+def create_image_on_simple_hexdump(dset: Type[DatasetProvider], sample: Sample):
+    dim = (100, 100)
+    image_path = get_path_image(dset, sample.md5, dim, subdir=f"_hexdump")
+    if os.path.isfile(image_path):
+        return
+
+    with open(sample.filepath, "rb") as f:
+        content = f.read()
+        content = content[:dim[0] * dim[1]]
+
+    image = CallGraphImage.get_image_from_hexdump(dim, content)
+    pil_image = Image.fromarray(image)
+    pil_image.save(image_path)
+
+
 def tmp_count_rcalls(cg: CallGraph):
     calls = {}
     calls_path = os.path.join(Bodmas.get_dir_info(), f"{cg.md5}.calls.json")
@@ -150,4 +165,6 @@ if __name__ == "__main__":
     config.load_env()
     # process_samples(Bodmas, create_image, batch_size=1000, max_batches=None, pool=ProcessPoolExecutor(max_workers=8))
     # process_samples(Bodmas, create_image_on_dfs_files, batch_size=1000, max_batches=None,
+    #                 pool=ProcessPoolExecutor(max_workers=8))
+    # process_samples(Bodmas, create_image_on_simple_hexdump, batch_size=1000, max_batches=None,
     #                 pool=ProcessPoolExecutor(max_workers=8))

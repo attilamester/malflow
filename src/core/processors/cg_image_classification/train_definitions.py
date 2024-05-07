@@ -20,6 +20,7 @@ from core.processors.cg_image_classification.dataset import Datasets, ImgDataset
 from core.processors.cg_image_classification.dataset.dataloader import create_bodmas_train_val_loader
 from core.processors.cg_image_classification.hparams import HPARAMS, get_hparam_value
 from core.processors.cg_image_classification.nn_model import bagnet17, bagnet9, bagnet33, SimpleCNN
+from core.processors.cg_image_classification.nn_model.resnet1d import ResNet1D
 from util.logger import Logger
 
 
@@ -95,6 +96,8 @@ def get_model(debug: bool = False) -> torch.nn.Module:
 
     elif hp_model.startswith("simplecnn"):
         MODEL = SimpleCNN(DATASET, 32, dropout=0.5)
+    elif hp_model == "resnet1d":
+        MODEL = ResNet1D(3, 2, 9, 1, 1, 3, DATASET.num_classes)
 
     if MODEL is None:
         raise Exception(f"Unknown model: {hp_model}")
@@ -264,13 +267,14 @@ def init_train_valid_loader():
 def debug_bagnet():
     import numpy as np
     init_train_valid_loader()
-    # loader = get_train_loader()
+    loader = get_train_loader()
 
-    for model in [bagnet9(DATASET, pretrained=False, debug=True)]:
+    for model in [
+        bagnet9(DATASET, pretrained=False, debug=True),
         # bagnet17(DATASET, pretrained=False, debug=True),
-        # bagnet33(DATASET, pretrained=False, debug=True)]:
-
-        np_arr = np.zeros((1, 3, 11, 11), dtype=np.float32)
+        # bagnet33(DATASET, pretrained=False, debug=True)
+    ]:
+        np_arr = np.zeros((1, 3, 100), dtype=np.float32)
         np_arr[0, :, 0, 0] = 1
         images = torch.tensor(np_arr)
         # (images, target) = next(iter(loader))

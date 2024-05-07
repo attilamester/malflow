@@ -168,6 +168,11 @@ class CallGraphImage:
         return np_pixels
 
     @staticmethod
+    def get_image_from_hexdump(img_size, hexdump: bytes):
+        pixels = [[b, b, b] for b in hexdump]
+        return CallGraphImage.get_image_from_pixels(img_size, pixels)
+
+    @staticmethod
     def get_image_from_instructions(img_size, instructions: List[Instruction],
                                     instruction_encoder: Type[InstructionEncoder] = Type[InstructionEncoderComplete]):
         pixels = [instruction_encoder.encode(i) for i in instructions]
