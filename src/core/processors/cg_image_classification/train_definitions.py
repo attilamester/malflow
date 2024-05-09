@@ -59,6 +59,8 @@ def get_model(debug: bool = False) -> torch.nn.Module:
             weights = None if not hp_model_pretrained else torchvision.models.ResNet50_Weights.IMAGENET1K_V2
             MODEL = torchvision.models.resnet50(weights=weights)
             MODEL.fc = torch.nn.Linear(512 * 4, DATASET.num_classes)
+        elif hp_model == "resnet1d":
+            MODEL = ResNet1D(3, 2, 9, 1, 1, 3, DATASET.num_classes)
     elif hp_model.startswith("alexnet"):
         weights = None if not hp_model_pretrained else torchvision.models.AlexNet_Weights.IMAGENET1K_V1
         MODEL = torchvision.models.alexnet(weights=weights)
@@ -96,8 +98,6 @@ def get_model(debug: bool = False) -> torch.nn.Module:
 
     elif hp_model.startswith("simplecnn"):
         MODEL = SimpleCNN(DATASET, 32, dropout=0.5)
-    elif hp_model == "resnet1d":
-        MODEL = ResNet1D(3, 2, 9, 1, 1, 3, DATASET.num_classes)
 
     if MODEL is None:
         raise Exception(f"Unknown model: {hp_model}")
