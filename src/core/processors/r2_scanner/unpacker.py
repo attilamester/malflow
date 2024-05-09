@@ -6,11 +6,9 @@ from typing import Type
 
 from core.data import DatasetProvider
 from core.data.bodmas import Bodmas, BodmasUnpacked, BodmasArmed
-from core.model import CallGraph
 from core.model.sample import Sample
-from core.processors.r2_scanner.create_dfs import create_callgraph_dfs
 from core.processors.r2_scanner.paths import get_path_image
-from core.processors.util import process_samples, decorator_callgraph_processor
+from core.processors.util import process_samples
 from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GT_COL0
 from util import config
 from util.logger import Logger
@@ -76,12 +74,6 @@ def unpack_sample(dset, sample: Sample):
 
     if not os.path.isfile(dest_path):
         Logger.error(f"Unpacking failed: {sample.md5} {sample.sha256} {sample.filepath}")
-
-
-@decorator_callgraph_processor(BodmasUnpacked, skip_load_if=lambda dset, md5: os.path.isfile(
-    get_path_image(dset, md5, (300, 300), True, True)))
-def create_dfs(dset: Type[DatasetProvider], cg: CallGraph):
-    create_callgraph_dfs(dset, cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
 
 
 def __arm_samples():
