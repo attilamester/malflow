@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 
 from core.processors.cg_image_classification.dataset.dataset import ImgDataset
+from core.processors.cg_image_classification.hparams import get_hparam_value, HPARAMS
 from util.logger import Logger
 
 
@@ -60,6 +61,8 @@ class BodmasDataset(Dataset):
             """
             Normal flow | during training / evaluating
             """
+            if get_hparam_value(HPARAMS.MODEL) == "resnet1d":
+                image_tf = image_tf.view(3, -1)
             return image_tf, label
 
         """

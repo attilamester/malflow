@@ -2,7 +2,7 @@ import os
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import wraps
-from typing import List, Callable, Type, Union
+from typing import List, Callable, Type, Union, Any
 
 from core.data import DatasetProvider
 from core.model import CallGraph, CallGraphCompressed
@@ -57,18 +57,16 @@ def process_sample_batch(dset: Type[DatasetProvider], batch: List[Sample], batch
             log_eta(ts, i)
 
 
-def decorator_callgraph_processor(dset: Type[DatasetProvider] = None,
-                                  skip_load_if: Callable[[Type[DatasetProvider], str], bool] = lambda x: False) \
-        -> Callable[[Type[DatasetProvider]], Callable[[Sample], None]]:
+def decorator_callgraph_processor(skip_load_if: Callable[[Type[DatasetProvider], str], bool] = lambda x: False) \
+        -> Callable[[Any], Callable[[Type[DatasetProvider], Sample], None]]:
     """
     Will load the callgraph from disk and pass it to the processor.
-    :param dset:
     :return: Callable[[Sample], None]
     """
 
-    def decorator(processor) -> Callable[[Sample], None]:
+    def decorator(processor) -> Callable[[Type[DatasetProvider], Sample], None]:
         @wraps(processor)
-        def wrapped(sample: Sample):
+        def wrapped(dset: Type[DatasetProvider], sample: Sample):
             cg = CallGraph(sample.filepath, scan=False, verbose=False)
             md5 = cg.md5
 

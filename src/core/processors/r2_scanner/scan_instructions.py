@@ -27,8 +27,7 @@ def extract_callgraph_instructions_stats(dset: Type[DatasetProvider], cg: CallGr
         json.dump(instructions, f)
 
 
-@decorator_callgraph_processor(Bodmas,
-                               skip_load_if=lambda dset, md5: os.path.isfile(get_path_instructions_stats(dset, md5)))
+@decorator_callgraph_processor(skip_load_if=lambda dset, md5: os.path.isfile(get_path_instructions_stats(dset, md5)))
 def extract_sample_instructions(dset: Type[DatasetProvider], cg: CallGraph):
     extract_callgraph_instructions_stats(dset, cg)
 
@@ -37,7 +36,7 @@ INSTRUCTIONS = Counter()
 INSTRUCTIONS_PATH = "BODMAS_instructions_all.json"
 
 
-def sum_up_instructions(sample: Sample):
+def sum_up_instructions(dset, sample: Sample):
     global INSTRUCTIONS
     cg = CallGraph(sample.filepath, scan=False, verbose=False)
     md5 = cg.md5

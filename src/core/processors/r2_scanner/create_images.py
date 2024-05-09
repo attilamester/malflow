@@ -62,7 +62,7 @@ def create_callgraph_image_on_dfs_file(dset: Type[DatasetProvider], sample: Samp
         pil_image.save(image_path)
 
 
-@decorator_callgraph_processor(Bodmas, skip_load_if=lambda dset, md5: os.path.isfile(get_path_imageinfo(dset, md5)))
+@decorator_callgraph_processor(skip_load_if=lambda dset, md5: os.path.isfile(get_path_imageinfo(dset, md5)))
 def create_image(dset: Type[DatasetProvider], cg: CallGraph):
     create_callgraph_image(dset, cg, dim=(512, 512))
 

@@ -25,6 +25,12 @@ def get_path_instructions_dfs(dset: Type[DatasetProvider], md5: str, allow_multi
     return os.path.join(ins_dfs, f"{md5}.instructions_{allow_multiple_visits}_{store_call}.pickle")
 
 
+def get_path_instructions_function_blocks(dset: Type[DatasetProvider], md5: str):
+    ins = os.path.join(dset.get_dir_instructions(), "function_blocks")
+    ensure_dir(ins)
+    return os.path.join(ins, f"{md5}.instructions.pickle")
+
+
 def get_path_instructions_stats(dset: Type[DatasetProvider], md5: str):
     ins_stats = os.path.join(dset.get_dir_instructions(), "stats")
     ensure_dir(ins_stats)
