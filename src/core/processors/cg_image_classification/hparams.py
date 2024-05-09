@@ -14,10 +14,12 @@ config.load_env(get_cg_image_classification_env())
 class HParamSpace:
     type_: Type
     values: List
+    default: any
 
-    def __init__(self, type_, values):
+    def __init__(self, type_, values, default=None):
         self.type_ = type_
         self.values = values
+        self.default = default
 
 
 class HPARAMS(Enum):
@@ -37,6 +39,10 @@ class HPARAMS(Enum):
     DATA_AUGM = HParamSpace(
         bool, Validator.validate_list(os.environ["HPARAM_SPACE_DATA_AUGM"], Validator.validate_bool))
 
+    MODEL_KERNEL_ROWWISE = HParamSpace(
+        bool, Validator.validate_list(os.environ.get("HPARAM_SPACE_MODEL_KERNEL_ROWWISE", "f"),
+                                      Validator.validate_bool), False)  # only valid for bagnet models
+
 
 def get_hparam_name(hparam: HPARAMS):
     return f"HPARAM_{hparam.name}"
@@ -48,7 +54,10 @@ def get_hparam_value(hparam: HPARAMS, custom_env_name: str = None):
         if env_name not in os.environ:
             config.load_env(get_cg_image_classification_env_hparams())
 
-        env_value = os.environ[env_name]
+        if hparam.value.default is not None:
+            env_value = os.environ.get(env_name, hparam.value.default)
+        else:
+            env_value = os.environ[env_name]
 
         if hparam.value.type_ == int:
             validator = Validator.validate_int
