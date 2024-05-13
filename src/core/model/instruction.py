@@ -211,7 +211,7 @@ class InstructionParameter(Enum):
 
     @staticmethod
     def is_block(token: str):
-        return token.startswith("case.") or token.startswith("switch.")
+        return token.startswith("case.") or token.startswith("switch.") or token.startswith("segment.")
 
     @staticmethod
     def is_function(token: str):

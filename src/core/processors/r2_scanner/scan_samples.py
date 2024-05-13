@@ -6,7 +6,7 @@ from core.data import DatasetProvider
 from core.data.bodmas import Bodmas
 from core.model import CallGraph, CallGraphCompressed
 from core.model.sample import Sample
-from core.processors.r2_scanner.create_dfs import create_callgraph_dfs
+from core.processors.r2_scanner.create_dfs import create_callgraph_dfs, create_callgraph_function_blocks
 from core.processors.r2_scanner.scan_instructions import extract_callgraph_instructions_stats
 from core.processors.util import process_samples
 from util import config
@@ -30,6 +30,7 @@ def scan_sample(dset: Type[DatasetProvider], sample: Sample):
         scan(dset, cg)
         extract_callgraph_instructions_stats(dset, cg)
         create_callgraph_dfs(dset, cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
+        create_callgraph_function_blocks(dset, cg, img_dims=[(30, 30), (100, 100), (224, 224), (300, 300)])
     else:
         Logger.info(f">> Already existing r2 found on disk: {md5}")
 
