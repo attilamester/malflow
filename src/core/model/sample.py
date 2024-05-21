@@ -34,6 +34,16 @@ class Sample:
             self.size_fmt = display_size(len(self.content))
         return self.size_fmt
 
+    def get_ember_features(self):
+        import numpy as np
+        np.int = np.int32
+        np.float = np.float64
+        np.bool = np.bool_
+
+        from ember.features import PEFeatureExtractor
+        ex = PEFeatureExtractor(2, print_feature_warning=False)
+        return ex.feature_vector(self.content)
+
     def __str__(self):
         return (f"""Sample(  {self.filepath}
     md5={self.md5}

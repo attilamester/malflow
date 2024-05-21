@@ -84,7 +84,11 @@ class CGNode:
             if "disasm" not in op or "bytes" not in op:
                 continue
             refs = op.get("refs", []) if ("call" in op["type"] or "jmp" in op["type"]) else []
-            self.instructions.append(Instruction(op["disasm"], op["bytes"].encode(), refs))
+            try:
+                instruction = Instruction(op["disasm"], op["bytes"].encode(), refs)
+                self.instructions.append(instruction)
+            except Exception as e:
+                Logger.error(f"Skipping instruction on {self.rva}. Could not process instruction: {e}")
 
     def __str__(self):
         return f"CGNode({self.label}, {self.rva}, {self.type})"
