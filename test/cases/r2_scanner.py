@@ -115,7 +115,12 @@ def get_sample_get_function_instructions(cg_node: CGNode) -> List[Tuple[Union[st
 # ================
 
 def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_test_data: bool = False):
-    sample = MalwareBazaar.get_sample(sha256=test_sample.sha256)
+    try:
+        sample = MalwareBazaar.get_sample(sha256=test_sample.sha256)
+    except Exception as e:
+        if "Cannot find MalwareBazaar file" in str(e):
+            return
+
     cg = CallGraph(file_path=sample.filepath, scan=True, verbose=False)
 
     if gen_test_data:

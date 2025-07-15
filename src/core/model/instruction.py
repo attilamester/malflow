@@ -69,6 +69,38 @@ class Instruction:
             f"[{self.mnemonic}]" + \
             (" " + ", ".join([p.value for p in self.parameters]) if self.parameters else "")
 
+    @staticmethod
+    def parse_fmt(fmt: str) -> "Instruction":
+        i = Instruction("nop", b"", [])
+        parentheses = fmt.count("[")
+
+        def process_mnemonic_params(token):
+            tokens = token.split("]")
+            i.mnemonic = tokens[0][1:]
+            if len(tokens) == 2:
+                i.parameters = [InstructionParameter(p) for p in tokens[1].strip().split(", ") if p]
+
+        def process_prefix_mnemonic_params(token):
+            tokens = token.split("] ", maxsplit=1)
+            i.prefix = InstructionPrefix(tokens[0][1:])
+            process_mnemonic_params(tokens[1])
+
+        if parentheses == 1:
+            process_mnemonic_params(fmt)
+        elif parentheses == 2:
+            if fmt.startswith("[bnd]"):
+                fmt = fmt.replace("[bnd] ", "")
+                process_mnemonic_params(fmt)
+                i.has_bnd = True
+            else:
+                process_prefix_mnemonic_params(fmt)
+        elif parentheses == 3:
+            i.has_bnd = True
+            fmt = fmt.replace("[bnd] ", "")
+            process_prefix_mnemonic_params(fmt)
+
+        return i
+
     def __str__(self):
         return self.get_fmt()
 

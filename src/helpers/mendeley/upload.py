@@ -49,9 +49,9 @@ def send_mendeley_api_request(method, endpoint, **kwargs):
         request_method = requests.get
     if not request_method:
         raise Exception(f"Invalid method: {method}")
-    # res = request_method("https://api.mendeley.com" + ("" if endpoint.startswith("/") else "/") + endpoint, **kwargs)
-    # display_response(res)
-    # return res
+    res = request_method("https://api.mendeley.com" + ("" if endpoint.startswith("/") else "/") + endpoint, **kwargs)
+    display_response(res)
+    return res
 
 
 def display_response(response: requests.Response):
@@ -228,6 +228,44 @@ def upload_from_buffer():
         papers.append(MendeleyPaper(title, year, []))
 
     upload_papers(papers)
+
+
+def download_file(args):
+    folder_path, file, documents = args
+    res = send_mendeley_api_request(requests.get, f"files/{file['id']}",
+                                    headers={"Authorization": "Bearer " + ACCESS_TOKEN})
+    doc = documents.get(file["document_id"], None)
+    if doc:
+        filename = doc['title'].replace(' ', '_').replace('-', '_')
+        if "year" in doc:
+            filename = f"{doc['year']}_{filename}"
+        if "authors" in doc:
+            filename = doc["authors"][0]["last_name"] + filename
+    else:
+        filename = file["file_name"]
+    file_path = os.path.join(folder_path, filename)
+    if os.path.isfile(file_path):
+        return
+
+    with open(file_path, "wb") as f:
+        f.write(res.content)
+
+
+def get_files(folder_path):
+    resp_documents = send_mendeley_api_request(requests.get, "documents?limit=500",
+                                               headers={"Authorization": "Bearer " + ACCESS_TOKEN})
+    documents = {}
+    for document in resp_documents.json():
+        documents[document["id"]] = document
+
+    print(f"Got {len(documents)} documents")
+    resp_files = send_mendeley_api_request(requests.get, "files?limit=500",
+                                           headers={"Authorization": "Bearer " + ACCESS_TOKEN})
+    files = resp_files.json()
+    print(f"Downloading {len(files)} files")
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for res in executor.map(download_file, [(folder_path, file, documents) for file in files]):
+            pass
 
 
 if __name__ == "__main__":
