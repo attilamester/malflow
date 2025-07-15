@@ -75,10 +75,10 @@ class Instruction:
         parentheses = fmt.count("[")
 
         def process_mnemonic_params(token):
-            tokens = token.split("] ")
+            tokens = token.split("]")
             i.mnemonic = tokens[0][1:]
             if len(tokens) == 2:
-                i.parameters = [InstructionParameter(p) for p in tokens[1].split(", ")]
+                i.parameters = [InstructionParameter(p) for p in tokens[1].strip().split(", ") if p]
 
         def process_prefix_mnemonic_params(token):
             tokens = token.split("] ", maxsplit=1)

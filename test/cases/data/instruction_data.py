@@ -64,6 +64,11 @@ INSTRUCTIONS = [
         "disasm": "vpunpcklbw zmm2 {k7} {z}, zmm5, zmmword [edx + 0x140]]",
         "mnemonic": "vpunpcklbw", "has_bnd": False, "prefix": None,
         "parameters": [InstructionParameter.REGISTER, InstructionParameter.REGISTER, InstructionParameter.ADDRESS]
+    }),
+    InstructionData(**{
+        "disasm": "pushal",
+        "mnemonic": "pushal", "has_bnd": False, "prefix": None,
+        "parameters": []
     })
 ]
 

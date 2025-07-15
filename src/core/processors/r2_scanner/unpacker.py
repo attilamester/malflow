@@ -1,21 +1,34 @@
+import json
 import os
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from typing import Type
 
+import numpy as np
+import pandas as pd
+
 from core.data import DatasetProvider
 from core.data.bodmas import Bodmas, BodmasUnpacked, BodmasArmed
+from core.data.malimg import MalImg
 from core.model.sample import Sample
 from core.processors.r2_scanner.paths import get_path_image
 from core.processors.util import process_samples
-from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GT_COL0
+from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GT_COL0, BODMAS_METADATA_CSV
 from util import config
 from util.logger import Logger
 
 
-def is_sample_packed(sample: Sample):
-    dset = Bodmas
+def die_entropy(dset: Type[DatasetProvider], sample: Sample):
+    die_info_path = os.path.join(dset.get_dir_info(), "die-entropy", os.path.basename(sample.filepath) + ".json")
+    if not os.path.isfile(die_info_path):
+        Logger.info(f"No die info found for sample {sample.md5} {sample.sha256}")
+        return None
+    with open(die_info_path, "r") as f:
+        return json.load(f)
+
+
+def is_sample_packed(dset: Type[DatasetProvider], sample: Sample):
     die_info_path = os.path.join(dset.get_dir_info(), "die", os.path.basename(sample.filepath) + ".csv")
 
     if not os.path.isfile(die_info_path):
@@ -35,6 +48,7 @@ def is_sample_packed(sample: Sample):
         return False, None
 
 
+
 ARM_INFO = "/opt/work/bd/BODMAS/arm.txt"
 BUFF = ""
 
@@ -42,7 +56,7 @@ BUFF = ""
 def create_csv_for_arming_sample(dset: Type[DatasetProvider], sample: Sample):
     global BUFF
 
-    packed, packer_name = is_sample_packed(sample)
+    packed, packer_name = is_sample_packed(dset, sample)
     if not packed:
         return
     Logger.info(f"Sample packed with {packer_name} {sample.filepath}")
@@ -50,7 +64,7 @@ def create_csv_for_arming_sample(dset: Type[DatasetProvider], sample: Sample):
 
 
 def unpack_sample(dset, sample: Sample):
-    packed, packer_name = is_sample_packed(sample)
+    packed, packer_name = is_sample_packed(dset, sample)
     dset_unpacked = BodmasUnpacked
     dest_path = os.path.join(dset_unpacked.get_dir_samples(), f"unpacked_{os.path.basename(sample.filepath)}")
 
@@ -88,7 +102,7 @@ def __add_packer_info_to_gt():
     df = pd.read_csv(BODMAS_GROUND_TRUTH_CSV, index_col="md5")
 
     for sample in Bodmas.get_samples():
-        packed, packer_name = is_sample_packed(sample)
+        packed, packer_name = is_sample_packed(Bodmas, sample)
         if packed:
             df.loc[sample.md5, "packer"] = packer_name.lower()
 
