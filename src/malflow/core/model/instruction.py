@@ -2,9 +2,9 @@ from collections import deque
 from enum import Enum
 from typing import List, Optional, Dict, TypedDict
 
-from core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
+from malflow.core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
                                             Registers, Mnemonics)
-from util.logger import Logger
+from malflow.util.logger import Logger
 
 
 class Instruction:

@@ -2,8 +2,8 @@ import os
 from abc import abstractmethod, ABC
 from typing import Generator
 
-from core.model.sample import Sample
-from util.misc import ensure_dir
+from malflow.core.model.sample import Sample
+from malflow.util.misc import ensure_dir
 
 
 class DatasetProvider(ABC):

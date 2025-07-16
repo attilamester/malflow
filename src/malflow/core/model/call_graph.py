@@ -9,11 +9,11 @@ import pygraphviz
 import r2pipe
 from networkx import MultiDiGraph
 
-from core.model.function import CGNode, FunctionType
-from core.model.instruction import Instruction, InstructionParameter
-from core.model.radare2_definitions import is_symbol_flag
-from core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
-from util.logger import Logger
+from malflow.core.model.function import CGNode, FunctionType
+from malflow.core.model.instruction import Instruction, InstructionParameter
+from malflow.core.model.radare2_definitions import is_symbol_flag
+from malflow.core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
+from malflow.util.logger import Logger
 
 
 class CallGraph:
@@ -84,12 +84,24 @@ class CallGraph:
         basename = os.path.basename(path)
         return os.path.join(dirname, basename.split(".")[0])
 
+    def open_r2(self) -> r2pipe.open:
+        """
+        Returns the r2pipe instance for this PE.
+        :return: r2pipe.open
+        """
+        r2 = r2pipe.open(self.file_path, flags=["-2"])  # close stderr
+        return r2
+
+    @staticmethod
+    def close_r2(r2: r2pipe.open):
+        r2.quit()
+
     def scan(self, verbose=False):
         Logger.info(f"Scanning {self.file_path}")
 
         ts = time.time()
 
-        r2 = r2pipe.open(self.file_path, flags=["-2"])
+        r2 = self.open_r2()
         r2.cmd("aaa")
 
         entrypoint_info = r2.cmd("ie").split("\n")

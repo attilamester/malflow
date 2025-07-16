@@ -1,7 +1,7 @@
-# Static malware analysis -- call graph scanner of PE executable with Radare2
+# Static malware analysis - call graph scanner of PE executable with Radare2
 
 * https://github.com/radareorg/radare2
-* summary on [GitHub Pages](https://attilamester.github.io/call-graph/)
+* related work on [GitHub Pages](https://attilamester.github.io/call-graph/)
 
 ## Setup
 

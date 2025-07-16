@@ -1,7 +1,7 @@
 import unittest
 
 from cases.data.instruction_data import InstructionData, INSTRUCTIONS, INSTRUCTION_PARAMETER_TOKENS
-from core.model.instruction import Instruction, InstructionParameter
+from malflow.core.model.instruction import Instruction, InstructionParameter
 
 
 class TestInstruction(unittest.TestCase):

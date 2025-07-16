@@ -1,10 +1,9 @@
-import argparse
+__version__ = "0.0.6"
 
-
-def main():
-    args = argparse.ArgumentParser()
-    args.add_argument("--input", help="Path to the executable file")
-
-
-if __name__ == "__main__":
-    main()
+from .core.model import CallGraph, CallGraphCompressed
+from .core.model.call_graph_image import CallGraphImage
+from .core.model.instruction import Instruction, \
+    InstructionPrefix, \
+    InstructionParameter, \
+    InstructionReference, \
+    InstructionReferenceType

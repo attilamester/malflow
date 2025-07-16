@@ -4,8 +4,8 @@ import random
 import time
 from typing import List, Tuple
 
-from util.compression.compression import BrotliCompressor, ZLibCompressor, Compressor, Bzip2Compressor, LzmaCompressor
-from util.misc import list_avg, get_project_root, list_stats, display_size
+from malflow.util.compression.compression import BrotliCompressor, ZLibCompressor, Compressor, Bzip2Compressor, LzmaCompressor
+from malflow.util.misc import list_avg, get_project_root, list_stats, display_size
 
 
 def get_corpus():

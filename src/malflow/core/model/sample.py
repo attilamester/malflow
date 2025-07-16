@@ -1,7 +1,7 @@
 import hashlib
 
-from core.model import CallGraph
-from util.misc import display_size
+from malflow.core.model import CallGraph
+from malflow.util.misc import display_size
 
 
 class Sample:

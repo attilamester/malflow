@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
-from core.model.instruction import InstructionParameter, InstructionPrefix
+from malflow.core.model.instruction import InstructionParameter, InstructionPrefix
 
 
 @dataclass

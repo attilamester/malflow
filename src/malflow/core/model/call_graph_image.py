@@ -3,9 +3,9 @@ from typing import List, Tuple, Type
 
 import numpy as np
 
-from core.model import CallGraph
-from core.model.instruction import Instruction, InstructionPrefix, InstructionParameter
-from core.model.radare2_definitions import Mnemonics
+from malflow.core.model import CallGraph
+from malflow.core.model.instruction import Instruction, InstructionPrefix, InstructionParameter
+from malflow.core.model.radare2_definitions import Mnemonics
 
 
 def get_instruction_token_RG(mnemonic: str, prefix: str, bnd: bool) -> str:

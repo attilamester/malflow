@@ -1,10 +1,10 @@
 import os
 
-from core.data import DatasetProvider
-from core.model.sample import Sample
-from util.logger import Logger
-from util.misc import ensure_dir
-from util.validators import HashValidator
+from malflow.core.data import DatasetProvider
+from malflow.core.model.sample import Sample
+from malflow.util.logger import Logger
+from malflow.util.misc import ensure_dir
+from malflow.util.validators import HashValidator
 
 
 class Bodmas(DatasetProvider):

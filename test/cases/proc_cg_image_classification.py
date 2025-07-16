@@ -1,9 +1,9 @@
 import unittest
 
 from cases.data.instruction_data import INSTRUCTIONS
-from core.model.call_graph_image import InstructionEncoderMnemonic, InstructionEncoderComplete, \
+from malflow.core.model.call_graph_image import InstructionEncoderMnemonic, InstructionEncoderComplete, \
     InstructionEncoderMnemonicPrefixBnd
-from core.model.instruction import Instruction
+from malflow.core.model.instruction import Instruction
 
 
 class TestProcessorCgImageClassification(unittest.TestCase):

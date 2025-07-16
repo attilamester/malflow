@@ -5,10 +5,10 @@ import unittest
 from typing import List, Set, Tuple, Union, Optional
 
 from cases.data.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
-from core.data.malware_bazaar import MalwareBazaar
-from core.model import CallGraph, CallGraphCompressed
-from core.model.function import CGNode
-from util import config
+from malflow.core.data.malware_bazaar import MalwareBazaar
+from malflow.core.model import CallGraph, CallGraphCompressed
+from malflow.core.model.function import CGNode
+from malflow.util import config
 
 
 class TestR2Scanner(unittest.TestCase):

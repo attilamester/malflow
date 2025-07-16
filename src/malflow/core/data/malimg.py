@@ -1,9 +1,9 @@
 import os
 
-from core.data.bodmas import Bodmas
-from core.model.sample import Sample
-from util.logger import Logger
-from util.validators import HashValidator
+from malflow.core.data.bodmas import Bodmas
+from malflow.core.model.sample import Sample
+from malflow.util.logger import Logger
+from malflow.util.validators import HashValidator
 
 
 class MalImg(Bodmas):

@@ -7,7 +7,7 @@ from enum import Enum
 from logging.handlers import RotatingFileHandler
 from typing import Union
 
-from util.misc import ensure_dir
+from malflow.util.misc import ensure_dir
 
 
 class LogLevel(Enum):

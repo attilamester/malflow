@@ -3,12 +3,12 @@ import pickle
 import time
 from typing import Dict, List, Union
 
-from core.model.call_graph import CallGraph
-from core.model.function import CGNode, FunctionType
-from core.model.instruction import Instruction
-from util.compression import Compressor, BrotliCompressor
-from util.logger import Logger
-from util.misc import display_size
+from malflow.core.model.call_graph import CallGraph
+from malflow.core.model.function import CGNode, FunctionType
+from malflow.core.model.instruction import Instruction
+from malflow.util.compression import Compressor, BrotliCompressor
+from malflow.util.logger import Logger
+from malflow.util.misc import display_size
 
 
 class CallGraphCompressed:

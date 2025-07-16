@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import List, Optional, Dict, ValuesView
 
-from core.model.instruction import Instruction, InstructionParameter
-from util.logger import Logger
+from malflow.core.model.instruction import Instruction, InstructionParameter
+from malflow.util.logger import Logger
 
 
 class FunctionType(Enum):

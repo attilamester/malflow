@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Dict
 
 from cases.data.r2_scanner_data import R2ScannerData
-from core.model.instruction import InstructionReferenceType
+from malflow.core.model.instruction import InstructionReferenceType
 
 
 @dataclass

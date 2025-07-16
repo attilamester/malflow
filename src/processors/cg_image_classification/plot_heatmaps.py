@@ -85,9 +85,9 @@ def plotly_heatmap_on_model(model: torch.nn.Module, checkpoint_path: str, datase
 
         batch_size = len(images)
         for i in range(batch_size):
-            plotly_html_of_dataloader_item(model, dataset, images[i], details.image_disk[i],
+            plotly_html_of_dataloader_item(model, dataset, images[i], details.image_disk[i].numpy(),
                                            target[i], prediction[i], details.index[i].item(), details.packed[i].item(),
-                                           details.image_packed_tf[i], details.image_packed_disk[i])
+                                           details.image_packed_tf[i], details.image_packed_disk[i].numpy())
 
 
 def plotly_html_of_dataloader_item(model: torch.nn.Module, dataset: ImgDataset, image: torch.tensor,

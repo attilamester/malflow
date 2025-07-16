@@ -1,6 +1,6 @@
 import os
 
-from util.misc import get_project_root
+from malflow.util.misc import get_project_root
 
 
 def load_env(path: str = None):

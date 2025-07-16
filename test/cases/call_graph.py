@@ -9,7 +9,7 @@ import r2pipe
 
 from cases.data.call_graph_data import CALL_GRAPH_DATA, CallGraphData
 from cases.r2_scanner import test_sample
-from core.model.sample import Sample
+from malflow.core.model.sample import Sample
 
 
 class TestCallGraph(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestCallGraph(unittest.TestCase):
         except:
             pass
 
-    @patch("core.data.malware_bazaar.MalwareBazaar.get_sample",
+    @patch("malflow.core.data.malware_bazaar.MalwareBazaar.get_sample",
            return_value=Sample(filepath=os.path.abspath(__file__), check_hashes=False))
     def test_call_graph_scanner(self, mock_get_sample):
 
