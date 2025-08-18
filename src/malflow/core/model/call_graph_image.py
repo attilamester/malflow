@@ -174,14 +174,14 @@ class CallGraphImage:
 
     @staticmethod
     def get_image_from_instructions(img_size, instructions: List[Instruction],
-                                    instruction_encoder: Type[InstructionEncoder] = Type[InstructionEncoderComplete]):
+                                    instruction_encoder: Type[InstructionEncoder] = InstructionEncoderComplete):
         pixels = [instruction_encoder.encode(i) for i in instructions]
 
         return CallGraphImage.get_image_from_pixels(img_size, pixels)
 
     def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
         instructions = self.cg.DFS_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)
-        np_pixels = CallGraphImage.get_image_from_instructions(img_size, instructions)
+        np_pixels = CallGraphImage.get_image_from_instructions(img_size, instructions, InstructionEncoderComplete)
 
         return np_pixels, len(instructions)
 

@@ -208,11 +208,11 @@ class CallGraph:
         r2.quit()
         self.scan_time = time.time() - ts
 
-    def get_edges(self) -> Set[Tuple[CGNode, CGNode]]:
-        edges = set()
+    def get_edges(self) -> List[Tuple[CGNode, CGNode]]:
+        edges = []
         for label, node in self.nodes.items():
             for other in node.get_calls():
-                edges.add((node, other))
+                edges.append((node, other))
         return edges
 
     def get_representation(self):
