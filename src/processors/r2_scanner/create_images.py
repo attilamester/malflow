@@ -1,21 +1,21 @@
 import json
 import os
-from typing import Tuple, Type, List
+from typing import List, Tuple, Type
 
 import numpy as np
 from PIL import Image
 
-from core.data import DatasetProvider
-from core.data.bodmas import Bodmas
-from core.model import CallGraph
-from core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonicPrefixBnd
-from core.model.sample import Sample
-from core.processors.r2_scanner.paths import get_path_imageinfo, get_path_image, get_path_instructions_dfs
-from core.processors.util import decorator_callgraph_processor
 from helpers.readme.load_instruction import load_instruction_pickle
-from util import config
-from util.logger import Logger
-from util.misc import dict_key_inc, dict_key_add, list_stats
+from malflow.core.data import DatasetProvider
+from malflow.core.data.bodmas import Bodmas
+from malflow.core.model import CallGraph
+from malflow.core.model.call_graph_image import CallGraphImage, InstructionEncoder, InstructionEncoderMnemonicPrefixBnd
+from malflow.core.model.sample import Sample
+from malflow.util import config
+from malflow.util.logger import Logger
+from malflow.util.misc import dict_key_add, dict_key_inc, list_stats
+from processors.r2_scanner.paths import get_path_image, get_path_imageinfo, get_path_instructions_dfs
+from processors.util import decorator_callgraph_processor
 
 
 def create_callgraph_image(dset: Type[DatasetProvider], cg: CallGraph, dim: Tuple[int, int] = (512, 512)):

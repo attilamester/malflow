@@ -4,14 +4,14 @@ from typing import Type
 
 from PIL import Image
 
-from core.data import DatasetProvider
-from core.model import CallGraph
-from core.model.call_graph_image import CallGraphImage
-from core.processors.r2_scanner.paths import get_path_image, get_path_instructions_dfs, \
+from malflow.core.data import DatasetProvider
+from malflow.core.model import CallGraph
+from malflow.core.model.call_graph_image import CallGraphImage
+from malflow.util import config
+from malflow.util.compression import BrotliCompressor
+from processors.r2_scanner.paths import get_path_image, get_path_instructions_dfs, \
     get_path_instructions_function_blocks
-from core.processors.util import decorator_callgraph_processor
-from util import config
-from util.compression import BrotliCompressor
+from processors.util import decorator_callgraph_processor
 
 COMPRESSOR = BrotliCompressor(4)
 
@@ -25,7 +25,7 @@ def create_callgraph_dfs(dset: Type[DatasetProvider], cg: CallGraph, img_dims=No
     for allow_multiple_visits in [True]:
         for store_call in [True]:
             instructions_path = get_path_instructions_dfs(dset, cg.md5, allow_multiple_visits, store_call)
-            instructions = cg.DFS_instructions(max_instructions=img_dims[-1][0] * img_dims[-1][1],
+            instructions = cg.dfs_instructions(max_instructions=img_dims[-1][0] * img_dims[-1][1],
                                                allow_multiple_visits=allow_multiple_visits,
                                                store_call=store_call)
             with open(instructions_path, "wb") as f:
@@ -46,7 +46,7 @@ def create_callgraph_function_blocks(dset: Type[DatasetProvider], cg: CallGraph,
     else:
         img_dims = sorted(img_dims, key=lambda x: x[0] * x[1])
 
-    instructions = [node.instructions for node in cg.DFS()]
+    instructions = [node.instructions for node in cg.dfs()]
     instructions_to_pickle = [[i.compress() for i in node] for node in instructions]
     instructions_path = get_path_instructions_function_blocks(dset, cg.md5)
     with open(instructions_path, "wb") as f:

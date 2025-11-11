@@ -1,4 +1,6 @@
-from malflow.cli import main
+import sys
+
+from malflow.cli.main import main
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

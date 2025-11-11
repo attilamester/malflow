@@ -40,6 +40,9 @@ env/
 *.mbazaar
 *.dot
 *.svg
+*.pdf
+*.csv
+*.npy
 .coverage
 *.lcov
 *plotly.html
@@ -53,3 +56,5 @@ dist/
 # Pytorch model checkpoints
 
 **/*.pth.tar
+
+src/processors/r2_scanner/r&d

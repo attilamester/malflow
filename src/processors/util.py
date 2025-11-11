@@ -4,10 +4,10 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import wraps
 from typing import List, Callable, Type, Union, Any
 
-from core.data import DatasetProvider
-from core.model import CallGraph, CallGraphCompressed
-from core.model.sample import Sample
-from util.logger import Logger
+from malflow.core.data import DatasetProvider
+from malflow.core.model import CallGraph, CallGraphCompressed
+from malflow.core.model.sample import Sample
+from malflow.util.logger import Logger
 
 
 def process_samples(dset: Type[DatasetProvider], fn: Callable[[Type[DatasetProvider], Sample], None],

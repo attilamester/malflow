@@ -1,13 +1,15 @@
 from collections import deque
 from enum import Enum
-from typing import List, Optional, Dict, TypedDict
+from typing import Dict, List, Optional, TypedDict
 
-from malflow.core.model.radare2_definitions import (get_function_types, is_symbol_flag, get_class_attribute_types,
-                                            Registers, Mnemonics)
+from malflow.core.model.radare2_definitions import (Mnemonics, Registers, get_class_attribute_types, get_function_types,
+                                                    is_symbol_flag)
+from malflow.core.model.rva import RVA
 from malflow.util.logger import Logger
 
 
 class Instruction:
+    rva: Optional[RVA]
     disasm: str  # full instruction string, e.g. `mov eax, 0xc`
     opcode: bytes  # e.g. `0x83c40c`
     mnemonic: str  # e.g. `mov`
@@ -16,18 +18,21 @@ class Instruction:
     has_bnd: bool  # typedef struct r_x86nz_opcode_t
     refs: List["InstructionReference"]
 
-    def __init__(self, disasm: str, opcode: bytes, refs: List[TypedDict("ref", {"addr": int, "type": str})]):
+    def __init__(self, disasm: str, opcode: bytes, refs: List[TypedDict("ref", {"addr": int, "type": str})],
+                 addr: Optional[int] = None, verbose: bool = False):
         self.disasm = disasm
         self.opcode = opcode
         self.prefix = None
         self.parameters = []
         self.has_bnd = False  # MPX - used to check the bounds of memory addresses used by the instruction
         self.refs = []
+        self.rva = RVA(f"0x{addr:x}") if addr is not None else None
         try:
             self.process()
             self.process_refs(refs)
         except Exception as e:
-            Logger.error(f"Could not process instruction `{disasm}`")
+            if verbose:
+                Logger.error(f"Could not process instruction `{disasm}`")
             raise e
 
     def process(self):
@@ -281,3 +286,6 @@ class InstructionReference:
         if isinstance(other, InstructionReference):
             return (self.addr == other.addr and self.type == other.type)
         return False
+
+    def __str__(self):
+        return f"Ref(addr=0x{self.addr:x}, type={self.type.value})"

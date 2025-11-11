@@ -6,12 +6,14 @@ from typing import Dict, List, Union
 from malflow.core.model.call_graph import CallGraph
 from malflow.core.model.function import CGNode, FunctionType
 from malflow.core.model.instruction import Instruction
-from malflow.util.compression import Compressor, BrotliCompressor
+from malflow.util.compression import BrotliCompressor, Compressor
 from malflow.util.logger import Logger
 from malflow.util.misc import display_size
 
 
 class CallGraphCompressed:
+    COMPRESSED_EXTENSION = ".cgcompressed.pickle"
+
     md5: str
     file_path: str
     nodes: Dict[str, List]
@@ -62,10 +64,13 @@ class CallGraphCompressed:
                 node.add_call_to(other_node)
         return cg
 
+    def get_compressed(self, compressor: Compressor = BrotliCompressor(1)) -> bytes:
+        return compressor.compress(pickle.dumps(self))
+
     def dump_compressed(self, dir_path, compressor: Compressor = BrotliCompressor(1)) -> str:
         file_path = CallGraphCompressed.get_compressed_path(dir_path, self.md5)
         with open(file_path, "wb") as f:
-            f.write(compressor.compress(pickle.dumps(self)))
+            f.write(self.get_compressed(compressor))
         return file_path
 
     @staticmethod
@@ -86,8 +91,12 @@ class CallGraphCompressed:
             return cg_compressed
 
     @staticmethod
+    def get_compressed_name(md5: str):
+        return f"{md5}{CallGraphCompressed.COMPRESSED_EXTENSION}"
+
+    @staticmethod
     def get_compressed_path(dir_path, md5):
-        return os.path.join(dir_path, CallGraph.get_compressed_file_name(md5))
+        return os.path.join(dir_path, CallGraphCompressed.get_compressed_name(md5))
 
     def __eq__(self, other):
         if isinstance(other, CallGraphCompressed):

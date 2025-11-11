@@ -1,4 +1,4 @@
-__version__ = "0.0.9"
+__version__ = "0.0.11"
 
 from .core.model import CallGraph, CallGraphCompressed
 from .core.model.call_graph_image import CallGraphImage

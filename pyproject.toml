@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "malflow"
-version = "0.0.9"
+version = "0.0.11"
 description = "Malware callgraph analysis"
 readme = "src/malflow/README.md"
 requires-python = ">= 3.8, < 3.11"
@@ -24,6 +24,8 @@ dependencies = [
     "python-dotenv",
     "r2pipe==1.8.8",
     "requests",
+    "rich>=13.0.0",
+    "pyyaml>=6.0"
 ]
 
 [tool.setuptools]
@@ -38,4 +40,4 @@ Homepage = "https://github.com/attilamester/malflow"
 Issues = "https://github.com/attilamester/malflow/issues"
 
 [project.scripts]
-malflow = "malflow.cli:main"
+malflow = "malflow.cli.main:main"

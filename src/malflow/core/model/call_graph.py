@@ -2,7 +2,7 @@ import hashlib
 import json
 import os.path
 import time
-from typing import List, Dict, Set, Union, Tuple, Callable, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 import pygraphviz
@@ -23,6 +23,7 @@ class CallGraph:
     nodes: Dict[str, CGNode]
     addresses: Dict[int, CGNode]
     scan_time: Union[float, None]
+    imports: List
 
     __nx: MultiDiGraph
 
@@ -75,10 +76,6 @@ class CallGraph:
         return node
 
     @staticmethod
-    def get_compressed_file_name(md5: str):
-        return f"{md5}.cgcompressed.pickle"
-
-    @staticmethod
     def basepath(path):
         dirname = os.path.dirname(path)
         basename = os.path.basename(path)
@@ -108,11 +105,15 @@ class CallGraph:
         entries = -1
         for entry in entrypoint_info[1:]:
             if not entry:
-                break
-            entries += 1
-
+                continue
             entry = entry.split(" ")
-            rva = entry[0].split("=")[1]
+            try:
+                rva = entry[0].split("=")[1]
+            except (IndexError, ValueError):
+                if verbose:
+                    Logger.error(f"Could not parse entrypoint line: {entry} [{self.md5} {self.file_path}]")
+                continue
+            entries += 1
             node = CGNode(f"entry{entries}", rva)
             self.add_node(node)
             self.entrypoints.append(node)
@@ -202,7 +203,8 @@ class CallGraph:
                 if verbose:
                     Logger.warning(f"Could not run pdfj on {cg_node}: {e}")
             except Exception as e:
-                Logger.error(f"Could not process instructions on {cg_node}: {e} [{self.md5} {self.file_path}]")
+                if verbose:
+                    Logger.error(f"Could not process instructions on {cg_node}: {e} [{self.md5} {self.file_path}]")
                 raise e
 
         r2.quit()
@@ -221,14 +223,14 @@ class CallGraph:
             edge_set.add((a.label, b.label))
         return edge_set
 
-    def DFS(self, node_sorter: Callable[[CGNode], str] = None):
+    def dfs(self, node_sorter: Callable[[CGNode], str] = None):
         node_list = []
         visited_nodes = {}
 
         if node_sorter is None:
-            node_sorter = DFS_sorter
+            node_sorter = dfs_sorter
 
-        def dfs(node: CGNode):
+        def _dfs(node: CGNode):
             if node.label in visited_nodes:
                 return
 
@@ -236,13 +238,13 @@ class CallGraph:
             node_list.append(node)
 
             for n in sorted(node.get_calls(), key=node_sorter):
-                dfs(n)
+                _dfs(n)
 
         for node in sorted(self.entrypoints, key=lambda n: node_sorter(n)):
-            dfs(node)
+            _dfs(node)
 
         for node in sorted(self.nodes.values(), key=lambda n: node_sorter(n)):
-            dfs(node)
+            _dfs(node)
 
         return node_list
 
@@ -268,16 +270,20 @@ class CallGraph:
 
         return node_calls_labels_from_instructions
 
-    def DFS_instructions(self, max_instructions: int = None, allow_multiple_visits: bool = False,
-                         store_call: bool = False) -> List[Instruction]:
+    def dfs_instructions(self, max_instructions: int = None, allow_multiple_visits: bool = False,
+                         store_call: bool = False, store_cg_node: bool = False) -> List[Union[Instruction, CGNode]]:
         """
         Based on :func:`<core.model.call_graph.CallGraph.DFS>`
         The traversal here is done on the instructions level, not the nodes.
         The order of the instructions is preserved according to execution flow.
-        :return: List[IInstruction]
+        :param max_instructions: Maximum number of instructions to traverse
+        :param allow_multiple_visits: Allow multiple visits to the same function node
+        :param store_call: Whether to store the actual `call` instruction.
+        :param store_cg_node: Whether to store the CGNode when visiting a function node in the instruction list.
+        :return: List[Instruction | Tuple[CGNode, int: depth]]
         """
         instructions = []
-        dfs_nodes = self.DFS()
+        dfs_nodes = self.dfs()
         visited_nodes = set()
         node_calls_cache = {}
 
@@ -286,7 +292,7 @@ class CallGraph:
                 node_calls_cache[node.label] = self.get_node_calls_from_instructions(node)
             return node_calls_cache[node.label]
 
-        def build_instruction_traversal(node: CGNode):
+        def build_instruction_traversal(node: CGNode, depth=0):
             if max_instructions and len(instructions) > max_instructions:
                 return
 
@@ -305,6 +311,9 @@ class CallGraph:
 
             visited_nodes.add(node.label)
 
+            if store_cg_node:
+                instructions.append((node, depth))
+
             last_index = 0
             node_calls = get_node_calls_from_instructions(node)
 
@@ -315,7 +324,7 @@ class CallGraph:
                     callee = self.get_node_by_label(callee_label)
                     instructions.extend(node.instructions[last_index: i + store_call])
                     last_index = i + 1
-                    build_instruction_traversal(callee)
+                    build_instruction_traversal(callee, depth + 1)
                 instructions.extend(node.instructions[last_index:])
 
         for n in dfs_nodes:
@@ -323,9 +332,132 @@ class CallGraph:
                 continue
             if max_instructions and len(instructions) > max_instructions:
                 break
-            build_instruction_traversal(n)
+            build_instruction_traversal(n, 0)
 
         return instructions
+
+    def dfs_instructions_summary_txt(self, completeness: int = 0) -> str:
+        """
+        :param completeness: How much information is included in the summary.
+            0 - full DFS list
+            TODO: add more levels
+        :return:
+        """
+        buffer = ""
+        for instr in self.dfs_instructions(max_instructions=None, allow_multiple_visits=False, store_call=True,
+                                           store_cg_node=True):
+            if isinstance(instr, Instruction):
+                if instr.rva is not None:
+                    # malflow versions using r2 5.8.8 do not have instruction address saved in the call graph model
+                    buffer += f"{instr.rva.value} {instr.disasm}\n"
+                else:
+                    buffer += f"NaN {instr.disasm}\n"
+            else:
+                cg_node, depth = instr
+                buffer += f"Dep{depth} {cg_node.rva.value} {cg_node.label}\n"
+        return buffer
+
+    def dump_json(self, dir_path: str = None) -> str:
+        if dir_path is None:
+            dir_path = os.path.dirname(self.file_path)
+        file_path = os.path.join(dir_path, f"{self.md5}.cg.json")
+        Logger.info(f"Dumping call graph [md5: {self.md5} | {self.file_path}] in [JSON] to {file_path}")
+        with open(file_path, "w") as f:
+            json.dump({
+                "md5": self.md5,
+                "file_path": self.file_path,
+                "scan_time": self.scan_time,
+                "entrypoints": [ep.label for ep in self.entrypoints],
+                "nodes": {
+                    label: {
+                        "rva": node.rva.value,
+                        "type": node.type.value,
+                        "instructions": [instr.get_fmt() for instr in node.instructions],
+                        "calls": [n.label for n in node.get_calls()]
+                    }
+                    for label, node in self.nodes.items()
+                }
+            }, f)
+        return file_path
+
+    def create_pygraphviz(self, layout="dot") -> pygraphviz.AGraph:
+        ag = pygraphviz.AGraph(directed=True)
+
+        def get_label(node: CGNode) -> str:
+            imports = "\n".join(
+                [callee_label for callee_label, callee in node.calls.items() if callee.type == FunctionType.DLL]
+            )
+            # instructions = ''.join(
+            #     ['  • ' + node.instructions[i].disasm + ('\n' if (i + 1) % 3 == 0 else '   ')
+            #      for i in range(min(len(node.instructions), 10))]
+            # ) + ('\n  ...' if len(node.instructions) > 10 else '')
+            return f"""
+{label}\n
+--------------------
+[ {node.rva.value} ]
+--------------------
+{imports}
+{len(node.instructions)} instructions\n
+"""
+
+        def get_tooltip(node: CGNode) -> str:
+            if node.instructions:
+                return "\n".join([instr.disasm for instr in node.instructions])
+            return "- No instructions -"
+
+        for label, node in self.nodes.items():
+            ag.add_node(label, shape="box", style="filled",
+                        fillcolor="lightblue" if node.type == FunctionType.DLL else "black",
+                        fontcolor="white" if node.type != FunctionType.DLL else "black",
+                        label=get_label(node),
+                        tooltip=get_tooltip(node))
+
+        for (a, b) in self.get_edges():
+            ag.add_edge(a.label, b.label)
+
+        ag.layout(prog=layout)
+
+        return ag
+
+    def create_pygraphviz_fdp(self) -> pygraphviz.AGraph:
+        """
+        Force directed placement
+        """
+        ag = pygraphviz.AGraph(directed=True)
+
+        for label, node in self.nodes.items():
+            ag.add_node(label, shape="point", style="filled",
+                        fillcolor="lightblue" if node.type == FunctionType.DLL else "black",
+                        fontcolor="white" if node.type != FunctionType.DLL else "black",
+                        label="",
+                        tooltip=f"{node.label}\n{node.rva.value}\n{len(node.instructions)} instructions")
+
+        for (a, b) in self.get_edges():
+            ag.add_edge(a.label, b.label)
+
+        ag.layout(prog="fdp")
+
+        return ag
+
+    def dump_dot(self, dir_path: str = None) -> str:
+        if dir_path is None:
+            dir_path = os.path.dirname(self.file_path)
+        file_path = os.path.join(dir_path, f"{self.md5}.cg.dot")
+        Logger.info(f"Dumping call graph [md5: {self.md5} | {self.file_path}] in [DOT] to {file_path}")
+
+        ag = self.create_pygraphviz()
+        ag.draw(file_path, format="dot")
+
+    def dump_svg(self, dir_path: str = None) -> str:
+        if dir_path is None:
+            dir_path = os.path.dirname(self.file_path)
+
+        Logger.info(f"Dumping call graph [md5: {self.md5} | {self.file_path}] in [SVG] to {dir_path}")
+
+        ag = self.create_pygraphviz("dot")
+        ag.draw(os.path.join(dir_path, f"{self.md5}.cg.svg"), format="svg")
+        ag = self.create_pygraphviz_fdp()
+        ag.draw(os.path.join(dir_path, f"{self.md5}.cg.fdp.svg"), format="svg")
 
     def __eq__(self, other):
         if isinstance(other, CallGraph):
@@ -338,7 +470,7 @@ class CallGraph:
         return False
 
 
-def DFS_sorter(node: CGNode):
+def dfs_sorter(node: CGNode):
     if is_symbol_flag(node.label):
         return "_" + node.label
     return node.label

@@ -6,9 +6,6 @@ from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
 
-from core.data.bodmas import Bodmas, BodmasAugmented
-from core.model.sample import Sample
-from core.processors.cg_image_classification.paths import get_cg_image_classification_env
 from helpers.ground_truth import BODMAS_GROUND_TRUTH_CSV, BODMAS_GROUND_TRUTH_WITH_AUGM_CSV
 from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL1_ts,
@@ -20,13 +17,16 @@ from helpers.ground_truth import (BODMAS_GT_COL0,
                                   BODMAS_GT_COL7_packer,
                                   BODMAS_GT_COL8_augmof_md5,
                                   BODMAS_GT_COL9_augmof_sha)
-from util import config
-from util.logger import Logger
-from util.misc import ensure_dir
+from malflow.core.data.bodmas import Bodmas, BodmasAugmented
+from malflow.core.model.sample import Sample
+from malflow.util import config
+from malflow.util.logger import Logger
+from malflow.util.misc import ensure_dir
+from processors.cg_image_classification.paths import get_cg_image_classification_env
 
 config.load_env(get_cg_image_classification_env())
 
-from core.processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies
+from processors.cg_image_classification.dataset.preprocess import df_filter_having_at_column_min_occurencies
 
 
 def get_augmented_filename(dirpath, filename: str):

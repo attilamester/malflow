@@ -179,9 +179,11 @@ class CallGraphImage:
 
         return CallGraphImage.get_image_from_pixels(img_size, pixels)
 
-    def get_image(self, img_size: Tuple[int, int] = (512, 512), **dfs_kwargs) -> Tuple[np.ndarray, int]:
-        instructions = self.cg.DFS_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)
-        np_pixels = CallGraphImage.get_image_from_instructions(img_size, instructions, InstructionEncoderComplete)
+    def get_image(self, img_size: Tuple[int, int] = (512, 512),
+                  instruction_encoder: Type[InstructionEncoder] = InstructionEncoderComplete,
+                  **dfs_kwargs) -> Tuple[np.ndarray, int]:
+        instructions = self.cg.dfs_instructions(max_instructions=img_size[0] * img_size[1], **dfs_kwargs)
+        np_pixels = CallGraphImage.get_image_from_instructions(img_size, instructions, instruction_encoder)
 
         return np_pixels, len(instructions)
 

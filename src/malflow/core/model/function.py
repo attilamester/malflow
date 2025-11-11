@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List, Optional, Dict, ValuesView
 
 from malflow.core.model.instruction import Instruction, InstructionParameter
+from malflow.core.model.rva import RVA
 from malflow.util.logger import Logger
 
 
@@ -9,31 +10,6 @@ class FunctionType(Enum):
     SUBROUTINE = "subroutine"
     DLL = "dll"
     STATIC_LINKED_LIB = "static_linked_lib"
-
-
-class RVA:
-    value: str  # e.g. "0x<hex-string>"
-    addr: int
-
-    def __init__(self, rva: str):
-        self.value = rva.lower()
-        if not self.value.startswith("0x"):
-            raise Exception(f"Invalid RVA {rva}")
-        try:
-            self.addr = int(self.value[2:], 16)
-        except:
-            raise Exception(f"Invalid RVA {rva}")
-
-    def __str__(self):
-        return f"RVA('{self.value}')"
-
-    def __repr__(self):
-        return str(self)
-
-    def __eq__(self, other):
-        if isinstance(other, RVA):
-            return self.value == other.value and self.addr == other.addr
-        return False
 
 
 class CGNode:
@@ -85,7 +61,7 @@ class CGNode:
                 continue
             refs = op.get("refs", []) if ("call" in op["type"] or "jmp" in op["type"]) else []
             try:
-                instruction = Instruction(op["disasm"], op["bytes"].encode(), refs)
+                instruction = Instruction(op["disasm"], op["bytes"].encode(), refs, op.get("addr", None))
                 self.instructions.append(instruction)
             except Exception as e:
                 Logger.error(f"Skipping instruction on {self.rva}. Could not process instruction: {e}")

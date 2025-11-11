@@ -2,15 +2,15 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Type
 
-from core.data import DatasetProvider
-from core.data.bodmas import Bodmas
-from core.model import CallGraph, CallGraphCompressed
-from core.model.sample import Sample
-from core.processors.r2_scanner.create_dfs import create_callgraph_dfs, create_callgraph_function_blocks
-from core.processors.r2_scanner.scan_instructions import extract_callgraph_instructions_stats
-from core.processors.util import process_samples
-from util import config
-from util.logger import Logger
+from malflow.core.data import DatasetProvider
+from malflow.core.data.bodmas import Bodmas
+from malflow.core.model import CallGraph, CallGraphCompressed
+from malflow.core.model.sample import Sample
+from malflow.util import config
+from malflow.util.logger import Logger
+from processors.r2_scanner.create_dfs import create_callgraph_dfs, create_callgraph_function_blocks
+from processors.r2_scanner.scan_instructions import extract_callgraph_instructions_stats
+from processors.util import process_samples
 
 
 def scan(dset: Type[DatasetProvider], cg: CallGraph):

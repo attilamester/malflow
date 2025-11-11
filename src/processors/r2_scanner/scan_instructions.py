@@ -4,15 +4,15 @@ from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from typing import Type
 
-from core.data import DatasetProvider
-from core.data.bodmas import Bodmas
-from core.model import CallGraph
-from core.model.sample import Sample
-from core.processors.r2_scanner.paths import get_path_instructions_stats
-from core.processors.util import process_samples, decorator_callgraph_processor
-from util import config
-from util.logger import Logger
-from util.misc import list_stats, dict_key_inc, dict_key_add
+from malflow.core.data import DatasetProvider
+from malflow.core.data.bodmas import Bodmas
+from malflow.core.model import CallGraph
+from malflow.core.model.sample import Sample
+from malflow.util import config
+from malflow.util.logger import Logger
+from malflow.util.misc import dict_key_add, dict_key_inc, list_stats
+from processors.r2_scanner.paths import get_path_instructions_stats
+from processors.util import decorator_callgraph_processor, process_samples
 
 
 def extract_callgraph_instructions_stats(dset: Type[DatasetProvider], cg: CallGraph):

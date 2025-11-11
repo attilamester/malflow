@@ -1,8 +1,8 @@
 import os
 from typing import Type
 
-from core.data import DatasetProvider
-from util.misc import ensure_dir
+from malflow.core.data import DatasetProvider
+from malflow.util.misc import ensure_dir
 
 
 def get_path_imageinfo(dset: Type[DatasetProvider], md5: str):

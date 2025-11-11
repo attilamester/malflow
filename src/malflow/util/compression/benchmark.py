@@ -42,10 +42,10 @@ def data_provider_text(num_docs, tokens, max_token_length) -> Tuple[List, List[b
 
 
 def data_provider_callgraph() -> Tuple[List, List[bytes], List[int]]:
-    from core.data.malware_bazaar import MalwareBazaar
-    from core.model import CallGraph, CallGraphCompressed
-    from cases.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
-    from util import config
+    from malflow.core.data.malware_bazaar import MalwareBazaar
+    from malflow.core.model import CallGraph, CallGraphCompressed
+    from cases.data.r2_scanner_data import R2_SCANNER_DATA, R2ScannerData
+    from malflow.util import config
     config.load_env()
 
     docs = []

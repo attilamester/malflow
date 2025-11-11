@@ -90,7 +90,7 @@ def generate_test_data(cg: CallGraph, test_sample: R2ScannerData):
     if test_sample.functions:
         cg_nodes = [cg.get_node_by_label(lbl) for lbl in test_sample.functions.keys()]
     else:
-        cg_nodes = cg.DFS()[:5]
+        cg_nodes = cg.dfs()[:5]
     for node in cg_nodes:
         print(f"<<< {node.label}")
         print(f"<<< {buff_function_instructions(node)}")
@@ -150,11 +150,11 @@ def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_tes
     #     unittest.assertEqual(node_calls_labels, set([t[0] for t in node_calls_labels_from_instructions]), node)
 
     if test_sample.dfs:
-        unittest.assertEqual(test_sample.dfs, [node.label for node in cg.DFS()])
+        unittest.assertEqual(test_sample.dfs, [node.label for node in cg.dfs()])
 
     if test_sample.dfs_instructions:
         for (config, result) in test_sample.dfs_instructions:
-            unittest.assertEqual(result, [i.mnemonic for i in cg.DFS_instructions(**config)])
+            unittest.assertEqual(result, [i.mnemonic for i in cg.dfs_instructions(**config)])
 
     test_callgraph_compression(unittest, cg)
 
