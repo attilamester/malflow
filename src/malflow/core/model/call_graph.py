@@ -10,7 +10,7 @@ import r2pipe
 from networkx import MultiDiGraph
 
 from malflow.core.model.function import CGNode, FunctionType
-from malflow.core.model.instruction import Instruction, InstructionParameter
+from malflow.core.model.instruction import Instruction, InstructionParameter, InstructionPrefix
 from malflow.core.model.radare2_definitions import is_symbol_flag
 from malflow.core.model.radare2_definitions.sanitizer import sanitize_r2_bugs
 from malflow.util.logger import Logger
@@ -334,25 +334,91 @@ class CallGraph:
 
         return instructions
 
-    def dfs_instructions_summary_txt(self, completeness: int = 0) -> str:
+    def dfs_instructions_summary_txt(self, simplify: bool = False) -> str:
         """
-        :param completeness: How much information is included in the summary.
-            0 - full DFS list
-            TODO: add more levels
-        :return:
+        :param simplify: Whether to shorten the instruction disassembly
+        :return: String buffer of the instructions in DFS order
         """
+
+        def shorten_function_label(cg_node: CGNode) -> str:
+            if cg_node.type == FunctionType.DLL:
+                return cg_node.label.replace("sym.imp.", "")
+            if cg_node.type == FunctionType.SUBROUTINE:
+                return f"f_{cg_node.rva.value.replace('0x', 'x')}"
+            return cg_node.label
+
+        def shorten_instruction_disasm(i: Instruction) -> str:
+            buff = ""
+            if i.has_bnd:
+                buff += "bnd "
+            if i.prefix:
+                if i.prefix.value.startswith("rep"):
+                    buff += "rp "
+                elif i.prefix.value.startswith("seg"):
+                    buff += "sg "
+                elif i.prefix.value.startswith("lock"):
+                    buff += "lck "
+                elif i.prefix == InstructionPrefix.NOTRACK:
+                    buff += "nt "
+                else:
+                    buff += i.prefix + " "
+
+            if i.mnemonic.startswith("mov"):
+                buff += "m"
+            elif i.mnemonic.startswith("push"):
+                buff += "pu"
+            elif i.mnemonic.startswith("pop"):
+                buff += "po"
+            elif i.mnemonic.startswith("call"):
+                buff += "c"
+            else:
+                buff += i.mnemonic
+
+            p: InstructionParameter
+            for p in i.parameters:
+                if p == p.CONSTANT:
+                    buff += " c"
+                elif p == p.REGISTER:
+                    buff += " r"
+                elif p == p.ADDRESS or p == p.ADDRESS_FAR or p == p.BLOCK:
+                    buff += " a"
+                elif p == p.FUNCTION:
+                    buff += " f"
+                elif p == p.STRING:
+                    buff += " s"
+
+            return buff
+
         buffer = ""
         for instr in self.dfs_instructions(max_instructions=None, allow_multiple_visits=False, store_call=True,
                                            store_cg_node=True):
             if isinstance(instr, Instruction):
-                if instr.rva is not None:
+
+                # Process RVA
+                if not instr.rva:
                     # malflow versions using r2 5.8.8 do not have instruction address saved in the call graph model
-                    buffer += f"{instr.rva.value} {instr.disasm}\n"
+                    rva = "-"
                 else:
-                    buffer += f"NaN {instr.disasm}\n"
+                    if not simplify:
+                        rva = instr.rva.value
+                    else:
+                        rva = instr.rva.value.replace("0x", "x")
+
+                # Process DISASM
+                if not simplify:
+                    disasm = instr.disasm
+                else:
+                    disasm = shorten_instruction_disasm(instr)
+
+                buffer += f"{rva} {disasm}\n"
             else:
                 cg_node, depth = instr
-                buffer += f"Dep{depth} {cg_node.rva.value} {cg_node.label}\n"
+
+                if not simplify:
+                    buffer += f"D{depth} {cg_node.rva.value} {cg_node.label}\n"
+                else:
+                    buffer += f"D{depth} {cg_node.rva.value.replace('0x', 'x')} {shorten_function_label(cg_node)}\n"
+
         return buffer
 
     def dump_json(self, dir_path: str = None) -> str:
