@@ -22,7 +22,7 @@ dependencies = [
     "numpy>=1.22.0,<=2.2.6",
     "pygraphviz",
     "python-dotenv",
-    "r2pipe==1.8.8",
+    "r2pipe==1.9.6",
     "requests",
     "rich>=13.0.0",
     "pyyaml>=6.0"
