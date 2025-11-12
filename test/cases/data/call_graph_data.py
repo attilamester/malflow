@@ -10,7 +10,7 @@ from malflow.core.model.instruction import InstructionReferenceType
 class CallGraphData:
     agCd: str
     agRd: str
-    ie: str
+    ies: str
     r2_data: R2ScannerData
     s_pdfj: Dict = field(default_factory=dict)
 
@@ -41,8 +41,8 @@ digraph code {
 digraph code {
 }
 """,
-        "ie": """[Entrypoints]
-vaddr=0x1
+        "ies": """
+0x1 entry0
 """,
         "s_pdfj": {
             "s 0x1 ; pdfj": json.dumps({"ops": [
@@ -224,9 +224,9 @@ digraph code {
 digraph code {
 }
 """,
-        "ie": """[Entrypoints]
-vaddr=0x1
-vaddr=0x2
+        "ies": """
+0x1  entry0
+0x2  entry1
 """,
         "s_pdfj": {
             "s 0x1 ; pdfj": json.dumps({"ops": [

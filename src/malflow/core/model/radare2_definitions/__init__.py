@@ -1,5 +1,5 @@
 """
-Based on Radare2 5.8.8 implementation.
+Based on Radare2 6.0.4 implementation (54b6f9b)
 """
 
 from typing import Set

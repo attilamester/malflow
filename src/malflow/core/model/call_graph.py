@@ -52,25 +52,15 @@ class CallGraph:
         return self.addresses.get(rva, None)
 
     def add_node(self, node: CGNode) -> CGNode:
-        if node.label == "eip":
-            # experiments prove that `agCd` may have duplicate addresses with both labels `entry0` and `eip`
-            for ep in self.entrypoints:
-                if node.rva.addr == ep.rva.addr:
-                    Logger.warning(f"Skipping adding EIP node {node} [{self.md5} {self.file_path}]")
-                    return ep
-
         if node.label in self.nodes:
             if node.rva.value != self.nodes[node.label].rva.value:
-                if node.label.startswith("entry"):
-                    Logger.warning(
-                        f"Incorrect entrypoint address provided by ie ({self.nodes[node.label]}. Fixing to the corrected value {node} "
-                        f"[{self.md5} {self.file_path}]")
-                    self.addresses.pop(self.nodes[node.label].rva.addr)
-                else:
-                    raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
-                                    f"[{self.md5} {self.file_path}]")
+                # This should not happen. Let the app crash & check the logs.
+                raise Exception(f"Conflict while adding node {node} ; existing {self.nodes[node.label]} "
+                                f"[{self.md5} {self.file_path}]")
             else:
                 return node
+        if node.rva.addr in self.addresses:
+            return self.addresses[node.rva.addr]
         self.nodes[node.label] = node
         self.addresses[node.rva.addr] = node
         return node
@@ -101,20 +91,28 @@ class CallGraph:
         r2 = self.open_r2()
         r2.cmd("aaa")
 
-        entrypoint_info = r2.cmd("ie").split("\n")
+        entrypoint_info = r2.cmd("ies").strip().split("\n")
         entries = -1
-        for entry in entrypoint_info[1:]:
+        for entry in entrypoint_info:
             if not entry:
                 continue
-            entry = entry.split(" ")
+
+            entry = entry.split()
+
             try:
-                rva = entry[0].split("=")[1]
+                rva = entry[0]
+                if not rva.startswith("0x"):
+                    raise ValueError("Not a valid RVA")
             except (IndexError, ValueError):
                 if verbose:
                     Logger.error(f"Could not parse entrypoint line: {entry} [{self.md5} {self.file_path}]")
                 continue
             entries += 1
-            node = CGNode(f"entry{entries}", rva)
+            label = entry[1]
+            if not (label.startswith("entry") or label.startswith("eip") or label.startswith("main")):
+                label = f"entry{entries}"
+
+            node = CGNode(label, rva)
             self.add_node(node)
             self.entrypoints.append(node)
             if verbose:
@@ -192,7 +190,7 @@ class CallGraph:
             if cg_node.type == FunctionType.DLL:
                 continue
             try:
-                pdfj = json.loads(r2.cmd(f"s {addr} ; pdfj"))
+                pdfj = json.loads(r2.cmd(f"s {addr} ; pdfj").strip())
                 cg_node.set_instructions_from_function_disassembly(pdfj)
             except json.decoder.JSONDecodeError as e:
                 # TODO: conceptual question whether we want to keep these nodes or not.

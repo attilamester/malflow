@@ -17,6 +17,7 @@ class CallGraphCompressed:
     md5: str
     file_path: str
     nodes: Dict[str, List]
+    entrypoints_rva: List[int]
     scan_time: Union[float, None]
 
     def __init__(self, cg: CallGraph):
@@ -27,6 +28,7 @@ class CallGraphCompressed:
         self.file_path = cg.file_path
         self.scan_time = cg.scan_time
         self.nodes = {}
+        self.entrypoints_rva = [node.rva.addr for node in cg.entrypoints]
         for str, node in cg.nodes.items():
             self.nodes[str] = [node.label, node.rva.value, node.type.value,
                                [instr.compress() for instr in node.instructions],
@@ -50,8 +52,12 @@ class CallGraphCompressed:
             node.type = FunctionType(node_type)
             node.instructions = [Instruction.decompress(i) for i in instructions]
             cg.add_node(node)
-            if label.startswith("entry"):
-                cg.entrypoints.append(node)
+
+        for rva in self.entrypoints_rva:
+            entry_node = cg.get_node_by_rva(rva)
+            if entry_node:
+                cg.entrypoints.append(entry_node)
+
         for label, data in self.nodes.items():
             node_label, node_rva, node_type, instructions, call_labels = data
             node = cg.get_node_by_label(node_label)

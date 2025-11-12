@@ -18,7 +18,10 @@ class Instruction:
     has_bnd: bool  # typedef struct r_x86nz_opcode_t
     refs: List["InstructionReference"]
 
-    def __init__(self, disasm: str, opcode: bytes, refs: List[TypedDict("ref", {"addr": int, "type": str})],
+    def __init__(self,
+                 disasm: str,
+                 opcode: bytes,
+                 refs: List[TypedDict("ref", {"addr": int, "type": str})],
                  addr: Optional[int] = None, verbose: bool = False):
         self.disasm = disasm
         self.opcode = opcode
@@ -26,7 +29,8 @@ class Instruction:
         self.parameters = []
         self.has_bnd = False  # MPX - used to check the bounds of memory addresses used by the instruction
         self.refs = []
-        self.rva = RVA(f"0x{addr:x}") if addr is not None else None
+        self.rva = RVA(f"0x{addr:x}") if (addr is not None and addr != 0) else None
+
         try:
             self.process()
             self.process_refs(refs)
@@ -119,7 +123,8 @@ class Instruction:
                     self.has_bnd == other.has_bnd and
                     self.prefix == other.prefix and
                     self.parameters == other.parameters and
-                    self.refs == other.refs)
+                    self.refs == other.refs and
+                    self.rva == other.rva)
         return False
 
     @staticmethod
@@ -140,7 +145,12 @@ class Instruction:
         return mnemonic
 
     def compress(self) -> List:
-        return [self.disasm, self.opcode, [[ref.addr, ref.type] for ref in self.refs]]
+        return [
+            self.disasm,
+            self.opcode,
+            [[ref.addr, ref.type] for ref in self.refs],
+            self.rva.addr if self.rva is not None else 0
+        ]
 
     @staticmethod
     def decompress(i: List) -> "Instruction":
@@ -148,7 +158,7 @@ class Instruction:
         :param tokens: return value of `compress`
         :return:
         """
-        return Instruction(i[0], i[1], [{"addr": e[0], "type": e[1]} for e in i[2]])
+        return Instruction(i[0], i[1], [{"addr": e[0], "type": e[1]} for e in i[2]], i[3] if i[3] != 0 else None)
 
 
 class InstructionPrefix(Enum):

@@ -160,7 +160,7 @@ def test_sample(unittest: unittest.TestCase, test_sample: R2ScannerData, gen_tes
 
 
 def test_callgraph_compression(unittest: unittest.TestCase, cg: CallGraph):
-    dir = "./"
+    dir = os.path.dirname(os.path.abspath(__file__))
     compressed_file_path = CallGraphCompressed.get_compressed_path(dir, cg.md5)
     cg_compressed = CallGraphCompressed(cg)
 

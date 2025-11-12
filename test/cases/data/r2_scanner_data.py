@@ -685,7 +685,7 @@ R2_SCANNER_DATA = {
             "md5": "9c7befb18ccbd63100a497fe7c1acc69",
             "sha256": "853fa18adc3f9263a0f98a9a257dd70d7e1aee0545ab47a114f44506482bd188",
             "nodes": {
-                "entry0", "fcn.00401000", "fcn.00401180", "fcn.004012c0", "fcn.004012f0", "fcn.00401310",
+                "entry0", "section..text", "fcn.00401180", "fcn.004012c0", "fcn.004012f0", "fcn.00401310",
                 "fcn.004012a0", "fcn.004015e0", "fcn.00401610",
                 "fcn.004013b0", "fcn.004013d0", "fcn.004013f0", "fcn.00401410", "fcn.00401430", "fcn.00401450",
                 "fcn.00401490", "fcn.00401520", "fcn.00401570", "fcn.004015a0", "fcn.00401760", "fcn.004019a0",
@@ -733,7 +733,7 @@ R2_SCANNER_DATA = {
                 "sym.imp.USER32.dll_UpdateWindow", "unk.0x40f008", "unk.0x40f00c", "unk.0x40f010", "unk.0x40f01c",
                 "unk.0x40f020"},
             "links": {
-                ("entry0", "fcn.00401000"), ("entry0", "fcn.004012c0"), ("entry0", "fcn.004012f0"),
+                ("entry0", "section..text"), ("entry0", "fcn.004012c0"), ("entry0", "fcn.004012f0"),
                 ("entry0", "fcn.00401310"), ("entry0", "fcn.00401430"), ("entry0", "fcn.00401490"),
                 ("entry0", "fcn.00401520"), ("entry0", "fcn.0040a800"), ("entry0", "fcn.0040a9e0"),
                 ("entry0", "fcn.0040bda0"), ("entry0", "sym.imp.KERNEL32.dll_CloseHandle"),
@@ -747,8 +747,8 @@ R2_SCANNER_DATA = {
                 ("entry0", "sym.imp.USER32.dll_LoadCursorW"), ("entry0", "sym.imp.USER32.dll_MessageBoxW"),
                 ("entry0", "sym.imp.USER32.dll_RegisterClassW"), ("entry0", "sym.imp.USER32.dll_ShowWindow"),
                 ("entry0", "sym.imp.USER32.dll_TranslateMessage"), ("entry0", "sym.imp.USER32.dll_UpdateWindow"),
-                ("fcn.00401000", "sym.imp.KERNEL32.dll_GetProcAddress"),
-                ("fcn.00401000", "sym.imp.KERNEL32.dll_LoadLibraryA"), ("fcn.00401180", "unk.0x40f020"),
+                ("section..text", "sym.imp.KERNEL32.dll_GetProcAddress"),
+                ("section..text", "sym.imp.KERNEL32.dll_LoadLibraryA"), ("fcn.00401180", "unk.0x40f020"),
                 ("fcn.004012c0", "sym.imp.KERNEL32.dll_GetProcessHeap"),
                 ("fcn.004012c0", "sym.imp.KERNEL32.dll_HeapAlloc"),
                 ("fcn.004012f0", "sym.imp.KERNEL32.dll_GetProcessHeap"),
@@ -880,7 +880,7 @@ R2_SCANNER_DATA = {
                 ("sub.MPR.dll_WNetUseConnectionW", "sym.imp.MPR.dll_WNetUseConnectionW")},
             "functions": {
                 "entry0": [
-                    ("push", ["REG"]), ("mov", ["REG", "REG"]), ("sub", ["REG", "CONST"]), ("call", ["FUNC"]),
+                    ("push", ["REG"]), ("mov", ["REG", "REG"]), ("sub", ["REG", "CONST"]), ("call", ["ADDR"]),
                     ("test", ["REG", "REG"]), ("je", ["CONST"]), ("push", ["CONST"]), ("call", ["ADDR"]),
                     ("mov", ["ADDR", "CONST"]), ("mov", ["REG", "ADDR"]), ("mov", ["ADDR", "REG"]),
                     ("mov", ["REG", "ADDR"]), ("mov", ["ADDR", "REG"]), ("mov", ["REG", "ADDR"]),
@@ -950,7 +950,7 @@ R2_SCANNER_DATA = {
                     ("mov", ["ADDR", "CONST"]), ("mov", ["ADDR", "CONST"]), ("mov", ["ADDR", "CONST"]),
                     ("mov", ["ADDR", "CONST"]), ("mov", ["ADDR", "CONST"]), ("push", ["CONST"]), ("push", ["CONST"]),
                     ("call", ["ADDR"]), ("mov", ["ADDR", "REG"]), ("mov", ["REG", "CONST"]), ("add", ["REG", "CONST"]),
-                    ("mov", ["ADDR", "REG"]), ("mov", ["ADDR", "CONST"]), ("mov", ["ADDR", "CONST"]),
+                    ("mov", ["ADDR", "REG"]), ("mov", ["ADDR", "CONST"]), ("mov", ["ADDR", "STR"]),
                     ("lea", ["REG", "ADDR"]), ("push", ["REG"]), ("call", ["ADDR"]), ("push", ["CONST"]),
                     ("push", ["CONST"]), ("push", ["CONST"]), ("push", ["CONST"]), ("push", ["CONST"]),
                     ("push", ["CONST"]), ("push", ["CONST"]), ("push", ["CONST"]), ("push", ["CONST"]),
@@ -962,7 +962,7 @@ R2_SCANNER_DATA = {
                     ("push", ["REG"]), ("call", ["ADDR"]), ("test", ["REG", "REG"]), ("je", ["CONST"]),
                     ("lea", ["REG", "ADDR"]), ("push", ["REG"]), ("call", ["ADDR"]), ("lea", ["REG", "ADDR"]),
                     ("push", ["REG"]), ("call", ["ADDR"]), ("jmp", ["CONST"]), ("push", ["CONST"]), ("call", ["ADDR"])],
-                "fcn.00401000": [
+                "section..text": [
                     ("push", ["REG"]), ("mov", ["REG", "REG"]), ("push", ["STR"]), ("push", ["CONST"]),
                     ("call", ["ADDR"]), ("push", ["REG"]), ("call", ["ADDR"]), ("mov", ["ADDR", "REG"]),
                     ("push", ["STR"]), ("push", ["CONST"]), ("call", ["ADDR"]), ("push", ["REG"]), ("call", ["ADDR"]),
@@ -1073,7 +1073,7 @@ R2_SCANNER_DATA = {
                 "fcn.0005446d", "fcn.00054497", "fcn.0005449d", "fcn.00054ba5", "fcn.00054bad", "fcn.00054bb5",
                 "fcn.00054bc5", "fcn.00054bfd", "fcn.00054c25", "fcn.00054c2d", "fcn.00054c35", "fcn.00054c3d",
                 "fcn.00000000", "fcn.00006a16", "fcn.00006d04", "fcn.00006e31", "fcn.00007391", "fcn.00008622",
-                "fcn.000086b1", "fcn.0004d71d", "fcn.000ae2ab", "fcn.000ba491",
+                "fcn.000086b1", "fcn.0004d71d", "fcn.000ae2ab", "fcn.000ba491", "fcn.00054c46",
                 "unk.0x54b8d", "unk.0x54bbd", "unk.0x54bd5", "unk.0x54bdd", "unk.0x54be5", "unk.0x54bf5", "unk.0x54c45",
                 "unk.0x64c2", "unk.0x8", "unk.0xb8"},
             "links": {
@@ -1106,7 +1106,7 @@ R2_SCANNER_DATA = {
                 ("fcn.00007a77", "fcn.00007d80"), ("fcn.00007a77", "fcn.00007e31"), ("fcn.0000884e", "fcn.00008a72"),
                 ("fcn.0000884e", "fcn.00009101"), ("fcn.00008a9d", "fcn.000087b1"), ("fcn.00008a9d", "fcn.00009101"),
                 ("fcn.00008f29", "fcn.0000923f"), ("fcn.00008f6b", "fcn.00008fff"), ("fcn.00008f6b", "unk.0x8"),
-                ("fcn.0004cbbd", "fcn.00054ba5"), ("fcn.0004cbbd", "fcn.00054bad"), ("fcn.0004cdad", "fcn.00007d80"),
+                ("fcn.0004cbbd", "fcn.00054ba5"), ("fcn.0004cbbd", "fcn.00054bad"),
                 ("fcn.0004cdad", "fcn.00054bad"), ("fcn.0004cdad", "fcn.00054bb5"), ("fcn.0004cdad", "unk.0x54bbd"),
                 ("fcn.0004d07d", "fcn.00054bad"), ("fcn.0004d0fd", "fcn.0004cbbd"), ("fcn.0004d0fd", "fcn.0004cdad"),
                 ("fcn.0004d0fd", "fcn.0004d07d"), ("fcn.0004d0fd", "unk.0x54bd5"), ("fcn.0004d0fd", "unk.0x54bdd"),
@@ -1116,7 +1116,7 @@ R2_SCANNER_DATA = {
                 ("fcn.0004e32d", "fcn.00054ba5"), ("fcn.0004e32d", "fcn.00054bb5"), ("fcn.000542fd", "fcn.0005446d"),
                 ("fcn.000542fd", "fcn.00054497"), ("fcn.000542fd", "fcn.0005449d"), ("fcn.000542fd", "fcn.00054bfd"),
                 ("fcn.000542fd", "fcn.00054c25"), ("fcn.000542fd", "fcn.00054c2d"), ("fcn.000542fd", "fcn.00054c35"),
-                ("fcn.000542fd", "fcn.00054c3d"), ("fcn.000542fd", "unk.0x54c45")}
+                ("fcn.000542fd", "fcn.00054c3d"), ("fcn.000542fd", "unk.0x54c45"), ("fcn.000542fd", "fcn.00054c46")}
         }),
     "973bf":
         R2ScannerData(**{
@@ -1140,7 +1140,7 @@ R2_SCANNER_DATA = {
                 "fcn.00007511", "fcn.00007a71", "fcn.00008d02", "fcn.00008d91", "fcn.0004d3bd", "fcn.0004dfed",
                 "fcn.0004e65d", "fcn.0004e69d", "fcn.0004e83d", "fcn.00081e3c", "fcn.000849ac", "fcn.00089adc",
                 "fcn.000a6ea9", "unk.0x118", "unk.0x5539d", "unk.0x553bd", "unk.0x553c5", "unk.0x553cd", "unk.0x6ba2",
-                "unk.0x8"},
+                "unk.0x8", "fcn.0008745f"},
             "links": {
                 ("fcn.00004a91", "fcn.00004941"), ("fcn.00004a91", "fcn.000049d1"), ("fcn.00004a91", "fcn.00004a51"),
                 ("fcn.00004d01", "fcn.00004911"), ("fcn.00004d01", "fcn.00004941"), ("fcn.00004d01", "fcn.00004a91"),

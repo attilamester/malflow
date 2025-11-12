@@ -15,7 +15,7 @@
 
 * install dependencies
 ```bash
-sudo apt-get install graphviz graphviz-dev
+sudo apt-get install graphviz graphviz-dev libgraphviz-dev
 virtualenv --python="/usr/bin/python3.8" "env"
 source env/bin/activate
 python3 -m pip install -r requirements.txt

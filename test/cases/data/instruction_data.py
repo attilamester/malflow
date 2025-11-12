@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
+from malflow import InstructionReference
 from malflow.core.model.instruction import InstructionParameter, InstructionPrefix
 
 
@@ -11,6 +12,7 @@ class InstructionData:
     prefix: Optional["InstructionPrefix"]
     parameters: List["InstructionParameter"]
     has_bnd: bool
+    refs: List[InstructionReference] = None
 
 
 INSTRUCTIONS = [
@@ -69,6 +71,12 @@ INSTRUCTIONS = [
         "disasm": "pushal",
         "mnemonic": "pushal", "has_bnd": False, "prefix": None,
         "parameters": []
+    }),
+    InstructionData(**{
+        "disasm": "mov dword [ebp - 0x44], str.netwalker",
+        "mnemonic": "mov", "has_bnd": False, "prefix": None,
+        "refs": [],
+        "parameters": [InstructionParameter.ADDRESS, InstructionParameter.STRING]
     })
 ]
 

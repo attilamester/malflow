@@ -36,8 +36,8 @@ class TestCallGraph(unittest.TestCase):
                     return data.agCd
                 if cmd == "agRd":
                     return data.agRd
-                if cmd == "ie":
-                    return data.ie
+                if cmd == "ies":
+                    return data.ies
                 if cmd in data.s_pdfj:
                     return data.s_pdfj[cmd]
                 return ""

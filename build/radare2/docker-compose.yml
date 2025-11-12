@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+
+  r2-5.8.8:
+    image: attilamester/radare2-5.8.8
+    container_name: container_r2-5.8.8
+    build:
+      context: ./5.8.8
+      network: host
+      dockerfile: ./Dockerfile
+    network_mode: "host"
+
+  r2-6.0.4:
+    image: attilamester/radare2:6.0.4
+    container_name: container_r2-6.0.4
+    build:
+      context: ./6.0.4
+      network: host
+      dockerfile: ./Dockerfile
+    network_mode: "host"
