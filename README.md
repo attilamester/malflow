@@ -245,6 +245,9 @@ docker compose up --build malflow_test
 
 ## See Also
 
-- [GitHub Repository](https://github.com/attilamester/malflow)
+- [malflow GitHub Repo](https://github.com/attilamester/malflow)
+- [malflow PyPi Package](https://test.pypi.org/project/malflow/)
 - [Related Work](https://attilamester.github.io/call-graph/)
 - [Radare2 Documentation](https://github.com/radareorg/radare2)
+- [malfusion Github Repo](https://github.com/bianca-grama/malfusion) (by [bianca-grama](https://github.com/bianca-grama)):
+  > A comprehensive machine learning pipeline for classifying malware samples into families using static analysis features, call graph metrics, and graph embeddings.

@@ -65,11 +65,12 @@ def load_callgraph(input_path: str, force_rescan: bool = False, verbose: bool = 
         return None
 
 
-def cmd_info(args):
+def cmd_info(args, cg=None):
     """Info command - basic analysis with optional dump"""
-    cg = load_callgraph(args.input, force_rescan=args.rescan, verbose=args.verbose)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, force_rescan=args.rescan, verbose=args.verbose)
+        if not cg:
+            return 1
 
     format_callgraph_info(cg)
 
@@ -90,11 +91,12 @@ def cmd_info(args):
     return 0
 
 
-def cmd_nodes(args):
+def cmd_nodes(args, cg=None):
     """Nodes command - list and query nodes"""
-    cg = load_callgraph(args.input, verbose=args.verbose)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, verbose=args.verbose)
+        if not cg:
+            return 1
 
     nodes = list(cg.nodes.values())
 
@@ -139,11 +141,12 @@ def cmd_nodes(args):
     return 0
 
 
-def cmd_edges(args):
+def cmd_edges(args, cg=None):
     """Edges command - display call graph edges"""
-    cg = load_callgraph(args.input, verbose=args.verbose)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, verbose=args.verbose)
+        if not cg:
+            return 1
 
     edges = cg.get_edges()
     format_edges(edges, limit=args.limit)
@@ -151,11 +154,12 @@ def cmd_edges(args):
     return 0
 
 
-def cmd_export(args):
+def cmd_export(args, cg=None):
     """Export command - export to various formats"""
-    cg = load_callgraph(args.input, verbose=args.verbose)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, verbose=args.verbose)
+        if not cg:
+            return 1
 
     format_type = args.format.lower()
     output_dir_path = args.output or os.path.dirname(os.path.abspath(args.input))
@@ -186,11 +190,12 @@ def cmd_export(args):
     return 0
 
 
-def cmd_image(args):
+def cmd_image(args, cg=None):
     """Image command - generate image representation"""
-    cg = load_callgraph(args.input, verbose=False)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, verbose=False)
+        if not cg:
+            return 1
 
     img_size = (512, 512)
 
@@ -229,11 +234,12 @@ def cmd_image(args):
         return 1
 
 
-def cmd_dfs(args):
+def cmd_dfs(args, cg=None):
     """DFS command - perform DFS traversal"""
-    cg = load_callgraph(args.input, verbose=False)
     if not cg:
-        return 1
+        cg = load_callgraph(args.input, verbose=False)
+        if not cg:
+            return 1
 
     print_info("Performing DFS on instructions...")
     instructions = cg.dfs_instructions(
