@@ -1,8 +1,9 @@
 <h1>
-    <img src="./icon.png" alt="malflow-icon" width="150" style="float:left; margin-right:20px;" />
+    <img src="./icon.png" alt="malflow-icon" width="128" height="128" style="margin-right:20px;" align="left" />
     Static malware analysis - call graph scanner of PE executable with Radare2
-    <div style="clear:both"></div>
 </h1>
+
+<br><br>
 
 * https://github.com/radareorg/radare2
 * related work on [GitHub Pages](https://attilamester.github.io/call-graph/)
