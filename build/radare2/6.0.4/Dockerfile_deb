@@ -1,0 +1,46 @@
+# =================
+FROM python:3.10-slim as base
+# =================
+
+WORKDIR /usr/radare2
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends curl wget build-essential graphviz graphviz-dev git && \
+    python3 -m pip install pip==25.3 && \
+    apt-get clean all && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN curl -Ls https://github.com/radareorg/radare2/releases/download/6.0.4/radare2-6.0.4.tar.xz | tar xJv && \
+    cd radare2-6.0.4 && ./sys/install.sh && \
+    apt-get clean all && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+COPY ./requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+
+# =================
+FROM python:3.10-slim as main
+# =================
+
+WORKDIR /usr/radare2
+
+COPY --from=base /usr/local/bin/python3.10 /usr/local/bin/python3.10
+COPY --from=base /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+
+COPY --from=base /usr/lib/x86_64-linux-gnu/libcgraph* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libcdt* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libgvc* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libexpat* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libxdot* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libpathplan* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libltdl* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libpango* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libcairo* /usr/lib/x86_64-linux-gnu/
+COPY --from=base /usr/lib/x86_64-linux-gnu/libglib* /usr/lib/x86_64-linux-gnu/
+
+COPY --from=base /usr/include/graphviz /usr/include/graphviz
+COPY --from=base /usr/share/graphviz /usr/share/graphviz
+COPY --from=base /usr/local/lib/radare2 /usr/local/lib/radare2
+COPY --from=base /usr/local/bin/radare2 /usr/local/bin/radare2
+COPY --from=base /usr/local/share/radare2 /usr/local/share/radare2
+COPY --from=base /usr/local/bin/r2 /usr/local/bin/r2
+COPY --from=base /usr/local/lib/libr_*.so /usr/local/lib/
+COPY --from=base /usr/radare2/radare2-6.0.4/libr /usr/radare2/radare2-6.0.4/libr

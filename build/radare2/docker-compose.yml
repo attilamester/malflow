@@ -18,3 +18,12 @@ services:
       network: host
       dockerfile: ./Dockerfile
     network_mode: "host"
+
+  r2-6.0.4-deb:
+    image: attilamester/radare2:6.0.4-slim
+    container_name: container_r2-6.0.4-slim
+    build:
+      context: ./6.0.4
+      network: host
+      dockerfile: ./Dockerfile_deb
+    network_mode: "host"
