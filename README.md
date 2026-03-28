@@ -256,3 +256,17 @@ docker compose up --build malflow_test
 - [Radare2 Documentation](https://github.com/radareorg/radare2)
 - [malfusion Github Repo](https://github.com/bianca-grama/malfusion) (by [bianca-grama](https://github.com/bianca-grama)):
   > A comprehensive machine learning pipeline for classifying malware samples into families using static analysis features, call graph metrics, and graph embeddings.
+
+## Citing
+
+If you are using this project in a publication, please cite the following [paper](https://link.springer.com/chapter/10.1007/978-981-96-3531-3_9):
+```
+@inproceedings{mester2024towards,
+  title={Towards a Malware Family Classification Model Using Static Call Graph Instruction Visualization},
+  author={Mester, Attila and Bod{\'o}, Zal{\'a}n and Vinod, P and Conti, Mauro},
+  booktitle={International Conference on Network and System Security},
+  pages={167--186},
+  year={2024},
+  organization={Springer}
+}
+```
